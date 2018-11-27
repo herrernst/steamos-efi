@@ -52,7 +52,8 @@ steamcl.efi$(EXEEXT): steamcl.elf
 # We can't just subvert the link stage to do this because of the way the link
 # command is contructed (I think)
 steamcl_elf_SOURCES  = chainloader/hello.c
-steamcl_elf_CFLAGS   = $(CFLAGS) $(EFI_CFLAGS) -I${EFI_INC} -I${EFI_INC}/${build_cpu}
+steamcl_elf_CFLAGS   = $(CFLAGS) $(EFI_CFLAGS)
+steamcl_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}
 steamcl_elf_LDFLAGS  = $(LDFLAGS) $(EFI_LDFLAGS) 
 steamcl_elf_LDADD    = $(EFI_EXTRALIBS)
 steamcl_elf_LINK     = $(LD) $(steamcl_elf_LDFLAGS) -o $@
