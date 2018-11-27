@@ -1,0 +1,14 @@
+Makefile.in
+aclocal.m4
+autom4te.cache/
+build-aux/
+configure
+.deps/
+Makefile
+chainloader/.deps/
+chainloader/.dirstamp
+chainloader/steamcl_elf-hello.o
+config.log
+config.status
+steamcl.efi
+steamcl.elf
