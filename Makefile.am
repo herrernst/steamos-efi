@@ -35,9 +35,9 @@ AM_CCASFLAGS 	 = $(HOST_CCASFLAGS) $(CCASFLAGS_DEFAULT)
 
 ACLOCAL_AMFLAGS  = -I m4
 
-bin_PROGRAMS     = steamcl.efi
+pkglibexec_PROGRAMS = steamcl.efi
 noinst_bin_PROGRAMS = steamcl.elf
-noinst_bindir    = elf
+noinst_bindir       = elf
 
 # we need a non-standard step here to turn the elf output of the normal-ish
 # link stage into a PE32 blob:
