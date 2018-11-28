@@ -13,3 +13,4 @@ config.status
 steamcl.efi
 steamcl.elf
 m4
+*.o
