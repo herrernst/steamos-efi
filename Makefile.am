@@ -51,7 +51,10 @@ steamcl.efi$(EXEEXT): steamcl.elf
 # an EFI blob in the final stage.
 # We can't just subvert the link stage to do this because of the way the link
 # command is contructed (I think)
-steamcl_elf_SOURCES  = chainloader/chainloader.c
+steamcl_elf_SOURCES  = chainloader/chainloader.c \
+                       chainloader/fileio.c \
+                       chainloader/util.c \
+                       chainloader/bootload.c
 steamcl_elf_CFLAGS   = $(CFLAGS) $(EFI_CFLAGS)
 steamcl_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}
 steamcl_elf_LDFLAGS  = $(LDFLAGS) $(EFI_LDFLAGS) 
