@@ -50,3 +50,14 @@ EFI_STATUS valid_efi_binary (IN EFI_FILE_PROTOCOL *dir, CONST IN CHAR16 *path)
 
     return EFI_SUCCESS;
 }
+
+#ifdef WIP
+EFI_STATUS efi_execute (EFI_FILE_HANDLE bin)
+{
+    EFI_HANDLE efiapp;
+    EFI_DEVICE_PATH *dpath = NULL;
+
+    return
+      uefi_call_wrapper(BS->LoadImage, 6, FALSE, SIH, dpath, NULL, 0, &efiapp);
+}
+#endif

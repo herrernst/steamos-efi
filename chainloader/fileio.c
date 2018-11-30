@@ -80,3 +80,57 @@ EFI_STATUS efi_file_read (IN EFI_FILE_PROTOCOL *fh,
 {
     return uefi_call_wrapper( fh->Read, 3, fh, bytes, buf );
 }
+
+VOID ls (EFI_FILE_PROTOCOL *dir, UINTN indent, CONST CHAR16 *name, UINTN recurse)
+{
+    EFI_FILE_INFO *dirent = NULL;
+    UINTN buf_size = 0;
+    CHAR16 prefix[256] = { '/', 0 };
+    UINTN pad_to = (indent * 2) + 1;
+    CONST UINTN max_pfx = 255;
+    UINTN i = 1;
+    EFI_STATUS res = EFI_SUCCESS;
+    CONST UINTN unset = EFI_FILE_SYSTEM | EFI_FILE_ARCHIVE | EFI_FILE_RESERVED;
+
+    if( indent )
+        for( i = 0; (i < max_pfx) && (i < pad_to); i++ )
+            prefix[i] = (CHAR16)' ';
+    prefix[i] = (CHAR16) 0;
+
+    while( ((res = efi_readdir( dir, &dirent, &buf_size )) == EFI_SUCCESS) &&
+           buf_size )
+    {
+        // skip the pseudo dirents for self and parent:
+        if( !StrCmp( dirent->FileName, L"."  ) ||
+            !StrCmp( dirent->FileName, L".." ) )
+            continue;
+
+        Print( L"%s%s %lu bytes %cr%c- [%c%c%c%c]\n",
+               prefix, dirent->FileName, dirent->FileSize,
+               ( dirent->Attribute & EFI_FILE_DIRECTORY ) ? 'd' : '-' ,
+               ( dirent->Attribute & EFI_FILE_READ_ONLY ) ? '-' : 'w' ,
+               ( dirent->Attribute & EFI_FILE_SYSTEM    ) ? 'S' : ' ' ,
+               ( dirent->Attribute & EFI_FILE_RESERVED  ) ? 'R' : ' ' ,
+               ( dirent->Attribute & EFI_FILE_ARCHIVE   ) ? 'A' : ' ' ,
+               ( dirent->Attribute & EFI_FILE_HIDDEN    ) ? 'h' : ' ' );
+
+        if( (dirent->Attribute & EFI_FILE_DIRECTORY) &&
+            !(dirent->Attribute & unset)             )
+        {
+            EFI_FILE_PROTOCOL *subdir;
+            res = efi_file_open( dir, &subdir, dirent->FileName, 0, 0 );
+            ERROR_JUMP( res, out, L"%s->open(%s)", name, dirent->FileName );
+
+            if( recurse )
+                ls( subdir, indent + 1, dirent->FileName, recurse );
+
+            res = efi_file_close( subdir );
+            WARN_STATUS( res, L"->close() failed. what.\n" );
+        }
+    }
+
+    ERROR_JUMP( res, out, L"%s->Read failed", name );
+
+out:
+    if( dirent ) efi_free( dirent );
+}

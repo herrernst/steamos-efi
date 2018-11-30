@@ -17,3 +17,8 @@ EFI_STATUS efi_readdir (IN EFI_FILE_PROTOCOL *dir,
 EFI_STATUS efi_file_read (IN EFI_FILE_PROTOCOL *fh,
                           IN OUT CHAR8 *buf,
                           IN OUT UINTN *bytes);
+
+VOID ls (EFI_FILE_PROTOCOL *dir,
+         UINTN indent,
+         CONST CHAR16 *name,
+         UINTN recurse);

@@ -2,6 +2,7 @@
 #include <efilib.h>
 #include <efiprot.h>
 
+#include "err.h"
 #include "util.h"
 
 VOID * efi_alloc (IN UINTN s) { return AllocateZeroPool( s ); }
@@ -47,4 +48,47 @@ CONST CHAR16 * efi_statstr (EFI_STATUS s)
         return L"-UNKNOWN-";
     }
 
+}
+
+EFI_STATUS get_handle_protocol (IN EFI_HANDLE *handle,
+                                IN EFI_GUID *id,
+                                OUT VOID **protocol)
+{
+    return uefi_call_wrapper( BS->HandleProtocol, 3, *handle, id, protocol );
+}
+
+EFI_STATUS get_protocol_handles (IN EFI_GUID *guid,
+                                 OUT EFI_HANDLE **handles,
+                                 IN OUT UINTN *count)
+{
+    return LibLocateHandle(ByProtocol, guid, NULL, count, handles);
+}
+
+EFI_STATUS get_protocol_instance_handle (IN EFI_GUID *id,
+                                         IN VOID *protocol_instance,
+                                         OUT EFI_HANDLE *handle)
+{
+    EFI_HANDLE *handles = NULL;
+    UINTN max = 0;
+    EFI_STATUS res;
+
+    *handle = NULL;
+
+    res = get_protocol_handles( id, &handles, &max );
+    ERROR_RETURN( res, res, NULL, (UINT64)id );
+
+    for( UINTN i = 0; !*handle && (i < max); i++ )
+    {
+        VOID *found = NULL;
+        res = get_handle_protocol( &handles[i], id, &found );
+        ERROR_CONTINUE( res, L"handle %x does not support protocol %x. what.",
+                        (UINT64) handles[i], (UINT64) id );
+
+        if( found == protocol_instance )
+            *handle = handles[i];
+    }
+
+    efi_free( handles );
+
+    return EFI_SUCCESS;
 }
