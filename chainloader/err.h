@@ -3,24 +3,26 @@
 #define ERR_FMT(fmt, s, ...)                                    \
     fmt L": %s (%d)\n", ##__VA_ARGS__, efi_statstr(s), s
 
-#define ERROR_RETURN(s, r, fmt, ...)             \
-    if( s != EFI_SUCCESS )                       \
-    {                                            \
-        Print( ERR_FMT(fmt, s, ##__VA_ARGS__) ); \
-        return r;                                \
+#define ERROR_X(s, x, fmt, ...) \
+    if( s != EFI_SUCCESS )                                         \
+    {                                                              \
+        if( fmt ) Print( ERR_FMT(fmt ?: L"", s, ##__VA_ARGS__) );  \
+        x;                                                         \
     }
+
+#define ERROR_RETURN(s, r, fmt, ...)             \
+    ERROR_X( s, return r, fmt, ##__VA_ARGS__ )
+
+#define ERROR_CONTINUE(s, fmt, ...) \
+    ERROR_X( s, continue, fmt, ##__VA_ARGS__ )
+
+#define ERROR_JUMP(s, target, fmt, ...) \
+    ERROR_X( s, goto target, fmt, ##__VA_ARGS__ )
 
 #define WARN_STATUS(s, fmt, ...) \
     if( s != EFI_SUCCESS )                       \
     {                                            \
         Print( ERR_FMT(fmt, s, ##__VA_ARGS__) ); \
-    }
-
-#define ERROR_JUMP(s, target, fmt, ...) \
-    if( s != EFI_SUCCESS )                       \
-    {                                            \
-        Print( ERR_FMT(fmt, s, ##__VA_ARGS__) ); \
-        goto target;                             \
     }
 
 #define ALLOC_OR_GOTO(s, tgt) \
