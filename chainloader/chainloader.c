@@ -79,6 +79,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     UINTN count = 0;
     EFI_STATUS res;
     UINTN debug = 1;
+    bootloader steamos;
 
     InitializeLib( image_handle, sys_table );
     Print( L"Chainloader starting\n" );
@@ -96,9 +97,9 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
         if( debug )
             dump_fs_details( fs );
-
-        // choose_steamos_loader( )
     }
+
+    choose_steamos_loader( handles, count, &steamos );
 
     efi_free( handles );
 
