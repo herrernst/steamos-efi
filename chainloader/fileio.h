@@ -18,6 +18,11 @@ EFI_STATUS efi_file_read (IN EFI_FILE_PROTOCOL *fh,
                           IN OUT CHAR8 *buf,
                           IN OUT UINTN *bytes);
 
+EFI_STATUS efi_mount (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
+                      OUT EFI_FILE_PROTOCOL **root);
+
+EFI_STATUS efi_unmount (IN OUT EFI_FILE_PROTOCOL **root);
+
 VOID ls (EFI_FILE_PROTOCOL *dir,
          UINTN indent,
          CONST CHAR16 *name,

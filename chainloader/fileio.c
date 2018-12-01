@@ -81,6 +81,26 @@ EFI_STATUS efi_file_read (IN EFI_FILE_PROTOCOL *fh,
     return uefi_call_wrapper( fh->Read, 3, fh, bytes, buf );
 }
 
+EFI_STATUS efi_mount (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
+                      OUT EFI_FILE_PROTOCOL **root)
+{
+    *root = NULL;
+    return uefi_call_wrapper( part->OpenVolume, 2, part, root );
+}
+
+EFI_STATUS efi_unmount (IN OUT EFI_FILE_PROTOCOL **root)
+{
+    EFI_STATUS res = EFI_SUCCESS;
+
+    if( *root )
+    {
+        efi_file_close( *root );
+        *root = NULL;
+    }
+
+    return res;
+}
+
 VOID ls (EFI_FILE_PROTOCOL *dir, UINTN indent, CONST CHAR16 *name, UINTN recurse)
 {
     EFI_FILE_INFO *dirent = NULL;
