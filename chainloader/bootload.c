@@ -5,6 +5,7 @@
 #include "err.h"
 #include "util.h"
 #include "fileio.h"
+#include "bootload.h"
 
 // this is x86_64 specific
 #define EFI_STUB_ARCH 0x8664
@@ -49,6 +50,47 @@ EFI_STATUS valid_efi_binary (IN EFI_FILE_PROTOCOL *dir, CONST IN CHAR16 *path)
         return EFI_LOAD_ERROR;
 
     return EFI_SUCCESS;
+}
+
+EFI_STATUS choose_steamos_loader (IN EFI_HANDLE *handles,
+                                  CONST IN UINTN n_handles,
+                                  IN OUT bootloader *chosen)
+{
+    EFI_STATUS res;
+    EFI_FILE_PROTOCOL *root_dir = NULL;
+    static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
+    static EFI_GUID dp_guid = DEVICE_PATH_PROTOCOL;
+
+    chosen->partition = NULL;
+    chosen->loader_path = NULL;
+
+    for ( UINTN i = 0; i < n_handles; i++ )
+    {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs = NULL;
+
+        efi_unmount( &root_dir );
+
+        res = get_handle_protocol( &handles[i], &fs_guid, (VOID **)&fs );
+        ERROR_CONTINUE( res, L"handle #%u: no simple file system protocol", i );
+
+        res = efi_mount( fs, &root_dir );
+        ERROR_CONTINUE( res, L"partition #%u not opened", i );
+
+        res = efi_file_exists( root_dir, BOOTCONFPATH );
+        if( res != EFI_SUCCESS )
+            continue;
+
+        res = get_handle_protocol( &handles[i], &dp_guid,
+                                   (VOID **) &chosen->device_path );
+        ERROR_CONTINUE( res, L"Unable to get device path for partition #%u", 1 );
+        chosen->partition = handles[i];
+        chosen->loader_path = BOOTCONFPATH;
+        break;
+    }
+
+    efi_unmount( &root_dir );
+
+    return chosen->partition ? EFI_SUCCESS : EFI_NOT_FOUND;
 }
 
 #ifdef WIP
