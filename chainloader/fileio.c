@@ -154,3 +154,92 @@ VOID ls (EFI_FILE_PROTOCOL *dir, UINTN indent, CONST CHAR16 *name, UINTN recurse
 out:
     if( dirent ) efi_free( dirent );
 }
+
+EFI_DEVICE_PATH *
+make_device_path (IN EFI_HANDLE device,
+                  IN CHAR16 *path)
+{
+    UINTN                   size;
+    FILEPATH_DEVICE_PATH    *fpath;
+    EFI_DEVICE_PATH         *eop, *dpath;
+    UINTN alloc;
+
+    size  = StrSize( path );
+    alloc = size + SIZE_OF_FILEPATH_DEVICE_PATH + sizeof(EFI_DEVICE_PATH);
+    fpath = efi_alloc( alloc );
+
+    Print( L"Allocated %u bytes to hold %u:%s + wrapper data at %x\n",
+           alloc, size, path, (UINT64) fpath );
+
+    dpath = NULL;
+
+    if( fpath )
+    {
+        fpath->Header.Type    = MEDIA_DEVICE_PATH;
+        fpath->Header.SubType = MEDIA_FILEPATH_DP;
+        SetDevicePathNodeLength( &fpath->Header,
+                                 size + SIZE_OF_FILEPATH_DEVICE_PATH );
+        CopyMem( fpath->PathName, path, size );
+        eop = NextDevicePathNode( &fpath->Header );
+        SetDevicePathEndNode( eop );
+
+        // Append file path to device's device path
+        dpath = (EFI_DEVICE_PATH *) fpath;
+        if( device )
+        {
+            EFI_DEVICE_PATH *edp = DevicePathFromHandle( device );
+            Print( L"appending device path to file path %x + %x\n",
+                   (UINT64) edp, (UINT64) dpath );
+
+            dpath = AppendDevicePath ( edp, dpath );
+            Print( L"compound device path %x\n", (UINT64) dpath );
+            efi_free( fpath );
+        }
+    }
+
+    return dpath;
+}
+
+EFI_DEVICE_PATH *
+append_path_to_device_path (IN EFI_DEVICE_PATH *device_path,
+                            IN CHAR16 *path)
+{
+    UINTN                   size;
+    FILEPATH_DEVICE_PATH    *fpath;
+    EFI_DEVICE_PATH         *eop, *dpath;
+    UINTN alloc;
+
+    size  = StrSize( path );
+    alloc = size + SIZE_OF_FILEPATH_DEVICE_PATH + sizeof(EFI_DEVICE_PATH);
+    fpath = efi_alloc( alloc );
+
+    Print( L"Allocated %u bytes to hold %u:%s + wrapper data at %x\n",
+           alloc, size, path, (UINT64) fpath );
+
+    dpath = NULL;
+
+    if( fpath )
+    {
+        fpath->Header.Type    = MEDIA_DEVICE_PATH;
+        fpath->Header.SubType = MEDIA_FILEPATH_DP;
+        SetDevicePathNodeLength( &fpath->Header,
+                                 size + SIZE_OF_FILEPATH_DEVICE_PATH );
+        CopyMem( fpath->PathName, path, size );
+        eop = NextDevicePathNode( &fpath->Header );
+        SetDevicePathEndNode( eop );
+
+        // Append file path to device's device path
+        dpath = (EFI_DEVICE_PATH *) fpath;
+        if( device_path )
+        {
+            Print( L"appending device path to file path %x + %x\n",
+                   (UINT64) device_path, (UINT64) dpath );
+
+            dpath = AppendDevicePath ( device_path, dpath );
+            Print( L"compound device path %x\n", (UINT64) dpath );
+            efi_free( fpath );
+        }
+    }
+\
+    return dpath;
+}
