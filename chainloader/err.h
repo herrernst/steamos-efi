@@ -4,10 +4,11 @@
     fmt L": %s (%d)\n", ##__VA_ARGS__, efi_statstr(s), s
 
 #define ERROR_X(s, x, fmt, ...) \
-    if( s != EFI_SUCCESS )                                         \
-    {                                                              \
-        if( fmt ) Print( ERR_FMT(fmt ?: L"", s, ##__VA_ARGS__) );  \
-        x;                                                         \
+    if( s != EFI_SUCCESS )                             \
+    {                                                  \
+        if( *(CHAR16 *)fmt != L'0' )                   \
+            Print( ERR_FMT( fmt, s, ##__VA_ARGS__ ) ); \
+        x;                                             \
     }
 
 #define ERROR_RETURN(s, r, fmt, ...)             \
