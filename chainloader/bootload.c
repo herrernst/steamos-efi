@@ -80,11 +80,25 @@ EFI_STATUS choose_steamos_loader (IN EFI_HANDLE *handles,
         if( res != EFI_SUCCESS )
             continue;
 
+        // TODO: parse the config file here to pick the bootloader
+        // TODO: If we've already seen a candidate, compare the
+        // new bootconfig with the old one to see if it's a better choice
+        // for now we're just picking the first option because we want to
+        // get the actual bootloader exec step working
+
+        res = efi_file_exists( root_dir, STEAMOSLDR );
+        if( res != EFI_SUCCESS )
+            continue;
+
+        res = valid_efi_binary( root_dir, STEAMOSLDR );
+        ERROR_CONTINUE( res, L"%s is not an EFI executable", STEAMOSLDR );
+
         res = get_handle_protocol( &handles[i], &dp_guid,
                                    (VOID **) &chosen->device_path );
         ERROR_CONTINUE( res, L"Unable to get device path for partition #%u", 1 );
+
         chosen->partition = handles[i];
-        chosen->loader_path = BOOTCONFPATH;
+        chosen->loader_path = STEAMOSLDR;
         break;
     }
 
