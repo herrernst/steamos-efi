@@ -2,8 +2,11 @@
 
 #define MAXFSNAMLEN 200
 #define BOOTCONFPATH L"SteamOS\\bootconf"
-#define EFIDIR       L"EFI"
-#define DEFAULTLDR   L"EFI\\Boot\\bootx64.efi"
+#define EFIDIR       L"\\EFI"
+#define SYSTEMDLDR  EFIDIR L"\\SYSTEMD\\SYSTEMD-BOOTX64.EFI"
+#define DEFAULTLDR  EFIDIR L"\\Boot\\bootx64.efi"
+#define STEAMOSLDR  SYSTEMDLDR
+#define CHAINLDR    EFIDIR L"\\Shell\\steamcl.efi"
 
 VOID * efi_alloc (IN UINTN s);
 VOID   efi_free  (IN VOID *p);
