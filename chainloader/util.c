@@ -6,7 +6,7 @@
 #include "util.h"
 
 VOID * efi_alloc (IN UINTN s) { return AllocateZeroPool( s ); }
-VOID   efi_free  (IN VOID *p) { FreePool( p); }
+VOID   efi_free  (IN VOID *p) { if( p ) FreePool( p); }
 
 CONST CHAR16 * efi_statstr (EFI_STATUS s)
 {
