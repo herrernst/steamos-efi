@@ -107,13 +107,142 @@ EFI_STATUS choose_steamos_loader (IN EFI_HANDLE *handles,
     return chosen->partition ? EFI_SUCCESS : EFI_NOT_FOUND;
 }
 
-#ifdef WIP
-EFI_STATUS efi_execute (EFI_FILE_HANDLE bin)
+static VOID dump_bootloader_paths (EFI_HANDLE *current, EFI_DEVICE_PATH *target)
 {
-    EFI_HANDLE efiapp;
-    EFI_DEVICE_PATH *dpath = NULL;
+    CHAR16 *this = NULL;
+    CHAR16 *that = NULL;
+    EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
+    EFI_LOADED_IMAGE *li;
+    EFI_STATUS res;
+    EFI_DEVICE_PATH *fqdp = NULL;
 
-    return
-      uefi_call_wrapper(BS->LoadImage, 6, FALSE, SIH, dpath, NULL, 0, &efiapp);
+    that = DevicePathToStr( target );
+    Print( L"Loading bootloader @ %s\n", that );
+
+    res = get_handle_protocol( current, &lip_guid, (VOID **) &li );
+    ERROR_RETURN( res, , L"No loaded image protocol. wat." );
+
+    fqdp = AppendDevicePath( DevicePathFromHandle( li->DeviceHandle ),
+                             li->FilePath );
+
+    this = DevicePathToStr( fqdp );
+
+    Print( L"Within chainloader @ %s\n", this );
 }
-#endif
+
+static const CHAR16 *memtype (EFI_MEMORY_TYPE m)
+{
+    switch (m)
+    {
+      case EfiReservedMemoryType:      return L"Reserved";
+      case EfiLoaderCode:              return L"Loader Code";
+      case EfiLoaderData:              return L"Loader Data";
+      case EfiBootServicesCode:        return L"Boot Services Code";
+      case EfiBootServicesData:        return L"Boot Services Data";
+      case EfiRuntimeServicesCode:     return L"Runtime Services Code";
+      case EfiRuntimeServicesData:     return L"Runtime Services Data";
+      case EfiConventionalMemory:      return L"Conventional Memory";
+      case EfiUnusableMemory:          return L"Unusable Memory";
+      case EfiACPIReclaimMemory:       return L"ACPI Reclaim Memory";
+      case EfiACPIMemoryNVS:           return L"ACPI Memory NVS";
+      case EfiMemoryMappedIO:          return L"Memory Mapped IO";
+      case EfiMemoryMappedIOPortSpace: return L"Memory Mapped IO Port Space";
+      case EfiPalCode:                 return L"Pal Code";
+      case EfiMaxMemoryType:           return L"(INVALID)";
+      default:
+        return L"???";
+    }
+}
+
+EFI_STATUS exec_bootloader (EFI_HANDLE *current_image, bootloader *boot)
+{
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_HANDLE efi_app = NULL;
+    EFI_GUID load_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    EFI_LOADED_IMAGE *child = NULL;
+    EFI_DEVICE_PATH *dpath = NULL;
+    //EFI_DEVICE_PATH *dp2 = NULL;
+    UINTN esize;
+    CHAR16 *edata = NULL;
+
+    dpath = FileDevicePath( boot->partition, boot->loader_path );
+    //dp2 = make_device_path( boot->partition, boot->loader_path );
+    if( !dpath )
+        res = EFI_INVALID_PARAMETER;
+
+    ERROR_JUMP( res, unload,
+                L"FDP could not construct a device path from %x + %s",
+                (UINT64) &boot->device_path, boot->loader_path );
+
+    dump_bootloader_paths( current_image, dpath );
+
+    res = uefi_call_wrapper(BS->LoadImage, 6, FALSE,
+                            *current_image, dpath, NULL, 0, &efi_app);
+
+    ERROR_JUMP( res, unload, L"load-image failed" );
+
+    // TODO: do the self-reload trick to keep shim + EFI happy
+    // we don't can't support secureboot yet because of the NVIDIA
+    // module/dkms/initrd problem, but if we ever fix that, we'll
+    // need to do what refind.main.c@394 does.
+
+    res = get_handle_protocol( &efi_app, &load_guid, (VOID **) &child );
+    ERROR_JUMP( res, unload, L"loaded-image-protocol not found" );
+
+    Print( L"Zeroing out command line options to %x\n--\n", (UINT64) child );
+    child->LoadOptions = L"";
+    child->LoadOptionsSize = 0;
+
+    Print( L"\n\
+typedef struct {                                               \n\
+    UINT32                          Revision;         %u       \n\
+    EFI_HANDLE                      ParentHandle;     %x (%x)  \n\
+    struct _EFI_SYSTEM_TABLE        *SystemTable;     %x       \n\
+                                                               \n\
+    // Source location of image                                \n\
+    EFI_HANDLE                      DeviceHandle;     %x       \n\
+    EFI_DEVICE_PATH                 *FilePath;        %s       \n\
+    VOID                            *Reserved;        %x       \n\
+                                                               \n\
+    // Images load options                                     \n\
+    UINT32                          LoadOptionsSize;  %u       \n\
+    VOID                            *LoadOptions;   \"%s\"     \n\
+                                                               \n\
+    // Location of where image was loaded                      \n\
+    VOID                            *ImageBase;       %x       \n\
+    UINT64                          ImageSize;        %lu      \n\
+    EFI_MEMORY_TYPE                 ImageCodeType;    %s       \n\
+    EFI_MEMORY_TYPE                 ImageDataType;    %s       \n\
+                                                               \n\
+    // If the driver image supports a dynamic unload request   \n\
+    EFI_IMAGE_UNLOAD                Unload;           %x       \n\
+} EFI_LOADED_IMAGE_PROTOCOL;                                   \n",
+           child->Revision,
+           child->ParentHandle, *current_image,
+           (UINT64) child->SystemTable,
+           child->DeviceHandle,
+           DevicePathToStr( child->FilePath ),
+           child->Reserved,
+           child->LoadOptionsSize,
+           (CHAR16 *)child->LoadOptions,
+           (UINT64)child->ImageBase,
+           child->ImageSize,
+           memtype( child->ImageCodeType ),
+           memtype( child->ImageDataType ),
+           (UINT64) child->Unload );
+    res = uefi_call_wrapper( BS->StartImage, 3, efi_app, &esize, &edata );
+    WARN_STATUS( res, L"start image returned with exit code: %u; data @ 0x%x",
+                 esize, (UINT64) edata );
+
+unload:
+    if( efi_app )
+    {
+        EFI_STATUS r2 = uefi_call_wrapper( BS->UnloadImage, 1, efi_app );
+        WARN_STATUS( r2, L"unload of image failed" );
+    }
+
+    efi_free( dpath );
+
+    return res;
+}
+
