@@ -92,9 +92,9 @@ EFI_STATUS efi_unmount (IN OUT EFI_FILE_PROTOCOL **root)
 {
     EFI_STATUS res = EFI_SUCCESS;
 
-    if( *root )
+    if( root && *root )
     {
-        efi_file_close( *root );
+        res = efi_file_close( *root );
         *root = NULL;
     }
 
