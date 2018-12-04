@@ -5,9 +5,9 @@
 #include "err.h"
 #include "util.h"
 
-EFI_STATUS efi_file_open (IN EFI_FILE_PROTOCOL *dir,
+EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
                           OUT EFI_FILE_PROTOCOL **opened,
-                          CONST IN CHAR16 *path,
+                          CONST CHAR16 *path,
                           UINT64 mode,
                           UINT64 attr)
 {
@@ -22,7 +22,7 @@ EFI_STATUS efi_file_close (IN EFI_FILE_PROTOCOL *file)
     return uefi_call_wrapper( file->Close, 1, file );
 }
 
-EFI_STATUS efi_file_exists (IN EFI_FILE_PROTOCOL *dir, CONST IN CHAR16 *path)
+EFI_STATUS efi_file_exists (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
 {
     EFI_FILE_PROTOCOL *target;
     EFI_STATUS res = EFI_SUCCESS;
@@ -45,7 +45,7 @@ EFI_STATUS efi_file_exists (IN EFI_FILE_PROTOCOL *dir, CONST IN CHAR16 *path)
     return res;
 }
 
-EFI_STATUS efi_readdir (IN EFI_FILE_PROTOCOL *dir,
+EFI_STATUS efi_readdir (EFI_FILE_PROTOCOL *dir,
                         IN OUT EFI_FILE_INFO **dirent,
                         IN OUT UINTN *dirent_size)
 {
@@ -74,14 +74,14 @@ allocfail:
     return EFI_OUT_OF_RESOURCES;
 }
 
-EFI_STATUS efi_file_read (IN EFI_FILE_PROTOCOL *fh,
-                          IN OUT CHAR8 *buf,
+EFI_STATUS efi_file_read (EFI_FILE_PROTOCOL *fh,
+                          OUT CHAR8 *buf,
                           OUT UINTN *bytes)
 {
     return uefi_call_wrapper( fh->Read, 3, fh, bytes, buf );
 }
 
-EFI_STATUS efi_mount (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
+EFI_STATUS efi_mount (EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
                       OUT EFI_FILE_PROTOCOL **root)
 {
     *root = NULL;
@@ -156,8 +156,7 @@ out:
 }
 
 EFI_DEVICE_PATH *
-make_device_path (IN EFI_HANDLE device,
-                  IN CHAR16 *path)
+make_device_path (EFI_HANDLE device, CHAR16 *path)
 {
     UINTN                   size;
     FILEPATH_DEVICE_PATH    *fpath;
@@ -201,8 +200,8 @@ make_device_path (IN EFI_HANDLE device,
 }
 
 EFI_DEVICE_PATH *
-append_path_to_device_path (IN EFI_DEVICE_PATH *device_path,
-                            IN CHAR16 *path)
+append_path_to_device_path (EFI_DEVICE_PATH *device_path,
+                            CHAR16 *path)
 {
     UINTN                   size;
     FILEPATH_DEVICE_PATH    *fpath;

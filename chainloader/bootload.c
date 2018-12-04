@@ -12,7 +12,7 @@
 // this is x86_64 specific
 #define EFI_STUB_ARCH 0x8664
 
-EFI_STATUS valid_efi_binary (IN EFI_FILE_PROTOCOL *dir, CONST IN CHAR16 *path)
+EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
 {
     EFI_STATUS res;
     EFI_FILE_PROTOCOL *bin = NULL;
@@ -54,9 +54,9 @@ EFI_STATUS valid_efi_binary (IN EFI_FILE_PROTOCOL *dir, CONST IN CHAR16 *path)
     return EFI_SUCCESS;
 }
 
-EFI_STATUS choose_steamos_loader (IN EFI_HANDLE *handles,
-                                  CONST IN UINTN n_handles,
-                                  IN OUT bootloader *chosen)
+EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
+                                  CONST UINTN n_handles,
+                                  OUT bootloader *chosen)
 {
     EFI_STATUS res;
     EFI_FILE_PROTOCOL *root_dir = NULL;

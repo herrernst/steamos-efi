@@ -5,8 +5,8 @@
 #include "err.h"
 #include "util.h"
 
-VOID * efi_alloc (IN UINTN s) { return AllocateZeroPool( s ); }
-VOID   efi_free  (IN VOID *p) { if( p ) FreePool( p); }
+VOID * efi_alloc (UINTN s) { return AllocateZeroPool( s ); }
+VOID   efi_free  (VOID *p) { if( p ) FreePool( p); }
 
 EFI_HANDLE self_image;
 
@@ -76,22 +76,22 @@ CONST CHAR16 *efi_memtypestr (EFI_MEMORY_TYPE m)
 }
 
 
-EFI_STATUS get_handle_protocol (IN EFI_HANDLE *handle,
-                                IN EFI_GUID *id,
+EFI_STATUS get_handle_protocol (EFI_HANDLE *handle,
+                                EFI_GUID *id,
                                 OUT VOID **protocol)
 {
     return uefi_call_wrapper( BS->HandleProtocol, 3, *handle, id, protocol );
 }
 
-EFI_STATUS get_protocol_handles (IN EFI_GUID *guid,
+EFI_STATUS get_protocol_handles (EFI_GUID *guid,
                                  OUT EFI_HANDLE **handles,
-                                 IN OUT UINTN *count)
+                                 OUT UINTN *count)
 {
     return LibLocateHandle(ByProtocol, guid, NULL, count, handles);
 }
 
-EFI_STATUS get_protocol_instance_handle (IN EFI_GUID *id,
-                                         IN VOID *protocol_instance,
+EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
+                                         VOID *protocol_instance,
                                          OUT EFI_HANDLE *handle)
 {
     EFI_HANDLE *handles = NULL;

@@ -16,16 +16,16 @@ VOID   efi_free  (IN VOID *p);
 CONST CHAR16 * efi_statstr (EFI_STATUS s);
 CONST CHAR16 * efi_memtypestr (EFI_MEMORY_TYPE m);
 
-EFI_STATUS get_handle_protocol (IN EFI_HANDLE *handle,
-                                IN EFI_GUID *id,
+EFI_STATUS get_handle_protocol (EFI_HANDLE *handle,
+                                EFI_GUID *id,
                                 OUT VOID **protocol);
 
-EFI_STATUS get_protocol_handles (IN EFI_GUID *guid,
+EFI_STATUS get_protocol_handles (EFI_GUID *guid,
                                  OUT EFI_HANDLE **handles,
                                  OUT UINTN *count);
 
-EFI_STATUS get_protocol_instance_handle (IN EFI_GUID *id,
-                                         IN VOID *protocol,
+EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
+                                         VOID *protocol,
                                          OUT EFI_HANDLE *handle);
 
 EFI_HANDLE get_self_handle (VOID);
