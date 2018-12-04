@@ -128,3 +128,9 @@ VOID initialise (EFI_HANDLE image)
 {
     self_image = image;
 }
+
+EFI_DEVICE_PATH *
+make_absolute_device_path (EFI_HANDLE device, CHAR16 *path)
+{
+    return FileDevicePath( device, path );
+}

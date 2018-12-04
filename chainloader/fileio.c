@@ -155,9 +155,3 @@ out:
     if( dirent ) efi_free( dirent );
 }
 
-EFI_DEVICE_PATH *
-make_absolute_device_path (EFI_HANDLE device, CHAR16 *path)
-{
-    return FileDevicePath( device, path );
-}
-
