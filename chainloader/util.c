@@ -8,6 +8,8 @@
 VOID * efi_alloc (IN UINTN s) { return AllocateZeroPool( s ); }
 VOID   efi_free  (IN VOID *p) { if( p ) FreePool( p); }
 
+EFI_HANDLE self_image;
+
 CONST CHAR16 * efi_statstr (EFI_STATUS s)
 {
     switch (s)
@@ -47,8 +49,32 @@ CONST CHAR16 * efi_statstr (EFI_STATUS s)
       default:
         return L"-UNKNOWN-";
     }
-
 }
+
+CONST CHAR16 *efi_memtypestr (EFI_MEMORY_TYPE m)
+{
+    switch (m)
+    {
+      case EfiReservedMemoryType:      return L"Reserved";
+      case EfiLoaderCode:              return L"Loader Code";
+      case EfiLoaderData:              return L"Loader Data";
+      case EfiBootServicesCode:        return L"Boot Services Code";
+      case EfiBootServicesData:        return L"Boot Services Data";
+      case EfiRuntimeServicesCode:     return L"Runtime Services Code";
+      case EfiRuntimeServicesData:     return L"Runtime Services Data";
+      case EfiConventionalMemory:      return L"Conventional Memory";
+      case EfiUnusableMemory:          return L"Unusable Memory";
+      case EfiACPIReclaimMemory:       return L"ACPI Reclaim Memory";
+      case EfiACPIMemoryNVS:           return L"ACPI Memory NVS";
+      case EfiMemoryMappedIO:          return L"Memory Mapped IO";
+      case EfiMemoryMappedIOPortSpace: return L"Memory Mapped IO Port Space";
+      case EfiPalCode:                 return L"Pal Code";
+      case EfiMaxMemoryType:           return L"(INVALID)";
+      default:
+        return L"(OUT OF RANGE)";
+    }
+}
+
 
 EFI_STATUS get_handle_protocol (IN EFI_HANDLE *handle,
                                 IN EFI_GUID *id,
@@ -91,4 +117,14 @@ EFI_STATUS get_protocol_instance_handle (IN EFI_GUID *id,
     efi_free( handles );
 
     return EFI_SUCCESS;
+}
+
+EFI_HANDLE get_self_handle (VOID)
+{
+    return self_image;
+}
+
+VOID initialise (EFI_HANDLE image)
+{
+    self_image = image;
 }

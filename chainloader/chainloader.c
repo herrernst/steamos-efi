@@ -4,7 +4,6 @@
 
 #include "chainloader.h"
 
-
 EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
 {
     EFI_STATUS res = EFI_NOT_STARTED;
@@ -12,8 +11,7 @@ EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
     EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *volume = NULL;
     UINTN is_esp_ish = 0;
 
-    res = uefi_call_wrapper( fs->OpenVolume, 2, fs, &root_dir );
-
+    res = efi_mount( fs, &root_dir );
     ERROR_RETURN( res, res, L"SFSP->open-volume %x failed", (UINT64)fs );
 
     volume = LibFileSystemVolumeLabelInfo( root_dir );
@@ -82,7 +80,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     bootloader steamos;
 
     InitializeLib( image_handle, sys_table );
-    Print( L"Chainloader starting\n" );
+    initialise( image_handle );
 
     res = get_protocol_handles( &fs_guid, &handles, &count );
 
@@ -102,7 +100,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     res = choose_steamos_loader( handles, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
 
-    res = exec_bootloader( &image_handle, &steamos );
+    res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );
 
 cleanup:
