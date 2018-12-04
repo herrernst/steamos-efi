@@ -142,8 +142,7 @@ EFI_STATUS exec_bootloader (bootloader *boot)
     UINTN esize;
     CHAR16 *edata = NULL;
 
-    dpath = FileDevicePath( boot->partition, boot->loader_path );
-    //dp2 = make_device_path( boot->partition, boot->loader_path );
+    dpath = make_absolute_device_path( boot->partition, boot->loader_path );
     if( !dpath )
         res = EFI_INVALID_PARAMETER;
 

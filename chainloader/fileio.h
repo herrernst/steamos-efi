@@ -28,6 +28,5 @@ VOID ls (EFI_FILE_PROTOCOL *dir,
          CONST CHAR16 *name,
          UINTN recurse);
 
-EFI_DEVICE_PATH * make_device_path (EFI_HANDLE device, CHAR16 *path);
+EFI_DEVICE_PATH * make_absolute_device_path (EFI_HANDLE device, CHAR16 *path);
 
-EFI_DEVICE_PATH * append_path_to_device_path (EFI_DEVICE_PATH *dpath, CHAR16 *path);
