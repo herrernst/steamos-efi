@@ -155,3 +155,61 @@ out:
     if( dirent ) efi_free( dirent );
 }
 
+EFI_STATUS efi_file_stat (EFI_FILE_PROTOCOL *fh,
+                          IN OUT EFI_FILE_INFO **info,
+                          IN OUT UINTN *bufsize)
+{
+    CONST UINTN size = SIZE_OF_EFI_FILE_INFO + MAXFSNAMLEN;
+    UINTN allocated;
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_GUID info_guid = EFI_FILE_INFO_ID;
+
+    if( *info && !*bufsize )
+        res = EFI_INVALID_PARAMETER;
+    ERROR_RETURN( res, res,
+                  L"user must provide buffer size with preallocated buffer" );
+
+    if( *bufsize == 0 )
+        *bufsize = size;
+
+    allocated = *bufsize;
+
+    if( *info == NULL )
+        *info = ALLOC_OR_GOTO( *bufsize, allocfail );
+
+    res = uefi_call_wrapper( fh->GetInfo, 4, fh, &info_guid, bufsize, *info );
+    *bufsize = allocated;
+
+    return res;
+
+allocfail:
+    return EFI_OUT_OF_RESOURCES;
+}
+
+EFI_STATUS efi_file_to_mem (EFI_FILE_PROTOCOL *fh,
+                            OUT CHAR8 **buf,
+                            OUT UINTN *bytes,
+                            OUT UINTN *alloc)
+{
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_FILE_INFO *info = NULL;
+    UINTN ialloc = 0;
+    UINT64 dalloc = 0;
+
+    res = efi_file_stat( fh, &info, &ialloc );
+    ERROR_JUMP( res, out, L"file_to_mem: stat" );
+
+    dalloc = info->FileSize;
+    *buf   = ALLOC_OR_GOTO( dalloc + 1, out );
+    *bytes = dalloc;
+    *alloc = dalloc + 1;
+    *buf[ dalloc ] = (CHAR8) 0;
+
+    res = efi_file_read( fh, *buf, bytes );
+    ERROR_JUMP( res, out, L"file_to_mem: read" );
+    *buf[ dalloc ] = (CHAR8) 0;
+
+out:
+    efi_free( info );
+    return res;
+}
