@@ -101,6 +101,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         chosen->partition = handles[i];
         chosen->loader_path = STEAMOSLDR;
+        parse_config( &handles[i], &chosen->config );
+        dump_config( chosen->config );
         break;
     }
 

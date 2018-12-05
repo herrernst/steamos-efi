@@ -56,6 +56,7 @@ steamcl_elf_SOURCES  = chainloader/chainloader.c \
                        chainloader/util.c \
                        chainloader/debug.c \
                        chainloader/exec.c \
+                       chainloader/config.c \
                        chainloader/bootload.c
 steamcl_elf_CFLAGS   = $(CFLAGS) $(EFI_CFLAGS)
 steamcl_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}

@@ -1,10 +1,13 @@
 #pragma once
 
+#include "config.h"
+
 typedef struct
 {
     EFI_HANDLE partition;
     EFI_DEVICE_PATH device_path;
     CHAR16 *loader_path;
+    cfg_entry *config;
 } bootloader;
 
 EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path);
