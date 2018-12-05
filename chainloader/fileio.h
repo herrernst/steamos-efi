@@ -15,8 +15,8 @@ EFI_STATUS efi_readdir (EFI_FILE_PROTOCOL *dir,
                         IN OUT UINTN *dirent_size);
 
 EFI_STATUS efi_file_read (EFI_FILE_PROTOCOL *fh,
-                          OUT CHAR8 *buf,
-                          OUT UINTN *bytes);
+                          IN OUT CHAR8 *buf,
+                          IN OUT UINTN *bytes);
 
 EFI_STATUS efi_mount (EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
                       OUT EFI_FILE_PROTOCOL **root);

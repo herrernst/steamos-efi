@@ -75,8 +75,8 @@ allocfail:
 }
 
 EFI_STATUS efi_file_read (EFI_FILE_PROTOCOL *fh,
-                          OUT CHAR8 *buf,
-                          OUT UINTN *bytes)
+                          IN OUT CHAR8 *buf,
+                          IN OUT UINTN *bytes)
 {
     return uefi_call_wrapper( fh->Read, 3, fh, bytes, buf );
 }
