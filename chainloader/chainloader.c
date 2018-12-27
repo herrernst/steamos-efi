@@ -73,7 +73,7 @@ EFIAPI
 efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 {
     EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
-    EFI_HANDLE* handles = NULL;
+    EFI_HANDLE* filesystems = NULL;
     UINTN count = 0;
     EFI_STATUS res = EFI_SUCCESS;
     UINTN debug = 1;
@@ -82,7 +82,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     InitializeLib( image_handle, sys_table );
     initialise( image_handle );
 
-    res = get_protocol_handles( &fs_guid, &handles, &count );
+    res = get_protocol_handles( &fs_guid, &filesystems, &count );
 
     ERROR_JUMP( res, cleanup, L"get_fs_handles" );
 
@@ -90,21 +90,21 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fs = NULL;
 
-        res = get_handle_protocol( &handles[i], &fs_guid, (VOID **)&fs );
+        res = get_handle_protocol( &filesystems[i], &fs_guid, (VOID **)&fs );
         ERROR_CONTINUE( res, L"simple fs protocol" );
 
         if( debug )
             dump_fs_details( fs );
     }
 
-    res = choose_steamos_loader( handles, count, &steamos );
+    res = choose_steamos_loader( filesystems, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
 
     res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );
 
 cleanup:
-    efi_free( handles );
+    efi_free( filesystems );
 
     return res;
 }
