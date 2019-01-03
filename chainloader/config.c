@@ -27,7 +27,9 @@ static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
     UINTN ll = strlena( line );
     CHAR8 *start = NULL;
     UINTN vsize = 0;
-
+    CHAR8 *nstart = NULL;
+    CHAR8 *nend = NULL;
+    UINTN place = 1;
     // no room for "NAME:"
     if( ll <= nl + 1 )
         return 0;
@@ -54,6 +56,29 @@ static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
     item->value.string.size  = vsize;
     CopyMem( item->value.string.bytes, start, vsize );
     item->value.string.bytes[ vsize ] = (CHAR8)0;
+
+    switch( item->type )
+    {
+      case cfg_bool:
+      case cfg_uint:
+      case cfg_stamp: // ← this is not OK on 32 bit. We don't care.
+        nstart = &item->value.string.bytes[ 0 ];
+        nend   = nstart + item->value.string.size;
+        item->value.number.u = 0;
+        for( nend--; nend >= nstart; nend-- )
+        {
+            if( *nend < '0' || *nend > '9' )
+            {
+                item->value.number.u = 0;
+                break;
+            }
+            item->value.number.u += (*nend - '0') * place;
+            place *= 10;
+        }
+        break;
+      default:
+        item->value.number.u = 0;
+    }
 
     return 1;
 
