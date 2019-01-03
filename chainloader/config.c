@@ -185,3 +185,47 @@ allocfail:
     *config = NULL;
     return EFI_OUT_OF_RESOURCES;
 }
+
+cfg_entry * get_conf_item (cfg_entry *config, CHAR8 *name)
+{
+    if( !name )
+        return NULL;
+
+    for( UINTN i = 0; config[i].type != cfg_end; i++ )
+        if( config[i].name )
+            if( strcmpa( (CHAR8 *)config[i].name, name ) == 0 )
+                return &config[i];
+
+    return NULL;
+}
+
+UINT64 get_conf_uint (cfg_entry *config, char *name)
+{
+    cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
+
+    return c ? c->value.number.u : 0;
+}
+
+CHAR8 * get_conf_str (cfg_entry *config, char *name)
+{
+    cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
+
+    return c ? &c->value.string.bytes[0] : NULL;
+}
+
+VOID free_config (cfg_entry **config)
+{
+    cfg_entry *conf = *config;
+    for( UINTN i = 0; conf[i].type != cfg_end; i++ )
+    {
+        conf[i].value.string.size = 0;
+        conf[i].value.number.u = 0;
+        if( !conf[i].value.string.bytes )
+            continue;
+        efi_free( conf[i].value.string.bytes );
+        conf[i].value.string.bytes = NULL;
+    }
+
+    efi_free( conf );
+    *config = NULL;
+}

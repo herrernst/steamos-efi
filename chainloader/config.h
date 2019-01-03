@@ -24,3 +24,12 @@ typedef struct
 EFI_STATUS parse_config (EFI_HANDLE *partition, cfg_entry **config);
 
 VOID dump_config (cfg_entry *config);
+
+cfg_entry * get_conf_item (cfg_entry *config, CHAR8 *name);
+
+UINT64 get_conf_uint (cfg_entry *config, char *name);
+
+CHAR8 * get_conf_str (cfg_entry *config, char *name);
+
+
+VOID free_config (cfg_entry **config);
