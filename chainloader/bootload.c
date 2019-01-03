@@ -54,6 +54,27 @@ EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
     return EFI_SUCCESS;
 }
 
+typedef struct { cfg_entry *cfg; UINT64 at; EFI_HANDLE partition; } found_cfg;
+
+UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
+{
+    found_cfg c;
+
+    c.cfg       = f[a].cfg;
+    c.at        = f[a].at;
+    c.partition = f[a].partition;
+
+    f[a].cfg       = f[b].cfg;
+    f[a].at        = f[b].at;
+    f[a].partition = f[b].partition;
+
+    f[b].cfg       = c.cfg;
+    f[b].at        = c.at;
+    f[b].partition = c.partition;
+
+    return 1;
+}
+
 EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen)
@@ -62,11 +83,14 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     EFI_FILE_PROTOCOL *root_dir = NULL;
     static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
     static EFI_GUID dp_guid = DEVICE_PATH_PROTOCOL;
+    cfg_entry *conf = NULL;
+    UINTN j = 0;
+    found_cfg found[MAX_BOOTCONFS] = { { NULL } };
 
     chosen->partition = NULL;
     chosen->loader_path = NULL;
 
-    for ( UINTN i = 0; i < n_handles; i++ )
+    for ( UINTN i = 0; i < n_handles && j < MAX_BOOTCONFS; i++ )
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs = NULL;
 
@@ -82,33 +106,113 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( res != EFI_SUCCESS )
             continue;
 
-        // TODO: parse the config file here to pick the bootloader
-        // TODO: If we've already seen a candidate, compare the
-        // new bootconfig with the old one to see if it's a better choice
-        // for now we're just picking the first option because we want to
-        // get the actual bootloader exec step working
+        parse_config( &handles[i], &conf );
 
-        res = efi_file_exists( root_dir, STEAMOSLDR );
-        if( res != EFI_SUCCESS )
+        // entry is known-bad. ignore it
+        if( get_conf_uint( conf, "image-invalid" ) > 0 )
+        {
+            free_config( &conf );
             continue;
+        }
 
-        res = valid_efi_binary( root_dir, STEAMOSLDR );
-        ERROR_CONTINUE( res, L"%s is not an EFI executable", STEAMOSLDR );
+        UINTN loader_ok = 0;
+#ifdef HAVE_CHAR_TO_CHAR16_CONVERTER
+        CHAR8 *alt_loader = NULL;
+        // entry has its stage ii bootloader?:
+        // TODO: spec says paths relative to conf file are allowed
+        if( (alt_loader = get_conf_str( conf, "loader" )) && *alt_loader )
+            if( efi_file_exists( root_dir, alt_loader ) == EFI_SUCCESS )
+                if( valid_efi_binary( root_dir, alt_loader ) == EFI_SUCCESS )
+                    loader_ok = 1;
+#endif
+        // fall back to default bootloader:
+        if( !loader_ok )
+            if( efi_file_exists( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
+                if( valid_efi_binary( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
+                    loader_ok = 1;
 
-        res = get_handle_protocol( &handles[i], &dp_guid,
-                                   (VOID **) &chosen->device_path );
-        ERROR_CONTINUE( res, L"Unable to get device path for partition #%u", 1 );
+        if( !loader_ok )
+        {
+            free_config( &conf );
+            continue;
+        }
 
-        chosen->partition = handles[i];
-        chosen->loader_path = STEAMOSLDR;
-        parse_config( &handles[i], &chosen->config );
-        dump_config( chosen->config );
+        found[ j ].cfg       = conf;
+        found[ j ].partition = handles[ i ];
+        found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
+        j++;
+    }
+
+    found[ j ].cfg = NULL;
+    efi_unmount( &root_dir );
+
+    // yes I know, bubble sort is terribly gauche, but we really don't care:
+    // usually there will be only two entries (and at most 16, which would be
+    // a fairly psychosis-inducing setup):
+    UINTN sort = 1;
+    while( sort )
+        for( UINTN i = sort = 0; i < j - 1; i++ )
+            if( found[ i ].at > found[ i + 1 ].at  )
+                sort += swap_cfgs( &found[0], i, i + 1 );
+
+    // we now have a sorted (oldest to newest) list of configs
+    // and their respective partition handles, none of which are known-bad.
+
+    // pick the newest entry:
+    INTN selected = -1;
+    UINTN update  = 0;
+
+    // if boot-other is set, we need to bounce along to the next entry:
+    for( INTN i = (INTN) j - 1; i >= 0; i-- )
+    {
+        selected = i;
+
+        if( get_conf_uint( found[i].cfg, "boot-other" ) )
+        {
+            // if boot-other is set, update should persist until we get to
+            // a non-boot-other entry:
+            if( !update)
+                update = get_conf_uint( found[i].cfg, "update" );
+            continue;
+        }
+
+        // boot other is not set, whatever we found is good
         break;
     }
 
-    efi_unmount( &root_dir );
+    // we never un-set an update we inherited from boot-other
+    // but we might have it set in our own config:
+    if( !update )
+        update = get_conf_uint( found[selected].cfg, "update" );
+
+    if( selected > -1 )
+    {
+        chosen->partition = found[selected].partition;
+#ifdef HAVE_CHAR_TO_CHAR16_CONVERTER
+        chosen->loader_path = get_conf_str( found[selected].cfg, "loader" );
+#endif
+        chosen->config = found[selected].cfg;
+
+        if( !chosen->loader_path )
+            chosen->loader_path = STEAMOSLDR;
+
+        res = get_handle_protocol( &handles[selected], &dp_guid,
+                                   (VOID **) &chosen->device_path );
+
+        // free the unused configs:
+        for( INTN i = 0; i < (INTN) j; i++ )
+            if( i != selected )
+                free_config( &found[i].cfg );
+
+        ERROR_JUMP(res, no_device_path,
+                   L"Unable to get device path for chosen boot config");
+    }
 
     return chosen->partition ? EFI_SUCCESS : EFI_NOT_FOUND;
+
+no_device_path:
+    free_config( &found[selected].cfg );
+    return EFI_NOT_FOUND;
 }
 
 static VOID dump_bootloader_paths (EFI_DEVICE_PATH *target)
@@ -164,6 +268,11 @@ EFI_STATUS exec_bootloader (bootloader *boot)
 
     res = set_image_cmdline( &efi_app, L"", &child );
     ERROR_JUMP( res, unload, L"command line not set" );
+
+#if DEBUG_ABORT
+    res = EFI_ABORTED;
+    ERROR_JUMP( res, unload, L"aborting deliberately to show config data" );
+#endif
 
     res = exec_image( efi_app, &esize, &edata );
     WARN_STATUS( res, L"start image returned with exit code: %u; data @ 0x%x",
