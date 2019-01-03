@@ -17,8 +17,7 @@ typedef struct
     struct
     {
         struct { CHAR8 *bytes; UINTN size; } string;
-        // not sure we can even use fp in EFI, come to think of it:
-        union  { UINTN u; INTN i; double d; float f; } number;
+        union  { UINT64 u; INT64 i; } number;
     } value;
 } cfg_entry;
 
