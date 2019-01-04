@@ -116,15 +116,15 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         }
 
         UINTN loader_ok = 0;
-#ifdef HAVE_CHAR_TO_CHAR16_CONVERTER
-        CHAR8 *alt_loader = NULL;
-        // entry has its stage ii bootloader?:
+        CHAR16 *alt = NULL;
+        // entry has its stage ii bootloader:
         // TODO: spec says paths relative to conf file are allowed
-        if( (alt_loader = get_conf_str( conf, "loader" )) && *alt_loader )
-            if( efi_file_exists( root_dir, alt_loader ) == EFI_SUCCESS )
-                if( valid_efi_binary( root_dir, alt_loader ) == EFI_SUCCESS )
+        if( (alt = strwiden( get_conf_str( conf, "loader" ) )) && *alt )
+            if( efi_file_exists( root_dir, alt ) == EFI_SUCCESS )
+                if( valid_efi_binary( root_dir, alt ) == EFI_SUCCESS )
                     loader_ok = 1;
-#endif
+        efi_free( alt );
+
         // fall back to default bootloader:
         if( !loader_ok )
             if( efi_file_exists( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
@@ -187,14 +187,11 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     if( selected > -1 )
     {
-        chosen->partition = found[selected].partition;
-#ifdef HAVE_CHAR_TO_CHAR16_CONVERTER
-        chosen->loader_path = get_conf_str( found[selected].cfg, "loader" );
-#endif
-        chosen->config = found[selected].cfg;
+        CHAR16 *alt = strwiden( get_conf_str( found[selected].cfg, "loader" ) );
 
-        if( !chosen->loader_path )
-            chosen->loader_path = STEAMOSLDR;
+        chosen->loader_path = alt ?: STEAMOSLDR;
+        chosen->partition = found[selected].partition;
+        chosen->config = found[selected].cfg;
 
         res = get_handle_protocol( &handles[selected], &dp_guid,
                                    (VOID **) &chosen->device_path );
