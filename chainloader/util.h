@@ -35,3 +35,7 @@ VOID initialise (EFI_HANDLE image);
 
 CHAR16 *strwiden (CHAR8 *narrow);
 CHAR8  *strnarrow (CHAR16 *wide);
+
+CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen);
+
+VOID sleep (UINTN seconds);

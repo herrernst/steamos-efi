@@ -75,6 +75,15 @@ CONST CHAR16 *efi_memtypestr (EFI_MEMORY_TYPE m)
     }
 }
 
+VOID sleep (UINTN seconds)
+{
+    // sleep for at most 1 minute
+    if( seconds && (seconds < 60) )
+    {
+        UINTN musec = 1000000 * seconds;
+        uefi_call_wrapper( BS->Stall, 1, musec );
+    }
+}
 
 EFI_STATUS get_handle_protocol (EFI_HANDLE *handle,
                                 EFI_GUID *id,
@@ -168,5 +177,86 @@ strnarrow (CHAR16 *wide)
     return narrow;
 
 allocfail:
+    return NULL;
+}
+
+CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen)
+{
+    UINTN plen;
+    UINTN rlen;
+    CHAR16 *wide = NULL;
+    CHAR16 *rel  = NULL;
+    CHAR16 *abs  = NULL;
+
+    if( !path )
+        return NULL;
+
+    // make sure wide is a wide copy of path
+    wide = widen ? strwiden( (CHAR8 *)path ): StrDuplicate( (CHAR16 *)path );
+
+    if( !wide )
+        return NULL;
+
+    // unset or zero-length relative path treated as / (root):
+    if( relative_to && (StrLen( relative_to ) > 0) )
+        rel = (CHAR16 *) relative_to;
+    else
+        rel = L"\\";
+
+    plen = StrLen( wide );
+    rlen = StrLen( rel  );
+
+    // empty path, just return the relative_to path
+    // not 100% convinced this shouldn't be an error, but whatever.
+    if( plen == 0 )
+    {
+        efi_free( wide );
+        return StrDuplicate( rel );
+    }
+
+    // path separators flipped:
+    for( UINTN i = 0; i < plen; i++ )
+        if( wide[ i ] == (CHAR16)'/' )
+            wide[ i ] = (CHAR16)'\\';
+
+    // apth is absolute, we're good to go:
+    if( wide[0] == (CHAR16)'\\' )
+        return wide;
+
+    rel = StrDuplicate( rel );
+
+    // path separators flipped:
+    for( UINTN i = 0; i < rlen; i++ )
+        if( rel[ i ] == (CHAR16)'/' )
+            rel[ i ] = (CHAR16)'\\';
+
+    // We strip the path element after the last /
+    for( INTN i = (INTN) rlen - 1; i >= 0; i-- )
+        if( rel[ i ] == (CHAR16)'\\' )
+        {
+            rel[ i ] = (CHAR16)0;
+            rlen = i;
+            break;
+        }
+
+    // add a / at the start (maybe); and in between; plus a trailing NUL
+    abs = ALLOC_OR_GOTO( (plen + rlen + 3) * sizeof(CHAR16), allocfail );
+    abs[0] = (CHAR16) 0;
+
+    if( rel[ 0 ] != (CHAR16)'\\' )
+        StrCat( abs, L"\\");
+    StrCat( abs, rel );
+    StrCat( abs, L"\\" );
+    StrCat( abs, wide );
+
+    efi_free( rel  );
+    efi_free( wide );
+
+    return abs;
+
+allocfail:
+    efi_free( rel  );
+    efi_free( abs  );
+    efi_free( wide );
     return NULL;
 }
