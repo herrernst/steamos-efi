@@ -134,3 +134,39 @@ make_absolute_device_path (EFI_HANDLE device, CHAR16 *path)
 {
     return FileDevicePath( device, path );
 }
+
+CHAR16 *
+strwiden (CHAR8 *narrow)
+{
+    if( !narrow )
+        return NULL;
+
+    UINTN l = strlena( narrow ) + 1;
+    CHAR16 *wide = ALLOC_OR_GOTO( l * sizeof(CHAR16), allocfail );
+
+    for( UINTN i = 0; i < l; i++ )
+        wide[ i ] = (CHAR16) narrow[ i ];
+    return wide;
+
+allocfail:
+    return NULL;
+}
+
+CHAR8 *
+strnarrow (CHAR16 *wide)
+{
+    if( !wide )
+        return NULL;
+
+    UINTN l = StrLen( wide ) + 1;
+    CHAR8 *narrow = ALLOC_OR_GOTO( l, allocfail );
+
+    // if any high bit is set, set the 8th bit in the narrow character:
+    for( UINTN i = 0; i < l; i++ )
+        narrow[i] =
+          (CHAR8) (0xff & ((wide[i] & 0xff80) ? (wide[i] | 0x80) : wide[i]));
+    return narrow;
+
+allocfail:
+    return NULL;
+}
