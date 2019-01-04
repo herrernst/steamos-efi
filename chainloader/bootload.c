@@ -54,23 +54,42 @@ EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
     return EFI_SUCCESS;
 }
 
-typedef struct { cfg_entry *cfg; UINT64 at; EFI_HANDLE partition; } found_cfg;
+typedef struct
+{
+    EFI_HANDLE partition;
+    EFI_DEVICE_PATH device_path;
+    CHAR16 *loader;
+    cfg_entry *cfg;
+    UINT64 at;
+} found_cfg;
+
+static VOID dump_found (found_cfg *c)
+{
+    for(UINTN i = 0; c && c->cfg; c++)
+        Print( L"#%u %x @%lu %s%s[%s]\n",
+               i,
+               c->partition,
+               c->at,
+               get_conf_uint( c->cfg, "boot-other" ) ? L"OTHER " : L"",
+               get_conf_uint( c->cfg, "update"     ) ? L"UPDATE ": L"",
+               c->loader );
+}
+
+#define COPY_FOUND(src,dst) \
+    ({ dst.cfg         = src.cfg;         \
+       dst.at          = src.at;          \
+       dst.partition   = src.partition;   \
+       dst.loader      = src.loader;      \
+       dst.device_path = src.device_path; \
+       dst.at          = src.at;          })
 
 UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
 {
     found_cfg c;
 
-    c.cfg       = f[a].cfg;
-    c.at        = f[a].at;
-    c.partition = f[a].partition;
-
-    f[a].cfg       = f[b].cfg;
-    f[a].at        = f[b].at;
-    f[a].partition = f[b].partition;
-
-    f[b].cfg       = c.cfg;
-    f[b].at        = c.at;
-    f[b].partition = c.partition;
+    COPY_FOUND( f[ a ], c      );
+    COPY_FOUND( f[ b ], f[ a ] );
+    COPY_FOUND( c     , f[ b ] );
 
     return 1;
 }
@@ -89,6 +108,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     chosen->partition = NULL;
     chosen->loader_path = NULL;
+    chosen->args = NULL;
+    chosen->config = NULL;
 
     for ( UINTN i = 0; i < n_handles && j < MAX_BOOTCONFS; i++ )
     {
@@ -102,11 +123,16 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         res = efi_mount( fs, &root_dir );
         ERROR_CONTINUE( res, L"partition #%u not opened", i );
 
+        res = get_handle_protocol( &handles[ i ], &dp_guid,
+                                   (VOID **)&found[ i ].device_path );
+        ERROR_CONTINUE( res, L"partition #%u has no device path (what?)", i );
+
         res = efi_file_exists( root_dir, BOOTCONFPATH );
         if( res != EFI_SUCCESS )
             continue;
 
-        parse_config( &handles[i], &conf );
+        if( parse_config( &handles[ i ], &conf ) != EFI_SUCCESS )
+            continue;
 
         // entry is known-bad. ignore it
         if( get_conf_uint( conf, "image-invalid" ) > 0 )
@@ -115,24 +141,25 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             continue;
         }
 
-        UINTN loader_ok = 0;
-        CHAR16 *alt = NULL;
+        CHAR8  *alt_cfg = get_conf_str( conf, "loader" );
+        CHAR16 *alt_ldr = resolve_path( alt_cfg, BOOTCONFPATH, 1 );
+        efi_free( alt_cfg );
+
         // entry has its stage ii bootloader:
-        // TODO: spec says paths relative to conf file are allowed
-        if( (alt = strwiden( get_conf_str( conf, "loader" ) )) && *alt )
-            if( efi_file_exists( root_dir, alt ) == EFI_SUCCESS )
-                if( valid_efi_binary( root_dir, alt ) == EFI_SUCCESS )
-                    loader_ok = 1;
-        efi_free( alt );
+        if( alt_ldr && *alt_ldr )
+            if( efi_file_exists( root_dir, alt_ldr ) == EFI_SUCCESS )
+                if( valid_efi_binary( root_dir, alt_ldr ) == EFI_SUCCESS )
+                    found[ j ].loader = alt_ldr;
 
         // fall back to default bootloader:
-        if( !loader_ok )
+        if( !found[ j ].loader )
             if( efi_file_exists( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
                 if( valid_efi_binary( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
-                    loader_ok = 1;
+                    found[ j ].loader = StrDuplicate( STEAMOSLDR );
 
-        if( !loader_ok )
+        if( !found[ j ].loader )
         {
+            efi_free( alt_ldr );
             free_config( &conf );
             continue;
         }
@@ -146,6 +173,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     found[ j ].cfg = NULL;
     efi_unmount( &root_dir );
 
+    Print( L"Unsorted\n" );
+    dump_found( &found[0] );
     // yes I know, bubble sort is terribly gauche, but we really don't care:
     // usually there will be only two entries (and at most 16, which would be
     // a fairly psychosis-inducing setup):
@@ -154,7 +183,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         for( UINTN i = sort = 0; i < j - 1; i++ )
             if( found[ i ].at > found[ i + 1 ].at  )
                 sort += swap_cfgs( &found[0], i, i + 1 );
-
+    Print( L"Sorted\n" );
+    dump_found( &found[0] );
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles, none of which are known-bad.
 
@@ -180,35 +210,34 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         break;
     }
 
-    // we never un-set an update we inherited from boot-other
-    // but we might have it set in our own config:
-    if( !update )
-        update = get_conf_uint( found[selected].cfg, "update" );
-
     if( selected > -1 )
     {
-        CHAR16 *alt = strwiden( get_conf_str( found[selected].cfg, "loader" ) );
+        chosen->device_path = found[selected].device_path;
+        chosen->loader_path = found[selected].loader;
+        chosen->partition   = found[selected].partition;
+        chosen->config      = found[selected].cfg;
 
-        chosen->loader_path = alt ?: STEAMOSLDR;
-        chosen->partition = found[selected].partition;
-        chosen->config = found[selected].cfg;
+        found[selected].cfg    = NULL;
+        found[selected].loader = NULL;
 
-        res = get_handle_protocol( &handles[selected], &dp_guid,
-                                   (VOID **) &chosen->device_path );
+        // we never un-set an update we inherited from boot-other
+        // but we might have it set in our own config:
+        if( !update )
+            update = get_conf_uint( chosen->config, "update" );
+
+        if( update )
+            chosen->args = L" steamos-update=1 ";
 
         // free the unused configs:
         for( INTN i = 0; i < (INTN) j; i++ )
-            if( i != selected )
-                free_config( &found[i].cfg );
+        {
+            efi_free( found[ i ].loader );
+            free_config( &found[ i ].cfg );
+        }
 
-        ERROR_JUMP(res, no_device_path,
-                   L"Unable to get device path for chosen boot config");
+        return EFI_SUCCESS;
     }
 
-    return chosen->partition ? EFI_SUCCESS : EFI_NOT_FOUND;
-
-no_device_path:
-    free_config( &found[selected].cfg );
     return EFI_NOT_FOUND;
 }
 
