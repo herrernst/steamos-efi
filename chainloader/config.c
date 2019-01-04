@@ -216,6 +216,10 @@ CHAR8 * get_conf_str (cfg_entry *config, char *name)
 VOID free_config (cfg_entry **config)
 {
     cfg_entry *conf = *config;
+
+    if( !conf )
+        return;
+
     for( UINTN i = 0; conf[i].type != cfg_end; i++ )
     {
         conf[i].value.string.size = 0;
