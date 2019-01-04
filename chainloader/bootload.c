@@ -158,10 +158,10 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles, none of which are known-bad.
 
-    // pick the newest entry:
     INTN selected = -1;
     UINTN update  = 0;
 
+    // pick the newest entry to start with.
     // if boot-other is set, we need to bounce along to the next entry:
     for( INTN i = (INTN) j - 1; i >= 0; i-- )
     {
