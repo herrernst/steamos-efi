@@ -76,7 +76,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     EFI_HANDLE* filesystems = NULL;
     UINTN count = 0;
     EFI_STATUS res = EFI_SUCCESS;
-    UINTN debug = 1;
+    UINTN debug = 0;
     bootloader steamos;
 
     InitializeLib( image_handle, sys_table );
