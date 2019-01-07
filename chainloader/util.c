@@ -206,12 +206,11 @@ CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen)
     plen = StrLen( wide );
     rlen = StrLen( rel  );
 
-    // empty path, just return the relative_to path
-    // not 100% convinced this shouldn't be an error, but whatever.
+    // empty path, we don't want to resolve anything:
     if( plen == 0 )
     {
         efi_free( wide );
-        return StrDuplicate( rel );
+        return NULL;
     }
 
     // path separators flipped:
