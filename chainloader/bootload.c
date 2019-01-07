@@ -141,17 +141,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             continue;
         }
 
-        CHAR8  *alt_cfg = get_conf_str( conf, "loader" );
-        CHAR16 *alt_ldr = resolve_path( alt_cfg, BOOTCONFPATH, 1 );
-        efi_free( alt_cfg );
+        // TODO? allow the 'loader' config entry to specify an alternative
+        // bootloader. This code was causing EFI runtime service errors
+        // that made the kernel explode on boot, so it's been backed out for
+        // now. May drop this feature entirely from the spec.
 
-        // entry has its stage ii bootloader:
-        if( alt_ldr && *alt_ldr )
-            if( efi_file_exists( root_dir, alt_ldr ) == EFI_SUCCESS )
-                if( valid_efi_binary( root_dir, alt_ldr ) == EFI_SUCCESS )
-                    found[ j ].loader = alt_ldr;
-
-        // fall back to default bootloader:
+        // use the default bootloader:
         if( !found[ j ].loader )
             if( efi_file_exists( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
                 if( valid_efi_binary( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
@@ -159,7 +154,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         if( !found[ j ].loader )
         {
-            efi_free( alt_ldr );
             free_config( &conf );
             continue;
         }
