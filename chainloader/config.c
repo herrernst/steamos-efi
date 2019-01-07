@@ -143,25 +143,15 @@ VOID dump_config (cfg_entry *config)
                _vts( &config[i] ) );
 }
 
-EFI_STATUS parse_config (EFI_HANDLE *partition, cfg_entry **config)
+EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config)
 {
     EFI_STATUS res = EFI_SUCCESS;
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs = NULL;
-    EFI_FILE_PROTOCOL *root_dir = NULL;
     EFI_FILE_PROTOCOL *cffile = NULL;
     CHAR8 *cfdata;
     UINTN cfsize;
     UINTN cfalloc;
 
-    static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
-
     *config = ALLOC_OR_GOTO( sizeof(bootspec), allocfail );
-
-    res = get_handle_protocol( partition, &fs_guid, (VOID **)&fs );
-    ERROR_JUMP( res, cleanup, L"parse_bootconfig: no filesys proto" );
-
-    res = efi_mount( fs, &root_dir );
-    ERROR_JUMP( res, cleanup, L"parse_bootconfig: mount failed" );
 
     res = efi_file_open( root_dir, &cffile, BOOTCONFPATH, 0, 0 );
     ERROR_JUMP( res, cleanup, L"parse_bootconfig: " BOOTCONFPATH );
@@ -176,7 +166,6 @@ EFI_STATUS parse_config (EFI_HANDLE *partition, cfg_entry **config)
 cleanup:
     efi_free( cfdata );
     efi_file_close( cffile );
-    efi_unmount( &root_dir );
 
     return res;
 

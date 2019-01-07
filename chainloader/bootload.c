@@ -131,7 +131,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( res != EFI_SUCCESS )
             continue;
 
-        if( parse_config( &handles[ i ], &conf ) != EFI_SUCCESS )
+        if( parse_config( root_dir, &conf ) != EFI_SUCCESS )
             continue;
 
         // entry is known-bad. ignore it

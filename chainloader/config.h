@@ -21,7 +21,7 @@ typedef struct
     } value;
 } cfg_entry;
 
-EFI_STATUS parse_config (EFI_HANDLE *partition, cfg_entry **config);
+EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config);
 
 VOID dump_config (cfg_entry *config);
 
