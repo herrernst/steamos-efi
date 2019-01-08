@@ -148,9 +148,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         // use the default bootloader:
         if( !found[ j ].loader )
-            if( efi_file_exists( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
-                if( valid_efi_binary( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
-                    found[ j ].loader = StrDuplicate( STEAMOSLDR );
+            if( valid_efi_binary( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
+                found[ j ].loader = StrDuplicate( STEAMOSLDR );
 
         if( !found[ j ].loader )
         {
