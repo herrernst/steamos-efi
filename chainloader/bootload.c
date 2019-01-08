@@ -145,6 +145,18 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         // bootloader. This code was causing EFI runtime service errors
         // that made the kernel explode on boot, so it's been backed out for
         // now. May drop this feature entirely from the spec.
+        CHAR8 *alt_cfg = get_conf_str( conf, "loader" );
+        if( alt_cfg && *alt_cfg )
+        {
+            CHAR16 *alt_ldr =
+              resolve_path( (CHAR8 *)"grubx64.efi", BOOTCONFPATH, 1 );
+
+            if( valid_efi_binary( root_dir, alt_ldr ) == EFI_SUCCESS )
+                found[ j ].loader = alt_ldr;
+            else
+                efi_free( alt_ldr );
+        }
+        efi_free( alt_cfg );
 
         // use the default bootloader:
         if( !found[ j ].loader )
