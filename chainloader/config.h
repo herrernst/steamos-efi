@@ -25,11 +25,10 @@ EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config);
 
 VOID dump_config (cfg_entry *config);
 
-cfg_entry * get_conf_item (cfg_entry *config, CHAR8 *name);
+const cfg_entry *get_conf_item (const cfg_entry *config, CHAR8 *name);
 
-UINT64 get_conf_uint (cfg_entry *config, char *name);
+UINT64 get_conf_uint (const cfg_entry *config, char *name);
 
-CHAR8 * get_conf_str (cfg_entry *config, char *name);
-
+CHAR8 *get_conf_str (const cfg_entry *config, char *name);
 
 VOID free_config (cfg_entry **config);

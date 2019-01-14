@@ -19,7 +19,7 @@ EFI_STATUS exec_image (EFI_HANDLE image, UINTN *code, CHAR16 **data)
     return uefi_call_wrapper( BS->StartImage, 3, image, code, data );
 }
 
-EFI_STATUS set_image_cmdline (EFI_HANDLE *image, CHAR16 *cmdline,
+EFI_STATUS set_image_cmdline (EFI_HANDLE *image, CONST CHAR16 *cmdline,
                               EFI_LOADED_IMAGE **child)
 {
     EFI_STATUS res;
@@ -30,7 +30,7 @@ EFI_STATUS set_image_cmdline (EFI_HANDLE *image, CHAR16 *cmdline,
 
     if( cmdline )
     {
-        (*child)->LoadOptions = cmdline;
+        (*child)->LoadOptions = (CHAR16 *)cmdline;
         (*child)->LoadOptionsSize = StrLen( cmdline );
     }
     else

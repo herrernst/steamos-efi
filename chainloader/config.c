@@ -175,7 +175,7 @@ allocfail:
     return EFI_OUT_OF_RESOURCES;
 }
 
-cfg_entry * get_conf_item (cfg_entry *config, CHAR8 *name)
+const cfg_entry * get_conf_item (const cfg_entry *config, CHAR8 *name)
 {
     if( !name )
         return NULL;
@@ -188,16 +188,16 @@ cfg_entry * get_conf_item (cfg_entry *config, CHAR8 *name)
     return NULL;
 }
 
-UINT64 get_conf_uint (cfg_entry *config, char *name)
+UINT64 get_conf_uint (const cfg_entry *config, char *name)
 {
-    cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
+    const cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
 
     return c ? c->value.number.u : 0;
 }
 
-CHAR8 * get_conf_str (cfg_entry *config, char *name)
+CHAR8 * get_conf_str (const cfg_entry *config, char *name)
 {
-    cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
+    const cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
 
     return c ? &c->value.string.bytes[0] : NULL;
 }
