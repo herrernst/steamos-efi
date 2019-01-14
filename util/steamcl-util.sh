@@ -36,7 +36,7 @@ find_esp ()
     local ptuid=;
     local fs=;
     local mount=;
-    
+
     while read part dev ptuid fs mount;
     do
         if [ "$fs" != vfat ]; then continue; fi;
@@ -84,7 +84,7 @@ find_esp ()
     fi;
 
     esp_part=${esp_part:${#esp_dev}};
-    
+
     return 0;
 }
 
@@ -101,10 +101,10 @@ find_boot_entries ()
     local epart=;
     local epath=;
     local edist=;
-    
+
     boot_entries=;
     distributor=${distributor,,};
-    
+
     while read -r bootid entry;
     do
         case $bootid in (Boot+([0-9])\*) true; ;; *) continue; esac;
@@ -117,7 +117,7 @@ find_boot_entries ()
         epart=${epart%%,*}
 
         if [ ! ${epart:-0} -eq ${part} ]; then continue; fi;
-        
+
         epath=${entry##*/File\(};
         epath=${epath%\)*};
         epath=${epath//\\/\/};
