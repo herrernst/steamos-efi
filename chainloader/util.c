@@ -441,3 +441,33 @@ UINT64 utc_datestamp (VOID)
              (now.Month  * 100000000)   +
              (now.Year   * 10000000000) );
 }
+
+UINT64 local_timestamp (VOID)
+{
+    EFI_TIME now = { 0 };
+    EFI_STATUS res = uefi_call_wrapper( RT->GetTime, 2, &now, NULL );
+
+    if( res != EFI_SUCCESS )
+        return 0;
+
+    // number of form: YYYY mm DD HH MM SS
+    return ( now.Second           +
+             (now.Minute * 100)   +
+             (now.Hour   * 10000) );
+}
+
+UINT64 utc_timestamp (VOID)
+{
+    EFI_TIME now = { 0 };
+    EFI_STATUS res = uefi_call_wrapper( RT->GetTime, 2, &now, NULL );
+
+    if( res != EFI_SUCCESS )
+        return 0;
+
+    efi_time_to_utc( &now );
+
+    // number of form: YYYY mm DD HH MM SS
+    return ( now.Second           +
+             (now.Minute * 100)   +
+             (now.Hour   * 10000) );
+}

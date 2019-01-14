@@ -42,3 +42,5 @@ VOID sleep (UINTN seconds);
 
 UINT64 local_datestamp (VOID);
 UINT64 utc_datestamp (VOID);
+UINT64 local_timestamp (VOID);
+UINT64 utc_timestamp (VOID);
