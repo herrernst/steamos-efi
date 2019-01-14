@@ -326,7 +326,7 @@ EFI_STATUS exec_bootloader (bootloader *boot)
     // module/dkms/initrd problem, but if we ever fix that, we'll
     // need to do what refind.main.c@394 does.
 
-    res = set_image_cmdline( &efi_app, L"", &child );
+    res = set_image_cmdline( &efi_app, boot->args, &child );
     ERROR_JUMP( res, unload, L"command line not set" );
 
 #if DEBUG_ABORT
