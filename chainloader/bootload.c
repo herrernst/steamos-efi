@@ -63,6 +63,35 @@ typedef struct
     UINT64 at;
 } found_cfg;
 
+static UINTN update_scheduled_now (const cfg_entry *conf)
+{
+    if( get_conf_uint( conf, "update" ) )
+    {
+        UINT64 beg = get_conf_uint( conf, "update-window-start" );
+        UINT64 end = get_conf_uint( conf, "update-window-end"   );
+
+        // no beginning or end of update window specified,
+        // update mode is unconditional:
+        if( !end && !beg )
+            return 1;
+
+        UINT64 now = utc_datestamp();
+
+        // only a window end is specified, update if we are before it:
+        if( !beg )
+            return ( now <= beg ) ? 1 : 0;
+
+        // only a window start is specified, upate if we are after it:
+        if( !end )
+            return ( now >= end ) ? 1 : 0;
+
+        // both specified, update mode only if within time window:
+        return (( now >= beg ) && ( now <= end )) ? 1 : 0;
+    }
+
+    return 0;
+}
+
 static VOID dump_found (found_cfg *c)
 {
     for(UINTN i = 0; c && c->cfg; c++)
@@ -71,7 +100,7 @@ static VOID dump_found (found_cfg *c)
                c->partition,
                c->at,
                get_conf_uint( c->cfg, "boot-other" ) ? L"OTHER " : L"",
-               get_conf_uint( c->cfg, "update"     ) ? L"UPDATE ": L"",
+               update_scheduled_now( c->cfg )        ? L"UPDATE ": L"",
                c->loader );
 }
 
@@ -207,7 +236,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             // if boot-other is set, update should persist until we get to
             // a non-boot-other entry:
             if( !update)
-                update = get_conf_uint( found[i].cfg, "update" );
+                update = update_scheduled_now( found[i].cfg );
             continue;
         }
 
@@ -228,7 +257,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         // we never un-set an update we inherited from boot-other
         // but we might have it set in our own config:
         if( !update )
-            update = get_conf_uint( chosen->config, "update" );
+            update = update_scheduled_now( chosen->config );
 
         if( update )
             chosen->args = L" steamos-update=1 ";
