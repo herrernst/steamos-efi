@@ -180,6 +180,9 @@ const cfg_entry * get_conf_item (const cfg_entry *config, CHAR8 *name)
     if( !name )
         return NULL;
 
+    if( !config )
+        return NULL;
+
     for( UINTN i = 0; config[i].type != cfg_end; i++ )
         if( config[i].name )
             if( strcmpa( (CHAR8 *)config[i].name, name ) == 0 )
