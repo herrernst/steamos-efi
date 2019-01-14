@@ -39,3 +39,6 @@ CHAR8  *strnarrow (CHAR16 *wide);
 CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen);
 
 VOID sleep (UINTN seconds);
+
+UINT64 local_datestamp (VOID);
+UINT64 utc_datestamp (VOID);

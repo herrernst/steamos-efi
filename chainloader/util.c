@@ -259,3 +259,185 @@ allocfail:
     efi_free( wide );
     return NULL;
 }
+// ============================================================================
+// EFI sadly has no UTC support so we need to roll our own:
+
+static UINT8 max_month_day (EFI_TIME *time)
+{
+    UINT16 y;
+
+    switch( time->Month )
+    {
+      case 1:  /* Jan */
+      case 3:  /* Mar */
+      case 5:  /* May */
+      case 7:  /* Jul */
+      case 8:  /* Aug */
+      case 10: /* Oct */
+      case 12: /* Dec */
+        return 31;
+
+      case 4:  /* Apr */
+      case 6:  /* Jun */
+      case 9:  /* Sep */
+      case 11: /* Nov */
+        return 30;
+
+      case 2:  /* Feb */
+        y = time->Year;
+        // leap years divisible by 4 BUT centuries must also be div by 400:
+        //       not-div-100  not-div-4             not-div-400
+        return ( (y % 100) ? ((y % 4) ? 28 : 29) : ((y % 400) ? 28 : 29) );
+
+      default:
+        return 0;
+    }
+}
+
+static inline void incr_month (EFI_TIME *time)
+{
+    if( time->Month == 12 )
+    {
+        time->Month = 1;
+        time->Year++;
+        return;
+    }
+
+    time->Month++;
+}
+
+static inline void incr_day (EFI_TIME *time)
+{
+    if( time->Day == max_month_day( time ) )
+    {
+        time->Day = 1;
+        incr_month( time );
+        return;
+    }
+
+    time->Day++;
+}
+
+static inline void incr_hour (EFI_TIME *time)
+{
+    if( time->Hour == 23 )
+    {
+        time->Hour = 0;
+        incr_day( time );
+        return;
+    }
+
+    time->Hour++;
+}
+
+static inline void incr_minute (EFI_TIME *time)
+{
+    if( time->Minute == 59 )
+    {
+        time->Minute = 0;
+        incr_hour( time );
+        return;
+    }
+
+    time->Minute++;
+}
+
+static inline void decr_month (EFI_TIME *time)
+{
+    if( time->Month == 1 )
+    {
+        time->Month = 12;
+        time->Year--;
+        return;
+    }
+
+    time->Month--;
+}
+
+static inline void decr_day (EFI_TIME *time)
+{
+    if( time->Day == 1 )
+    {
+        decr_month( time );
+        time->Day = max_month_day( time );
+        return;
+    }
+
+    time->Day--;
+}
+
+static inline void decr_hour (EFI_TIME *time)
+{
+    if( time->Hour == 0 )
+    {
+        time->Hour = 23;
+        decr_day( time );
+        return;
+    }
+
+    time->Hour--;
+}
+
+static inline void decr_minute (EFI_TIME *time)
+{
+    if( time->Minute == 0 )
+    {
+        time->Minute = 59;
+        decr_hour( time );
+        return;
+    }
+
+    time->Minute--;
+}
+
+// UTC = now + now.zone
+// now.zoneis ± 24 hours (1440 minutes)
+static VOID efi_time_to_utc (EFI_TIME *time)
+{
+
+    if( time->TimeZone == EFI_UNSPECIFIED_TIMEZONE )
+        return;
+
+    if( time->TimeZone > 0 )
+        for (; time->TimeZone; time->TimeZone--)
+            incr_minute( time );
+    else if( time->TimeZone < 0 )
+        for (; time->TimeZone; time->TimeZone++)
+            decr_minute( time );
+}
+
+UINT64 local_datestamp (VOID)
+{
+    EFI_TIME now = { 0 };
+    EFI_STATUS res = uefi_call_wrapper( RT->GetTime, 2, &now, NULL );
+
+    if( res != EFI_SUCCESS )
+        return 0;
+
+    // number of form: YYYY mm DD HH MM SS
+    return ( now.Second                 +
+             (now.Minute * 100)         +
+             (now.Hour   * 10000)       +
+             (now.Day    * 1000000)     +
+             (now.Month  * 100000000)   +
+             (now.Year   * 10000000000) );
+}
+
+UINT64 utc_datestamp (VOID)
+{
+    EFI_TIME now = { 0 };
+    EFI_STATUS res = uefi_call_wrapper( RT->GetTime, 2, &now, NULL );
+
+    if( res != EFI_SUCCESS )
+        return 0;
+
+    efi_time_to_utc( &now );
+
+    // number of form: YYYY mm DD HH MM SS
+    return ( now.Second                 +
+             (now.Minute * 100)         +
+             (now.Hour   * 10000)       +
+             (now.Day    * 1000000)     +
+             (now.Month  * 100000000)   +
+             (now.Year   * 10000000000) );
+}
