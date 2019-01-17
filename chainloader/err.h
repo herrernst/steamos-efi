@@ -1,12 +1,14 @@
 #pragma once
 
+#include <efi.h>
+
 #define ERR_FMT(fmt, s, ...)                                    \
     fmt L": %s (%d)\n", ##__VA_ARGS__, efi_statstr(s), s
 
 #define ERROR_X(s, x, fmt, ...) \
     if( s != EFI_SUCCESS )                             \
     {                                                  \
-        if( *(CHAR16 *)fmt != L'0' )                   \
+        if( verbose && *(CHAR16 *)fmt != L'0' )        \
             Print( ERR_FMT( fmt, s, ##__VA_ARGS__ ) ); \
         x;                                             \
     }
@@ -21,7 +23,7 @@
     ERROR_X( s, goto target, fmt, ##__VA_ARGS__ )
 
 #define WARN_STATUS(s, fmt, ...) \
-    if( s != EFI_SUCCESS )                       \
+    if( verbose && s != EFI_SUCCESS )            \
     {                                            \
         Print( ERR_FMT(fmt, s, ##__VA_ARGS__) ); \
     }
@@ -31,3 +33,7 @@
        EFI_STATUS stat = (x ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES); \
        ERROR_JUMP( stat, tgt, L"Allocating %d bytes", s );         \
        x; })
+
+extern UINTN verbose;
+UINTN set_verbosity (UINTN level);
+

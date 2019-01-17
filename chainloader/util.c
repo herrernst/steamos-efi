@@ -136,6 +136,7 @@ EFI_HANDLE get_self_handle (VOID)
 VOID initialise (EFI_HANDLE image)
 {
     self_image = image;
+    set_verbosity( 0 );
 }
 
 EFI_DEVICE_PATH *
