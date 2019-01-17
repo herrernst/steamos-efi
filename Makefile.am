@@ -38,6 +38,7 @@ ACLOCAL_AMFLAGS  = -I m4
 pkglibexec_PROGRAMS = steamcl.efi
 noinst_bin_PROGRAMS = steamcl.elf
 noinst_bindir       = elf
+dist_pkgdata_DATA   = data/steamcl.version
 
 # we need a non-standard step here to turn the elf output of the normal-ish
 # link stage into a PE32 blob:
@@ -46,6 +47,11 @@ noinst_bindir       = elf
 
 # this prevents automake from trying to build steamcl.efi as a normal binary
 steamcl.efi$(EXEEXT): steamcl.elf
+
+# the checksum/version file:
+data/steamcl.version: steamcl.efi Makefile
+	@SUM=$$(sha256sum $<) && echo -n $${SUM%% *} > $@;
+	@echo " @RELEASE_VERSION@" >> $@;
 
 # this builds an ELF DSO with the right charactteristics to be turned into
 # an EFI blob in the final stage.

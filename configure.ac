@@ -34,7 +34,7 @@ dnl with the prefix "TARGET_" (such as TARGET_CC, TARGET_CFLAGS, etc.) are
 dnl used for the target type. See INSTALL for full list of variables.
 
 AC_PREREQ([2.60])
-AC_INIT([steamos-efi],[0.00],[vivek@collabora.com])
+AC_INIT([steamos-efi],[0.01],[vivek@collabora.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
