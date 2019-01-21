@@ -36,8 +36,7 @@ AM_CCASFLAGS 	 = $(HOST_CCASFLAGS) $(CCASFLAGS_DEFAULT)
 ACLOCAL_AMFLAGS  = -I m4
 
 pkglibexec_PROGRAMS = steamcl.efi
-noinst_bin_PROGRAMS = steamcl.elf
-noinst_bindir       = elf
+noinst_PROGRAMS     = steamcl.elf
 dist_pkgdata_DATA   = data/steamcl.version
 
 # we need a non-standard step here to turn the elf output of the normal-ish
