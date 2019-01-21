@@ -91,6 +91,16 @@ AS_IF([test x"$with_platform" = x],
                [AC_MSG_ERROR([unsupported CPU, use --with-platform: "$target_cpu"])])],
       [platform="$with_platform"])
 
+# we're special casing this because the EFI binary is a different platform
+# than the intermediate blob that autofoo actually knows how to build.
+# directory name chosen by analogy with grub's packaging:
+AC_ARG_WITH([pkglibexecdir],
+            [AS_HELP_STRING([--with-pkglibexecdir=DIR],
+                            [Override the pkglibexecdir location])],
+            [pkglibexecdir=$with_pkglibexecdir],
+            [pkglibexecdir=${prefix}/lib/$PACKAGE_NAME/$host_cpu-$platform])
+AC_SUBST([pkglibexecdir])
+
 AS_CASE(["$target_cpu"-"$platform"],
         [*-efi], [],
         [AC_MSG_ERROR([Selected CPU/platform "$target_cpu"-"$target_vendor" is not EFI])])
