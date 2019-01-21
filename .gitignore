@@ -14,3 +14,4 @@ steamcl.efi
 steamcl.elf
 m4
 *.o
+util/steamcl-install
