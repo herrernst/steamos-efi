@@ -3,8 +3,9 @@
 # Process this file with autoconf to produce a configure script.
 
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010  Free Software Foundation, Inc.
-# Copyright © 2018, Collabora Ltd.
-# Copyright © 2018, Valve Corporation
+# Copyright © 2018,2019 Collabora Ltd.
+# Copyright © 2018,2019 Valve Corporation
+# Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
 #
 # This configure.ac is free software; the author
 # gives unlimited permission to copy and/or distribute it,
