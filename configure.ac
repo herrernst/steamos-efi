@@ -81,6 +81,14 @@ AC_ARG_WITH([efilib],
             [with_efilib=$with_efilib],
             [with_efilib=gnu])
 
+# define a release version number to bake into the binary
+# this is for the upgrade/install helper script to use:
+AC_ARG_WITH([release-version],
+            [AS_HELP_STRING([--with-release-version=VERSION-STRING],
+                            [Version to bake into the EFI binary])],
+            [AC_SUBST([RELEASE_VERSION],"$with_release_version")],
+            [AC_SUBST([RELEASE_VERSION],"$VERSION")])
+
 # Guess the platform if not specified.
 # Explode if the default for the platform is not EFI
 AS_IF([test x"$with_platform" = x],
