@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: steamos-efi
+Source: https://gitlab.collabora.com/vivek/efi-binaries
+
+Files: *
+Copyright: Copyright © 2018, 2019 Collabora Ltd
+           Copyright © 2018, 2019 Valve Corporation
+           Copyright © 2018, 2019 Vivek Das Mohapatra
+License: GPL-2.0+
