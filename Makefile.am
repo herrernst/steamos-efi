@@ -38,6 +38,7 @@ ACLOCAL_AMFLAGS  = -I m4
 pkglibexec_PROGRAMS = steamcl.efi
 noinst_PROGRAMS     = steamcl.elf
 dist_pkgdata_DATA   = data/steamcl.version
+dist_sbin_SCRIPTS   = util/steamcl-install
 
 # we need a non-standard step here to turn the elf output of the normal-ish
 # link stage into a PE32 blob:
