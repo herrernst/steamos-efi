@@ -15,3 +15,10 @@ steamcl.elf
 m4
 *.o
 util/steamcl-install
+debian/.debhelper
+debian/autoreconf.*
+debian/files
+debian/*.log
+debian/*.substvars
+debian/steamos-efi
+debian/*stamp
