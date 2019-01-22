@@ -1,3 +1,11 @@
+steamos-efi (0.02) clockwerk; urgency=medium
+
+  * Version bump to test update mechanism.
+  * After discussion with image team, remove postinst:
+    Chainloader will be installed by a different installation step.
+
+ -- Vivek Das Mohapatra <vivek@collabora.com>  Tue, 22 Jan 2019 14:51:14 +0000
+
 steamos-efi (0.01) clockwerk; urgency=medium
 
   * First upstream version.
