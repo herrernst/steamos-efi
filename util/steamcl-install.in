@@ -302,7 +302,8 @@ pkg_csum_ok=0;  # is the package's bootloader binary ok?
 esp_version=;   # version of the loader on the ESP (according to manifest)
 pkg_version=;   # version of the loader package in the OS
 pkg_checksum=;  # checksum of the loader binary in the OS package
-pkg_is_newer=0; # OS package has a newer loader then the ESP
+esp_checksum=;  # checksum of the loader binary on the ESP
+pkg_is_newer=0; # OS package has a newer loader than the ESP
 install_cl=0;
 
 read_manifest "$esp_mount/$installpath"/steamcl.version;
@@ -311,6 +312,7 @@ if [ ${checksum:-0} = ${manifest_checksum:-1} ];
 then
     esp_csum_ok=1;
     esp_version=$manifest_version;
+    esp_checksum=$manifest_checksum;
 fi;
 
 if check_boot_path $esp_part $installpath/steamcl.efi;
@@ -330,6 +332,13 @@ fi;
 if dpkg --compare-versions "${esp_version:-0}" lt "${pkg_version:-0}";
 then
     pkg_is_newer=1;
+elif dpkg --compare-versions "${esp_version:-0}" eq "${pkg_version:-0}";
+then
+    # updated(?) package without a version bump
+    if [ "$esp_checksum" != "$pkg_checksum" ];
+    then
+        pkg_is_newer=1;
+    fi;
 fi
 
 # let's walk through the logic here:
