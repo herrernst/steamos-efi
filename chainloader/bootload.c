@@ -198,7 +198,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( alt_cfg && *alt_cfg )
         {
             CHAR16 *alt_ldr =
-              resolve_path( (CHAR8 *)"grubx64.efi", BOOTCONFPATH, 1 );
+              resolve_path( alt_cfg, BOOTCONFPATH, 1 );
 
             if( valid_efi_binary( root_dir, alt_ldr ) == EFI_SUCCESS )
                 found[ j ].loader = alt_ldr;
