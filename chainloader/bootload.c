@@ -116,7 +116,7 @@ static VOID dump_found (found_cfg *c)
 {
     for(UINTN i = 0; c && c->cfg; c++)
         Print( L"#%u %x @%lu %s%s[%s]\n",
-               i,
+               i++,
                c->partition,
                c->at,
                get_conf_uint( c->cfg, "boot-other" ) ? L"OTHER " : L"",
