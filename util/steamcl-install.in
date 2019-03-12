@@ -73,8 +73,10 @@ calculate_checksum ()
 {
     local x=;
     local file=${1:-/dev/null};
+    # checksum of /dev/null
+    checksum=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855;
 
-    if [ -f"$file" ]
+    if [ -f "$file" ]
     then
         read checksum x < <(sha256sum "$file");
     fi;
@@ -227,6 +229,7 @@ update_esp ()
         if [ "${bootpath,,}" = /efi/"$dst"/steamcl.efi ]
         then
             echo Replacing boot entry Boot$bootnum \@ $bootpath;
+	    mkdir -p $esp${bootpath%/*};
             cp -av $bin $lst $esp${bootpath%/*};
             return 0;
         fi;
