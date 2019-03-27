@@ -47,7 +47,6 @@ static cfg_entry bootspec[] =
     { .type = cfg_string, .name = "partitions"          },
     { .type = cfg_end } };
 
-
 static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
 {
     UINTN nl = strlena( (CHAR8 *)item->name );
