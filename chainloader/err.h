@@ -20,10 +20,17 @@
 
 #pragma once
 
+#ifndef NO_EFI_TYPES
 #include <efi.h>
+#endif
 
+#ifndef NO_EFI_TYPES
 #define ERR_FMT(fmt, s, ...)                                    \
     fmt L": %s (%d)\n", ##__VA_ARGS__, efi_statstr(s), s
+#else
+#define ERR_FMT(fmt, s, ...)                                    \
+    fmt L": error-code %d\n", ##__VA_ARGS__, s
+#endif
 
 #define ERROR_X(s, x, fmt, ...) \
     if( s != EFI_SUCCESS )                             \
@@ -51,7 +58,7 @@
 #define ALLOC_OR_GOTO(s, tgt) \
     ({ VOID *x = efi_alloc( s ); \
        EFI_STATUS stat = (x ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES); \
-       ERROR_JUMP( stat, tgt, L"Allocating %d bytes", s );         \
+       ERROR_JUMP( stat, tgt, L"Allocating %d bytes", (int)s );    \
        x; })
 
 extern UINTN verbose;

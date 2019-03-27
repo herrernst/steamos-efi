@@ -20,7 +20,11 @@
 
 #pragma once
 
+#ifndef NO_EFI_TYPES
 #include <efi.h>
+#else
+#include "bootconf/efi.h"
+#endif
 
 #define MAXFSNAMLEN 200
 #define BOOTCONFPATH L"SteamOS\\bootconf"
@@ -31,6 +35,7 @@
 #define STEAMOSLDR  GRUBLDR
 #define CHAINLDR    EFIDIR L"\\Shell\\steamcl.efi"
 
+#ifndef NO_EFI_TYPES
 VOID * efi_alloc (IN UINTN s);
 VOID   efi_free  (IN VOID *p);
 
@@ -52,6 +57,7 @@ EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
 EFI_DEVICE_PATH * make_absolute_device_path (EFI_HANDLE device, CHAR16 *path);
 EFI_HANDLE get_self_handle (VOID);
 VOID initialise (EFI_HANDLE image);
+#endif
 
 CHAR16 *strwiden (CHAR8 *narrow);
 CHAR8  *strnarrow (CHAR16 *wide);

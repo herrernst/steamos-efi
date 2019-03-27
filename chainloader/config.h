@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 typedef enum
 {
     cfg_string,
@@ -36,19 +38,29 @@ typedef struct
     char *name;
     struct
     {
-        struct { CHAR8 *bytes; UINTN size; } string;
-        union  { UINT64 u; INT64 i; } number;
+        struct { unsigned char *bytes; uint64_t size; } string;
+        union  { uint64_t u; int64_t i; } number;
     } value;
 } cfg_entry;
 
+
+#ifndef NO_EFI_TYPES
 EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config);
 
 VOID dump_config (cfg_entry *config);
+#else
+const char *_cts (cfg_entry_type t);
+#endif
 
-const cfg_entry *get_conf_item (const cfg_entry *config, CHAR8 *name);
+const cfg_entry *get_conf_item (const cfg_entry *config, const CHAR8 *name);
 
 UINT64 get_conf_uint (const cfg_entry *config, char *name);
 
 CHAR8 *get_conf_str (const cfg_entry *config, char *name);
 
+cfg_entry *new_config (VOID);
+
 VOID free_config (cfg_entry **config);
+
+EFI_STATUS set_config_from_data (cfg_entry *cfg, CHAR8 *data, UINTN size);
+

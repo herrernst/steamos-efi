@@ -18,13 +18,20 @@
 // You should have received a copy of the GNU General Public License
 // along with steamos-efi.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifdef NO_EFI_TYPES
+#include "bootconf/efi.h"
+#endif
+
 #include "err.h"
 #include "util.h"
-#include "fileio.h"
-#include "config.h"
-#include "bootload.h"
 
+#ifndef NO_EFI_TYPES
+#include "fileio.h"
+#include "bootload.h"
 #include <efilib.h>
+#endif
+
+#include "config.h"
 
 static cfg_entry bootspec[] =
   { { .type = cfg_stamp , .name = "boot-requested-at"   },
@@ -117,7 +124,7 @@ static UINTN set_config_from_line (cfg_entry *cfg, CHAR8* line)
     return found;
 }
 
-static EFI_STATUS set_config_from_data (cfg_entry *cfg, CHAR8 *data, UINTN size)
+EFI_STATUS set_config_from_data (cfg_entry *cfg, CHAR8 *data, UINTN size)
 {
     UINTN found = 0;
 
@@ -132,6 +139,7 @@ static EFI_STATUS set_config_from_data (cfg_entry *cfg, CHAR8 *data, UINTN size)
     return found ? EFI_SUCCESS : EFI_END_OF_FILE;
 }
 
+#ifndef NO_EFI_TYPES
 static CONST CHAR16 *_cts (cfg_entry_type t)
 {
     switch (t)
@@ -146,12 +154,30 @@ static CONST CHAR16 *_cts (cfg_entry_type t)
         return L"UNKNOWN";
     }
 }
+#else
+const char *_cts (cfg_entry_type t)
+{
+    switch (t)
+    {
+      case cfg_string: return "string";
+      case cfg_bool:   return "bool";
+      case cfg_uint:   return "uint";
+      case cfg_path:   return "path";
+      case cfg_stamp:  return "stamp";
+      case cfg_end:    return "end";
+      default:
+        return "UNKNOWN";
+    }
+}
+#endif
 
+__attribute__ ((unused))
 static CONST CHAR8 *_vts (cfg_entry *c)
 {
     return (CHAR8 *) c->value.string.bytes ?: (CHAR8 *) "-UNSET-";
 }
 
+#ifndef NO_EFI_TYPES
 VOID dump_config (cfg_entry *config)
 {
     for( UINTN i = 0; config[i].type != cfg_end; i++ )
@@ -162,7 +188,9 @@ VOID dump_config (cfg_entry *config)
                config[i].value.string.size,
                _vts( &config[i] ) );
 }
+#endif
 
+#ifndef NO_EFI_TYPES
 EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config)
 {
     EFI_STATUS res = EFI_SUCCESS;
@@ -171,15 +199,15 @@ EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config)
     UINTN cfsize;
     UINTN cfalloc;
 
-    *config = ALLOC_OR_GOTO( sizeof(bootspec), allocfail );
+    *config = new_config();
+    if( !config )
+        goto allocfail;
 
     res = efi_file_open( root_dir, &cffile, BOOTCONFPATH, 0, 0 );
     ERROR_JUMP( res, cleanup, L"parse_bootconfig: " BOOTCONFPATH );
 
     res = efi_file_to_mem( cffile, &cfdata, &cfsize, &cfalloc );
     ERROR_JUMP( res, cleanup, L"parse_bootconfig: load to mem failed" );
-
-    CopyMem( *config, &bootspec[0], sizeof(bootspec) );
 
     res = set_config_from_data( *config, cfdata, cfsize );
 
@@ -194,8 +222,9 @@ allocfail:
     *config = NULL;
     return EFI_OUT_OF_RESOURCES;
 }
+#endif
 
-const cfg_entry * get_conf_item (const cfg_entry *config, CHAR8 *name)
+const cfg_entry * get_conf_item (const cfg_entry *config, const CHAR8 *name)
 {
     if( !name )
         return NULL;
@@ -223,6 +252,19 @@ CHAR8 * get_conf_str (const cfg_entry *config, char *name)
     const cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
 
     return c ? &c->value.string.bytes[0] : NULL;
+}
+
+cfg_entry *new_config (VOID)
+{
+    cfg_entry *config = efi_alloc( sizeof(bootspec) );
+
+    WARN_STATUS( (config != NULL) ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES,
+                 L"Failed to allocate %d bytes for bootspec", sizeof(bootspec) );
+
+    if( config )
+        CopyMem( config, &bootspec[0], sizeof(bootspec) );
+
+    return config;
 }
 
 VOID free_config (cfg_entry **config)
