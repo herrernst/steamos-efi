@@ -43,7 +43,7 @@
     ERROR_X( s, goto target, fmt, ##__VA_ARGS__ )
 
 #define WARN_STATUS(s, fmt, ...) \
-    if( verbose && s != EFI_SUCCESS )            \
+    if( verbose && (s != EFI_SUCCESS) )          \
     {                                            \
         Print( ERR_FMT(fmt, s, ##__VA_ARGS__) ); \
     }
