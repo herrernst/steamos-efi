@@ -38,6 +38,7 @@ AM_CCASFLAGS 	 = $(HOST_CCASFLAGS) $(CCASFLAGS_DEFAULT)
 
 ACLOCAL_AMFLAGS  = -I m4
 
+bin_PROGRAMS        = steamos-bootconf
 pkglibexec_PROGRAMS = steamcl.efi
 noinst_PROGRAMS     = steamcl.elf
 dist_pkgdata_DATA   = data/steamcl.version
@@ -74,4 +75,12 @@ steamcl_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}
 steamcl_elf_LDFLAGS  = $(LDFLAGS) $(EFI_LDFLAGS) 
 steamcl_elf_LDADD    = $(EFI_EXTRALIBS)
 steamcl_elf_LINK     = $(LD) $(steamcl_elf_LDFLAGS) -o $@
+
+steamos_bootconf_SOURCES = bootconf/bootconf.c     \
+                           bootconf/config-extra.c \
+                           bootconf/efi.c          \
+                           chainloader/config.c
+steamos_bootconf_CFLAGS  = $(CFLAGS) -DNO_EFI_TYPES -fshort-wchar -g
+steamos_bootconf_LDFLAGS = $(LDFLAGS)
+
 

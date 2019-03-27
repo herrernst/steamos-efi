@@ -12,6 +12,7 @@ config.log
 config.status
 steamcl.efi
 steamcl.elf
+steamos-bootconf
 m4
 *.o
 util/steamcl-install
