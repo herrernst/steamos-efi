@@ -232,7 +232,7 @@ const cfg_entry * get_conf_item (const cfg_entry *config, const CHAR8 *name)
         return NULL;
 
     for( UINTN i = 0; config[i].type != cfg_end; i++ )
-        if( config[i].name )
+        if( config[i].name && *(config[i].name))
             if( strcmpa( (CHAR8 *)config[i].name, name ) == 0 )
                 return &config[i];
 
