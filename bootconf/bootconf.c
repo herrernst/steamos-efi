@@ -538,7 +538,7 @@ int main (int argc, char **argv)
         break;
 
       default:
-        output_fd = fileno( stdin );
+        output_fd = fileno( stdout );
     }
 
     if( output_fd != NO_BOOTCONF_OUTPUT )
