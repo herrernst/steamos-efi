@@ -26,6 +26,12 @@
 #include "bootconf/efi.h"
 #endif
 
+#ifndef EFI_FILE_RESERVED
+#ifdef  EFI_FILE_RESERVIED
+#define EFI_FILE_RESERVED EFI_FILE_RESERVIED
+#endif
+#endif
+
 #define MAXFSNAMLEN 200
 #define BOOTCONFPATH L"SteamOS\\bootconf"
 #define EFIDIR       L"\\EFI"

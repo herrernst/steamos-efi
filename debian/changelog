@@ -1,3 +1,10 @@
+steamos-efi (0.04) clockwerk; urgency=medium
+
+  * gnu-efi has a typo'd #define in efiprot.h
+  * EFI_FILE_RESERVIED should be EFI_FILE_RESERVED
+
+ -- Vivek Das Mohapatra <vivek@collabora.com>  Fri, 29 Mar 2019 20:22:37 +0000
+
 steamos-efi (0.03) clockwerk; urgency=medium
 
   * Add the steamos-bootconf userspace config helper tool
