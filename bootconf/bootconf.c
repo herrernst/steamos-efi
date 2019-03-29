@@ -160,10 +160,12 @@ START and END may be:                                                        \n\
                                                                              \n\
   0 means \"don't care\" and is distinct from 0000                           \n\
                                                                              \n\
---output-to determines where the [modified] bootconf file wil be written:    \n\
+--output-to determines where the [modified] bootconf file will be written:   \n\
   stdout - to standard output                                                \n\
   none   - not emitted (useful if you are using --get)                       \n\
-  input  - the input path will be overwritten with the modified data         \n"
+  input  - the input path will be overwritten with the modified data         \n\
+  NOTE: this does not affect putput from --get commands and similar - only   \n\
+  the destination of the full modified bootconf data.\n"
            );
 
     return msg ? -1 : 0;
