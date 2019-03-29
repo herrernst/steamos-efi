@@ -544,7 +544,10 @@ int main (int argc, char **argv)
     if( output_fd != NO_BOOTCONF_OUTPUT )
     {
         size_t written = write_config( output_fd, config );
-        ftruncate( output_fd, written );
+
+        // if we're overwriting our input it may end up shrinking:
+        if( (output_fd == cfg_fd) && ftruncate( output_fd, written ) )
+            perror( "Output file not truncated - may be the wrong size" );
     }
 
     free_config( &config );
