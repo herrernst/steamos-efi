@@ -356,7 +356,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         set_conf_uint( cfg, "invalid"      , 0 );
         set_conf_uint( cfg, "boot-attempts", 0 );
         set_conf_uint( cfg, "boot-count"   , nth + 1 );
-        set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_conf_stamp_time( cfg, "boot-time", time(NULL) );
         return 1;
     }
 
