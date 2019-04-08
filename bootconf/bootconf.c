@@ -552,7 +552,10 @@ int main (int argc, char **argv)
 
     if( input_file )
     {
-        cfg_fd = open( input_file, O_RDWR );
+        if( output_fd == OVERWRITE_INPUT )
+            cfg_fd = open( input_file, O_RDWR|O_CREAT, 0644 );
+        else
+            cfg_fd = open( input_file, O_RDWR );
 
         if( cfg_fd < 0 )
         {
