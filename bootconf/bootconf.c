@@ -304,6 +304,31 @@ static int set_output (int n, int argc, char **argv, unused cfg_entry *cfg)
     return 1;
 }
 
+static int set_timestamped_note (cfg_entry *cfg, const char *note)
+{
+    char stamp[32];
+    time_t tloc = 0;
+    struct tm *now = NULL;
+    const char *prefix = NULL;
+    char *str = NULL;
+    int rv;
+
+    time( &tloc );
+    now = localtime( &tloc );
+
+    if( strftime( stamp, sizeof(stamp), "[%Y-%m-%d %T %z] ", now ) )
+        prefix = stamp;
+    else
+        prefix = "[timestamp-error] ";
+
+    str = calloc( strlen( prefix ) + strlen( note ) + 1, 1 );
+    sprintf( str, "%s%s", prefix, note );
+    rv = set_conf_string( cfg, "comment", str );
+    free( str );
+
+    return rv;
+}
+
 static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
 {
     if( n + 1 >= argc )
@@ -317,6 +342,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         set_conf_uint( cfg, "boot-other", 0 );
         set_conf_uint( cfg, "update",     1 );
         set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_timestamped_note( cfg, "bootconf mode: update (other)" );
         return 1;
     }
 
@@ -326,6 +352,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         set_conf_uint( cfg, "boot-other", 1 );
         set_conf_uint( cfg, "update",     1 );
         set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_timestamped_note( cfg, "bootconf mode: update (self)" );
         return 1;
     }
 
@@ -333,6 +360,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
     {
         set_conf_uint( cfg, "boot-other", 0 );
         set_conf_uint( cfg, "update",     0 );
+        set_timestamped_note( cfg, "bootconf mode: shutdown" );
         return 1;
     }
 
@@ -341,6 +369,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         set_conf_uint( cfg, "boot-other", 0 );
         set_conf_uint( cfg, "update",     0 );
         set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_timestamped_note( cfg, "bootconf mode: reboot (self)" );
         return 1;
     }
 
@@ -349,6 +378,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         set_conf_uint( cfg, "boot-other", 1 );
         set_conf_uint( cfg, "update",     0 );
         set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_timestamped_note( cfg, "bootconf mode: reboot (other)" );
         return 1;
     }
 
@@ -359,6 +389,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         set_conf_uint( cfg, "boot-attempts", 0 );
         set_conf_uint( cfg, "boot-count"   , nth + 1 );
         set_conf_stamp_time( cfg, "boot-time", time(NULL) );
+        set_timestamped_note( cfg, "bootconf mode: boot-ok" );
         return 1;
     }
 

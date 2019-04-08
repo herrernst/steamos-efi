@@ -45,6 +45,7 @@ static cfg_entry bootspec[] =
     { .type = cfg_stamp , .name = "update-window-end"   },
     { .type = cfg_path  , .name = "loader"              },
     { .type = cfg_string, .name = "partitions"          },
+    { .type = cfg_string, .name = "comment"             },
     { .type = cfg_end } };
 
 static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
