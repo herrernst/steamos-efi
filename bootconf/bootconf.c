@@ -15,6 +15,12 @@
 #define OVERWRITE_INPUT    -2
 #define NO_BOOTCONF_OUTPUT -1
 
+typedef enum
+{
+    ARG_STD = 0,
+    ARG_EARLY,
+} phase;
+
 typedef int (*handler) (int n, int max, char **argv, cfg_entry *cfg);
 
 typedef struct
@@ -22,6 +28,7 @@ typedef struct
     const char *cmd;
     uint params;
     handler function;
+    phase parse_phase;
 } arg_handler;
 
 UINTN verbose = 0;
@@ -43,13 +50,13 @@ static int show_help   (unused int n,
 
 static arg_handler arg_handlers[] =
 {
-    { "--help"         , 0, show_help   },
-    { "--set"          , 2, set_entry   },
-    { "--get"          , 1, get_entry   },
-    { "--del"          , 1, del_entry   },
-    { "--output-to"    , 1, set_output  },
-    { "--mode"         , 1, set_mode    },
-    { "--update-window", 2, set_window  },
+    { "--help"         , 0, show_help   , ARG_EARLY },
+    { "--set"          , 2, set_entry   , ARG_STD   },
+    { "--get"          , 1, get_entry   , ARG_STD   },
+    { "--del"          , 1, del_entry   , ARG_STD   },
+    { "--output-to"    , 1, set_output  , ARG_EARLY },
+    { "--mode"         , 1, set_mode    , ARG_STD   },
+    { "--update-window", 2, set_window  , ARG_STD   },
     { NULL }
 };
 
@@ -486,16 +493,19 @@ static int set_window (int n, int argc, char **argv, cfg_entry *cfg)
 
 // =========================================================================
 
-static int find_input_file (int x, char **argv)
+static int process_early_cmdline_args (int x, int argc, char **argv)
 {
     arg_handler *handler = NULL;
 
     for( handler = &arg_handlers[0]; handler->cmd; handler++ )
     {
-        if( strcmp( handler->cmd, argv[x] ) )
-            continue;
+        if( strcmp( handler->cmd, argv[x] ) == 0 )
+        {
+            if( handler->parse_phase == ARG_EARLY )
+                handler->function( x, argc, argv, NULL );
 
-        return handler->params;
+            return handler->params;
+        }
     }
 
     file_arg = x;
@@ -518,7 +528,7 @@ static int process_cmdline_arg (int x, int argc, char **argv, cfg_entry *cfg)
         if( strcmp( handler->cmd, argv[x] ) )
             continue;
 
-        if( handler->function )
+        if( handler->function && (handler->parse_phase != ARG_EARLY) )
             rv = handler->function( x, argc, argv, cfg );
 
         if( rv < 0 )
@@ -537,8 +547,8 @@ int main (int argc, char **argv)
 
     progname = argv[0];
 
-    for( int c = 1; !input_file && (c < argc); c++ )
-        c += find_input_file( c, argv );
+    for( int c = 1; c < argc; c++ )
+        c += process_early_cmdline_args( c, argc, argv );
 
     if( input_file )
     {
