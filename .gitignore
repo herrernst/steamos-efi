@@ -7,6 +7,7 @@ configure
 Makefile
 chainloader/.deps/
 chainloader/.dirstamp
+bootconf/.dirstamp
 chainloader/steamcl_elf-hello.o
 config.log
 config.status
