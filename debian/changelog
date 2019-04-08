@@ -1,3 +1,11 @@
+steamos-efi (0.05) clockwerk; urgency=medium
+
+  * steamos-bootconf uses the new comment field to record preset actions
+  * Intended to make the debugging of integration with the OS easier
+    as the shutdown scripts often trigger after the journal has stopped.
+
+ -- Vivek Das Mohapatra <vivek@collabora.com>  Mon, 08 Apr 2019 16:40:34 +0100
+
 steamos-efi (0.04) clockwerk; urgency=medium
 
   * gnu-efi has a typo'd #define in efiprot.h
