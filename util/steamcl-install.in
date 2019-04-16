@@ -45,6 +45,7 @@ all_boot_ids=; # space separated list of HEXBOOTID
 free_boot_id=; # an unused HEXBOOTID
 boot_path_found=; # set if a matching boot entry was found by check_boot_path
 
+pretty_name=${PRETTY_NAME:-"SteamOS/Clockwerk"};
 distrib=${ID:-steamos};
 distrib=${distrib,,};
 manifest_checksum=;
@@ -375,7 +376,7 @@ then
     choose_free_boot_id $all_boot_ids;
     if add_boot_entry $distrib $esp_mount \
                       $libexecdir/steamcl.efi $datadir/steamcl.version \
-                      $free_boot_id $esp_dev $esp_part "SteamOS/Clockwerk";
+                      $free_boot_id $esp_dev $esp_part "$pretty_name";
     then
         esp_boot_ok=1;
     fi;
