@@ -39,8 +39,8 @@ esp_part=;  # X (as in /dev/sdaX)
 esp_mount=; # usually /esp on SteamOS 3+
 esp_fs=;    # fs type (vfat)
 
-boot_entries=; # space separataed list of HEXBOOTID:LOADERPATH
-all_boot_ids=; # space separataed list of HEXBOOTID
+boot_entries=; # space separated list of HEXBOOTID:LOADERPATH
+all_boot_ids=; # space separated list of HEXBOOTID
 free_boot_id=; # an unused HEXBOOTID
 boot_path_found=; # set if a matching boot entry was found by check_boot_path
 
