@@ -88,6 +88,14 @@ calculate_checksum ()
 
 ############################################################################
 # determine the location of the esp and its current mount point if any
+unquote() {
+    local tmp="$1"
+    
+    tmp="${tmp%\"}"
+    tmp="${tmp#\"}"
+    echo "$tmp"
+}
+
 find_esp ()
 {
     esp_fs=;
@@ -104,6 +112,12 @@ find_esp ()
 
     while read part dev ptuid fs mount;
     do
+        part=$(unquote "${part#*=}");
+        dev=$(unquote "${dev#*=}");
+        ptuid=$(unquote "${ptuid#*=}");
+        fs=$(unquote "${fs#*=}");
+        mount=$(unquote "${mount#*=}");
+ 
         if [ "$fs" != vfat ]; then continue; fi;
 
         if [ "$mount" = /esp ];
@@ -115,13 +129,19 @@ find_esp ()
             esp_uuid="$ptuid";
             break;
         fi;
-    done < <(lsblk -nlp -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
+    done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
 
     # doesn't look like the ESP, try again:
     if [ "$ESP_UUID" != "$esp_uuid" ];
     then
         while read part dev ptuid fs mount;
         do
+            part=$(unquote "${part#*=}");
+            dev=$(unquote "${dev#*=}");
+            ptuid=$(unquote "${ptuid#*=}");
+            fs=$(unquote "${fs#*=}");
+            mount=$(unquote "${mount#*=}");
+
             if [ "$fs"    != vfat        ]; then continue; fi;
             if [ "$ptuid" != "$ESP_UUID" ]; then continue; fi;
 
@@ -131,7 +151,7 @@ find_esp ()
             esp_mount="$mount";
             esp_uuid="$ptuid";
             break;
-        done < <(lsblk -nlp -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
+        done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
     fi;
 
     if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
