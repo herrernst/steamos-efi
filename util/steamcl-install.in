@@ -1,4 +1,5 @@
 #!/bin/bash
+# vim: sw=4 sts=4 et
 
 # steamos-efi  --  SteamOS EFI Chainloader
 
