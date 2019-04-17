@@ -110,6 +110,7 @@ find_esp ()
     local fs=;
     local mount=;
 
+    # Find esp according to fs, parttuid and mountpoint
     while read part dev ptuid fs mount;
     do
         part=$(unquote "${part#*=}");
@@ -118,21 +119,20 @@ find_esp ()
         fs=$(unquote "${fs#*=}");
         mount=$(unquote "${mount#*=}");
  
-        if [ "$fs" != vfat ]; then continue; fi;
+        if [ "$fs"    != vfat        ]; then continue; fi;
+        if [ "$ptuid" != "$ESP_UUID" ]; then continue; fi;
+        if [ "$mount" != /esp        ]; then continue; fi;
 
-        if [ "$mount" = /esp ];
-        then
-            esp_fs="$fs";
-            esp_dev="$dev";
-            esp_part="$part";
-            esp_mount="$mount";
-            esp_uuid="$ptuid";
-            break;
-        fi;
+        esp_fs="$fs";
+        esp_dev="$dev";
+        esp_part="$part";
+        esp_mount="$mount";
+        esp_uuid="$ptuid";
+        break;
     done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
 
-    # doesn't look like the ESP, try again:
-    if [ "$ESP_UUID" != "$esp_uuid" ];
+    # If not found, loosen the requirement to fs and parttuid only
+    if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
     then
         while read part dev ptuid fs mount;
         do
