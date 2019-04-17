@@ -134,6 +134,11 @@ find_esp ()
     # If not found, loosen the requirement to fs and parttuid only
     if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
     then
+        esp_fs=;
+        esp_dev=;
+        esp_part=;
+        esp_mount=;
+        esp_uuid=;
         while read part dev ptuid fs mount;
         do
             part=$(unquote "${part#*=}");
@@ -158,6 +163,11 @@ find_esp ()
     # This is to workaround https://github.com/go-debos/debos/issues/160
     if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
     then
+        esp_fs=;
+        esp_dev=;
+        esp_part=;
+        esp_mount=;
+        esp_uuid=;
         while read part dev ptuid fs mount;
         do
             part=$(unquote "${part#*=}");
