@@ -154,6 +154,29 @@ find_esp ()
         done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
     fi;
 
+    # If not found, be very loose and just check the mountpoint.
+    # This is to workaround https://github.com/go-debos/debos/issues/160
+    if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
+    then
+        while read part dev ptuid fs mount;
+        do
+            part=$(unquote "${part#*=}");
+            dev=$(unquote "${dev#*=}");
+            ptuid=$(unquote "${ptuid#*=}");
+            fs=$(unquote "${fs#*=}");
+            mount=$(unquote "${mount#*=}");
+
+            if [ "$mount" != /esp ]; then continue; fi;
+
+            esp_fs="$fs";
+            esp_dev="$dev";
+            esp_part="$part";
+            esp_mount="$mount";
+            esp_uuid="$ptuid";
+            break;
+        done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
+    fi;
+
     if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
     then
         warn "ESP not found by part-type ($ESP_UUID) or path (/esp)";
