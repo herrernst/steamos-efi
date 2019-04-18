@@ -205,6 +205,13 @@ find_esp ()
 }
 
 ############################################################################
+# whether EFI variables are supported on this system
+efi_vars_supported ()
+{
+    [ -e /sys/firmware/efi/vars ] || [ -e /sys/firmware/efi/efivars ];
+}
+
+############################################################################
 # find matching efiboot entries:
 find_boot_entries ()
 {
@@ -448,8 +455,12 @@ fi;
 
 if [ $esp_boot_ok = 0 ];
 then
-    echo EFI: Failed to create boot entry $free_boot_id;
-    exit 1;
+    if efi_vars_supported; then
+        echo EFI: Failed to create boot entry $free_boot_id;
+        exit 1;
+    else
+	echo EFI: EFI variables not supported, no boot entry was created;
+    fi;
 fi;
 
 exit 0;
