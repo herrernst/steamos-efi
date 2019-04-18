@@ -368,7 +368,6 @@ pkg_version=;   # version of the loader package in the OS
 pkg_checksum=;  # checksum of the loader binary in the OS package
 esp_checksum=;  # checksum of the loader binary on the ESP
 pkg_is_newer=0; # OS package has a newer loader than the ESP
-install_cl=0;
 
 read_manifest "$esp_mount/$installpath"/steamcl.version;
 calculate_checksum "$esp_mount/$installpath"/steamcl.efi;
