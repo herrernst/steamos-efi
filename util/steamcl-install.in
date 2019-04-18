@@ -53,6 +53,8 @@ manifest_version=;
 checksum=;
 installpath=EFI/$distrib;
 
+force_extra_removable=0;
+
 warn () { echo "$@" >&2; }
 
 ############################################################################
@@ -309,6 +311,14 @@ update_esp ()
     mkdir -p $esp${bootpath%/*};
     cp -av $bin $lst $esp${bootpath%/*};
 
+    if [ $force_extra_removable = 1 ]; then
+        bootpath=/efi/boot/bootx64.efi;
+        echo "Installing bootloader to the removable media path @ $bootpath";
+        mkdir -p $esp${bootpath%/*};
+        cp -av $bin $esp${bootpath};
+        # not installing the .version file
+    fi
+
     return 0;
 }
 
@@ -367,6 +377,20 @@ check_boot_path ()
 }
 
 ############################################################################
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        (--force-extra-removable)
+            force_extra_removable=1;
+            shift
+            ;;
+
+        (*)
+            warn "Unexpected argument '$1'";
+            exit 1;
+            ;;
+    esac
+done
 
 find_esp;
 echo "ESP $esp_fs $esp_uuid on $esp_dev GPT#$esp_part ($esp_mount)";
