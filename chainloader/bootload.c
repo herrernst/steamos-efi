@@ -227,6 +227,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     found[ j ].cfg = NULL;
     efi_unmount( &root_dir );
 
+    Print( L"Went through %u filesystems, %u SteamOS loaders found\n", n_handles, j);
+
     Print( L"Unsorted\n" );
     dump_found( &found[0] );
     // yes I know, bubble sort is terribly gauche, but we really don't care:
