@@ -234,7 +234,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     // a fairly psychosis-inducing setup):
     UINTN sort = 1;
     while( sort )
-        for( UINTN i = sort = 0; i < j - 1; i++ )
+        for( UINTN i = sort = 0; i < j; i++ )
             if( found[ i ].at > found[ i + 1 ].at  )
                 sort += swap_cfgs( &found[0], i, i + 1 );
     Print( L"Sorted\n" );
