@@ -153,7 +153,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     static EFI_GUID dp_guid = DEVICE_PATH_PROTOCOL;
     cfg_entry *conf = NULL;
     UINTN j = 0;
-    found_cfg found[MAX_BOOTCONFS] = { { NULL } };
+    found_cfg found[MAX_BOOTCONFS + 1] = { { NULL } };
 
     chosen->partition = NULL;
     chosen->loader_path = NULL;
