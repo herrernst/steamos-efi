@@ -153,10 +153,10 @@ EFI_HANDLE get_self_handle (VOID)
     return self_image;
 }
 
-VOID initialise (EFI_HANDLE image)
+VOID initialise (EFI_HANDLE image, UINTN verbose)
 {
     self_image = image;
-    set_verbosity( 0 );
+    set_verbosity( verbose );
 }
 
 EFI_DEVICE_PATH *

@@ -97,10 +97,11 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     UINTN count = 0;
     EFI_STATUS res = EFI_SUCCESS;
     UINTN debug = 0;
+    UINTN verbose = 0;
     bootloader steamos;
 
     InitializeLib( image_handle, sys_table );
-    initialise( image_handle );
+    initialise( image_handle, verbose );
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
 
