@@ -1,3 +1,14 @@
+steamos-efi (0.06) clockwerk; urgency=medium
+
+  * Fix chainloader for cases where no steamos bootloader is found.
+  * Adjustments in steamcl-install to allow running it in debos, ie:
+    - within a container where lsblk has limited capabilities
+    - within a QEmu VM without EFI
+  * Fix steamcl-install for very first install
+  * Add an option to install the chainloader at boot/bootx64.efi.
+
+ -- Arnaud Rebillout <arnaud.rebillout@collabora.com>  Sat, 20 Apr 2019 19:33:11 +0700
+
 steamos-efi (0.05) clockwerk; urgency=medium
 
   * steamos-bootconf uses the new comment field to record preset actions
