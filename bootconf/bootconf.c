@@ -151,8 +151,8 @@ static int usage (const char *msg, ...)
     --output-to <stdout|nowhere|input>                                       \n\
                                                                              \n\
 If an error occurs before final output, the bootconf file will not be        \n\
-rewritten. It is still possible that an errorduring the writing of said file \n\
-could leave it in an inconsistent state.                                     \n\
+rewritten. It is still possible that an error during the writing of said     \n\
+file could leave it in an inconsistent state.                                \n\
                                                                              \n\
 START and END may be:                                                        \n\
   20380119031407 style UTC datestamps (yyyymmddHHMMSS)                       \n\
@@ -168,10 +168,10 @@ START and END may be:                                                        \n\
   0 means \"don't care\" and is distinct from 0000                           \n\
                                                                              \n\
 --output-to determines where the [modified] bootconf file will be written:   \n\
-  stdout - to standard output                                                \n\
-  none   - not emitted (useful if you are using --get)                       \n\
-  input  - the input path will be overwritten with the modified data         \n\
-  NOTE: this does not affect putput from --get commands and similar - only   \n\
+  stdout  - to standard output                                               \n\
+  nowhere - not emitted (useful if you are using --get)                      \n\
+  input   - the input path will be overwritten with the modified data        \n\
+  NOTE: this does not affect output from --get commands and similar - only   \n\
   the destination of the full modified bootconf data.\n"
            );
 
