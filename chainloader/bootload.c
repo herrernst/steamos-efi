@@ -234,9 +234,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     // yes I know, bubble sort is terribly gauche, but we really don't care:
     // usually there will be only two entries (and at most 16, which would be
     // a fairly psychosis-inducing setup):
-    UINTN sort = 1;
+    UINTN sort = j > 1 ? 1 : 0;
     while( sort )
-        for( UINTN i = sort = 0; i < j; i++ )
+        for( UINTN i = sort = 0; i < j - 1; i++ )
             if( found[ i ].at > found[ i + 1 ].at  )
                 sort += swap_cfgs( &found[0], i, i + 1 );
     Print( L"Sorted\n" );
