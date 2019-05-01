@@ -1,3 +1,9 @@
+steamos-efi (0.07) clockwerk; urgency=medium
+
+  * Fix the bootload sort loop in chainloader (for real this time).
+
+ -- Arnaud Rebillout <arnaud.rebillout@collabora.com>  Wed, 01 May 2019 12:27:07 +0700
+
 steamos-efi (0.06) clockwerk; urgency=medium
 
   * Fix chainloader for cases where no steamos bootloader is found.
