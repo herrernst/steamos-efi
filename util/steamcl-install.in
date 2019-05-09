@@ -236,7 +236,7 @@ find_boot_entries ()
 
         bootid=${bootid%\*};
 
-        case $bootid in (Boot+([0-9])) true; ;; *) continue; esac;
+        case $bootid in (Boot+([0-9A-Fa-f])) true; ;; *) continue; esac;
 
         all_boot_ids=${all_boot_ids}${all_boot_ids:+ }${bootid#Boot};
 
@@ -351,8 +351,8 @@ check_boot_path ()
     while read -r bootid entry;
     do
         bootid=${bootid%\*};
-        case $bootid in (Boot+([0-9]))   true; ;; *) continue; esac;
-        case $entry  in (*+([ 	])HD\(*) true; ;; *) continue; esac;
+        case $bootid in (Boot+([0-9A-Fa-f])) true; ;; *) continue; esac;
+        case $entry  in (*+([ 	])HD\(*)     true; ;; *) continue; esac;
 
         epart=${entry#*HD\(};
         epart=${epart%%,*}
