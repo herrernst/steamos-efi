@@ -195,8 +195,14 @@ find_esp ()
         return 1;
     fi;
 
-    if [ -z "$mount" ];
+    # If the esp is configured to be automounted, then it should be easy to mount it
+    if [ -z "$esp_mount" ];
     then
+        mount "$esp_part"
+        esp_mount=$(findmnt "$esp_part" -no target)
+    fi
+
+    if [ -z "$esp_mount" ];
         warn "ESP on $esp_part is not mounted";
         return 1;
     fi;
