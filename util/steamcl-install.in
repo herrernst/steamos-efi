@@ -274,7 +274,7 @@ choose_free_boot_id ()
         if [ $((16#$be)) = $id ]; then : $((id++)); fi;
     done
 
-    free_boot_id=$(printf "%x" $id);
+    free_boot_id=$(printf "%04X" $id);
 }
 
 update_esp ()
@@ -337,7 +337,7 @@ add_boot_entry ()
     local path="$esp""$dir";
     local ldr=$(basename $bin);
 
-    printf "Creating Boot%04x %s\n" ${bid:-0} "$nam";
+    printf "Creating Boot%s %s\n" ${bid:-0000} "$nam";
     dir=${dir//\//\\};
     efibootmgr -b $bid -c -d $dev -p $gpt -L "$nam" -l "$dir\\$ldr" > /dev/null;
 }
