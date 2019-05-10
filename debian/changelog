@@ -1,3 +1,9 @@
+steamos-efi (0.08) clockwerk; urgency=medium
+
+  * Minor fixes in steamcl-install.
+
+ -- Arnaud Rebillout <arnaud.rebillout@collabora.com>  Fri, 10 May 2019 09:48:39 +0700
+
 steamos-efi (0.07) clockwerk; urgency=medium
 
   * Fix the bootload sort loop in chainloader (for real this time).
