@@ -1,3 +1,9 @@
+steamos-efi (0.09) clockwerk; urgency=medium
+
+  * Fix bash syntax in steamcl-install.
+
+ -- Arnaud Rebillout <arnaud.rebillout@collabora.com>  Fri, 10 May 2019 12:33:47 +0700
+
 steamos-efi (0.08) clockwerk; urgency=medium
 
   * Minor fixes in steamcl-install.
