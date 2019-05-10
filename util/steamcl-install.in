@@ -203,6 +203,7 @@ find_esp ()
     fi
 
     if [ -z "$esp_mount" ];
+    then
         warn "ESP on $esp_part is not mounted";
         return 1;
     fi;
