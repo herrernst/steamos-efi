@@ -50,6 +50,7 @@ static int show_help   (unused int n,
 
 static arg_handler arg_handlers[] =
 {
+    { "-h"             , 0, show_help   , ARG_EARLY },
     { "--help"         , 0, show_help   , ARG_EARLY },
     { "--set"          , 2, set_entry   , ARG_STD   },
     { "--get"          , 1, get_entry   , ARG_STD   },
