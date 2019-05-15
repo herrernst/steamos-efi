@@ -309,6 +309,7 @@ static VOID dump_bootloader_paths (EFI_DEVICE_PATH *target)
 
     that = DevicePathToStr( target );
     Print( L"Loading bootloader @ %s\n", that );
+    FreePool( that ); 
 
     res = get_handle_protocol( &current, &lip_guid, (VOID **) &li );
     ERROR_RETURN( res, , L"No loaded image protocol. wat." );
@@ -317,8 +318,8 @@ static VOID dump_bootloader_paths (EFI_DEVICE_PATH *target)
                              li->FilePath );
 
     this = DevicePathToStr( fqdp );
-
     Print( L"Within chainloader @ %s\n", this );
+    FreePool( this );
 }
 
 EFI_STATUS exec_bootloader (bootloader *boot)
