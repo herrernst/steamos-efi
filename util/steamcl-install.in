@@ -90,7 +90,8 @@ calculate_checksum ()
 
 ############################################################################
 # determine the location of the esp and its current mount point if any
-unquote() {
+unquote()
+{
     local tmp="$1"
     
     tmp="${tmp%\"}"
@@ -308,7 +309,8 @@ update_esp ()
         fi;
     done;
 
-    if [ -n "$bootpath" ]; then
+    if [ -n "$bootpath" ];
+    then
         echo Replacing boot entry Boot$bootnum \@ $bootpath;
     else
         bootpath="$expected_bootpath";
@@ -318,7 +320,8 @@ update_esp ()
     mkdir -p $esp${bootpath%/*};
     cp -av $bin $lst $esp${bootpath%/*};
 
-    if [ $force_extra_removable = 1 ]; then
+    if [ $force_extra_removable = 1 ];
+    then
         bootpath=/efi/boot/bootx64.efi;
         echo "Installing bootloader to the removable media path @ $bootpath";
         mkdir -p $esp${bootpath%/*};
@@ -385,11 +388,12 @@ check_boot_path ()
 
 ############################################################################
 
-while [ "$#" -gt 0 ]; do
+while [ "$#" -gt 0 ];
+do
     case "$1" in
         (--force-extra-removable)
             force_extra_removable=1;
-            shift
+            shift;
             ;;
 
         (*)
