@@ -54,6 +54,7 @@ checksum=;
 installpath=EFI/$distrib;
 
 force_extra_removable=0;
+force_removable_efiboot=0;
 
 warn () { echo "$@" >&2; }
 
@@ -387,12 +388,60 @@ check_boot_path ()
 }
 
 ############################################################################
+# check to see if we're running off removable media
+os_on_removable_media ()
+{
+    local path=$(readlink -f "$0");
+    local bdev=$(df --output=source "$path" | tail -n +2);
+
+    if [ -n "$bdev" ];
+    then
+        local remo;
+        read remo < <(lsblk "$bdev" -o RM | tail -n +2);
+
+        if [ x"$remo" = x1 ];
+        then
+            return 0;
+        fi;
+    fi;
+
+    false;
+}
+
+############################################################################
+# Do we need to add an efi boot entry
+need_new_efi_boot_entry ()
+{
+    local epart=$1;
+    local epath=$2;
+
+    # _not_ forcing removable efi boot and we are actually on a removable medium:
+    if [ $force_removable_efiboot -eq 0 ] && os_on_removable_media;
+    then
+        return 1;
+    fi;
+
+    # efi boot entry already exists
+    if check_boot_path $epart $epath;
+    then
+        return 1;
+    fi;
+
+    return 0;
+}
+
+############################################################################
 
 while [ "$#" -gt 0 ];
 do
     case "$1" in
         (--force-extra-removable)
             force_extra_removable=1;
+            shift;
+            ;;
+
+        (--force-removable-efiboot)
+            force_removable_efiboot=1;
             shift;
             ;;
 
@@ -426,7 +475,7 @@ then
     esp_checksum=$manifest_checksum;
 fi;
 
-if check_boot_path $esp_part $installpath/steamcl.efi;
+if ! need_new_efi_boot_entry $esp_part $installpath/steamcl.efi;
 then
     esp_boot_ok=1;
 fi;
