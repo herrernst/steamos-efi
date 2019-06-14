@@ -1,3 +1,10 @@
+steamos-efi (0.10) clockwerk; urgency=medium
+
+  * Do not create EFI boot entries if running from removable media.
+  * Add --force-removable-efiboot to override the above behaviour.
+
+ -- Vivek Das Mohapatra <vivek@collabora.com>  Fri, 14 Jun 2019 17:08:34 +0100
+
 steamos-efi (0.09) clockwerk; urgency=medium
 
   * Fix bash syntax in steamcl-install.
