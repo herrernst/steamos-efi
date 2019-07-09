@@ -39,7 +39,7 @@ EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
 
     ERROR_JUMP( res, out, L"Allocating %d bytes",
                 SIZE_OF_EFI_FILE_SYSTEM_VOLUME_LABEL_INFO + MAXFSNAMLEN );
-    Print( L"<<< Volume label: %s>>>\n", volume->VolumeLabel );
+    Print( L"<<< Volume label: %s >>>\n", volume->VolumeLabel );
 
     res = efi_file_exists( root_dir, BOOTCONFPATH );
 
@@ -77,7 +77,7 @@ EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
     }
 
     if( is_esp_ish )
-        ls( root_dir , 0, L"/", 1 );
+        ls( root_dir, 0, L"/", 1 );
 
     res = efi_file_close( root_dir );
     WARN_STATUS( res, L"/->close() failed. what.\n" );
