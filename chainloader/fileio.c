@@ -223,11 +223,11 @@ EFI_STATUS efi_file_to_mem (EFI_FILE_PROTOCOL *fh,
     *buf   = ALLOC_OR_GOTO( dalloc + 1, out );
     *bytes = dalloc;
     *alloc = dalloc + 1;
-    *buf[ dalloc ] = (CHAR8) 0;
+    (*buf)[ dalloc ] = (CHAR8) 0;
 
     res = efi_file_read( fh, *buf, bytes );
     ERROR_JUMP( res, out, L"file_to_mem: read" );
-    *buf[ dalloc ] = (CHAR8) 0;
+    (*buf)[ dalloc ] = (CHAR8) 0;
 
 out:
     efi_free( info );
