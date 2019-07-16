@@ -1,3 +1,10 @@
+steamos-efi (0.11) clockwerk; urgency=medium
+
+  * Fix crash due to incorrect pointer
+  * Trivial nitpicks
+
+ -- Arnaud Rebillout <arnaud.rebillout@collabora.com>  Tue, 16 Jul 2019 11:18:31 +0700
+
 steamos-efi (0.10) clockwerk; urgency=medium
 
   * Do not create EFI boot entries if running from removable media.
