@@ -211,6 +211,7 @@ find_esp ()
     fi;
 
     esp_part=${esp_part:${#esp_dev}};
+    esp_part=${esp_part/p/};
 
     return 0;
 }
