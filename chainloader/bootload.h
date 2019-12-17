@@ -27,7 +27,7 @@
 typedef struct
 {
     EFI_HANDLE partition;
-    EFI_DEVICE_PATH device_path;
+    EFI_DEVICE_PATH *device_path;
     CHAR16 *loader_path;
     cfg_entry *config;
     CONST CHAR16 *args;

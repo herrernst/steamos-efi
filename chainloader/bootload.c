@@ -77,7 +77,7 @@ EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
 typedef struct
 {
     EFI_HANDLE partition;
-    EFI_DEVICE_PATH device_path;
+    EFI_DEVICE_PATH *device_path;
     CHAR16 *loader;
     cfg_entry *cfg;
     UINT64 at;
