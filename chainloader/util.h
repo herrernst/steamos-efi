@@ -41,6 +41,12 @@
 #define STEAMOSLDR  GRUBLDR
 #define CHAINLDR    EFIDIR L"\\Shell\\steamcl.efi"
 
+#ifndef EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID
+#define EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID              \
+    { 0xbc62157e, 0x3e33, 0x4fec,                               \
+      { 0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf } }
+#endif
+
 #ifndef NO_EFI_TYPES
 VOID * efi_alloc (IN UINTN s);
 VOID   efi_free  (IN VOID *p);
