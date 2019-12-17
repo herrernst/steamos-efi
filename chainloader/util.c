@@ -153,6 +153,59 @@ EFI_HANDLE get_self_handle (VOID)
     return self_image;
 }
 
+static EFI_HANDLE get_self_loaded_image (VOID)
+{
+    EFI_STATUS res;
+    EFI_GUID lip_guid  = LOADED_IMAGE_PROTOCOL;
+    EFI_LOADED_IMAGE *li = NULL;
+
+    if( !self_image )
+        ERROR_RETURN( EFI_NOT_STARTED, NULL,
+                      L"Chainloader is not initialised yet\n" );
+
+    res = get_handle_protocol( &self_image, &lip_guid, (VOID **) &li );
+    ERROR_RETURN( res, NULL, L"No loaded image protocol on %x\n", self_image );
+
+    return li;
+}
+
+EFI_HANDLE get_self_device_handle (VOID)
+{
+    EFI_LOADED_IMAGE *li = get_self_loaded_image();
+
+    return li ? li->DeviceHandle : NULL;
+}
+
+
+EFI_DEVICE_PATH * get_self_device_path (VOID)
+{
+    EFI_STATUS res;
+    EFI_GUID dp_guid   = DEVICE_PATH_PROTOCOL;
+    EFI_GUID lidp_guid = EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID;
+    EFI_DEVICE_PATH *lpath = NULL;
+    EFI_DEVICE_PATH *dpath = NULL;
+    EFI_HANDLE dh = get_self_device_handle();
+
+    if( !dh )
+        return NULL;
+
+    res = get_handle_protocol( &dh, &lidp_guid, (VOID **)&lpath );
+    if( res != EFI_SUCCESS )
+        res = get_handle_protocol( &dh, &dp_guid, (VOID **)&dpath );
+
+    WARN_STATUS( res, L"No DEVICE PATH type protos on self device handle\n" );
+
+    return dpath ?: lpath;
+}
+
+EFI_DEVICE_PATH * get_self_file (VOID)
+{
+    EFI_LOADED_IMAGE *li = get_self_loaded_image();
+
+    return li ? li->FilePath : NULL;
+}
+
+
 VOID initialise (EFI_HANDLE image, UINTN verbose)
 {
     self_image = image;
