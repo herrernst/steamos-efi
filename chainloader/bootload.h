@@ -31,9 +31,15 @@ typedef struct
     CHAR16 *loader_path;
     cfg_entry *config;
     CONST CHAR16 *args;
+    struct
+    {
+        UINT8 is_restricted;
+        EFI_DEVICE_PATH *device_path;
+    } criteria;
 } bootloader;
 
 EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path);
+EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader);
 EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen);

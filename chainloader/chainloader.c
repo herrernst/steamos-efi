@@ -102,6 +102,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
     InitializeLib( image_handle, sys_table );
     initialise( image_handle, verbose );
+    set_steamos_loader_criteria( &steamos );
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
 

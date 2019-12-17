@@ -143,6 +143,95 @@ UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
     return 1;
 }
 
+static BOOLEAN device_path_eq (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
+{
+    UINT16 la = 0;
+    UINT16 lb = 0;
+
+    if( a == b )
+        return TRUE;
+
+    if( !a )
+        return FALSE;
+
+    if( !b )
+        return FALSE;
+
+    la = a->Length[0] + (a->Length[1] << 8);
+    lb = b->Length[0] + (b->Length[1] << 8);
+
+    if( la != lb )
+        return FALSE;
+
+    if( (a->Type & EFI_DP_TYPE_MASK) !=
+        (b->Type & EFI_DP_TYPE_MASK) )
+        return FALSE;
+
+    if( a->SubType != b->SubType )
+        return FALSE;
+
+    for( UINT16 x = 0; x < la; x++ )
+        if( a->Length[ 2 + x ] != b->Length[ 2 + x ] )
+            return FALSE;
+
+    return TRUE;
+}
+
+EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
+{
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_HANDLE dh = NULL;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fs = NULL;
+    EFI_FILE_PROTOCOL *root_dir = NULL;
+    EFI_DEVICE_PATH *loader_file = NULL;
+    static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
+    CHAR16 *orig_path = NULL;
+    CHAR16 *flag_path = NULL;
+
+    loader_file = get_self_file();
+    loader->criteria.is_restricted = 0;
+    loader->criteria.device_path = NULL;
+
+    if( !loader_file )
+        return EFI_NOT_FOUND;
+
+    orig_path = DevicePathToStr( loader_file );
+    flag_path = resolve_path( L"restricted", orig_path, FALSE );
+
+    if( !flag_path )
+        res = EFI_INVALID_PARAMETER;
+    ERROR_JUMP( res, cleanup, L"Unable to construct path to flag file\n" );
+
+    dh = get_self_device_handle();
+    if( !dh )
+        res = EFI_NOT_FOUND;
+    ERROR_JUMP( res, cleanup, L"No device handle for running bootloader\n" );
+
+    res = get_handle_protocol( &dh, &fs_guid, (VOID **)&fs );
+    ERROR_JUMP( res, cleanup, L"No filesystem associated with bootloader\n" );
+
+    res = efi_mount( fs, &root_dir );
+    ERROR_JUMP( res, cleanup, L"Unable to mount bootloader filesystem\n" );
+
+    res = efi_file_exists( root_dir, flag_path );
+
+    if( res == EFI_SUCCESS )
+    {
+        loader->criteria.is_restricted = 1;
+        loader->criteria.device_path = get_self_device_path();
+
+    }
+
+    res = EFI_SUCCESS;
+
+cleanup:
+    efi_free( orig_path );
+    efi_free( flag_path );
+    efi_unmount( &root_dir );
+
+    return res;
+}
+
 EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen)
@@ -154,6 +243,10 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     cfg_entry *conf = NULL;
     UINTN j = 0;
     found_cfg found[MAX_BOOTCONFS + 1] = { { NULL } };
+    EFI_DEVICE_PATH *restricted = NULL;
+
+    if( chosen->criteria.is_restricted )
+        restricted = chosen->criteria.device_path;
 
     chosen->partition = NULL;
     chosen->loader_path = NULL;
@@ -175,6 +268,10 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         res = get_handle_protocol( &handles[ i ], &dp_guid,
                                    (VOID **)&found[ i ].device_path );
         ERROR_CONTINUE( res, L"partition #%u has no device path (what?)", i );
+
+        if( restricted )
+            if( !device_path_eq( restricted, found[ i ].device_path ) )
+                continue;
 
         res = efi_file_exists( root_dir, BOOTCONFPATH );
         if( res != EFI_SUCCESS )
