@@ -227,10 +227,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     found[ j ].cfg = NULL;
     efi_unmount( &root_dir );
 
-    Print( L"Went through %u filesystems, %u SteamOS loaders found\n", n_handles, j);
+    if( verbose )
+    {
+        Print( L"Went through %u filesystems, %u SteamOS loaders found\n", n_handles, j);
+        dump_found( &found[0] );
+    }
 
-    Print( L"Unsorted\n" );
-    dump_found( &found[0] );
     // yes I know, bubble sort is terribly gauche, but we really don't care:
     // usually there will be only two entries (and at most 16, which would be
     // a fairly psychosis-inducing setup):
@@ -239,11 +241,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         for( UINTN i = sort = 0; i < j - 1; i++ )
             if( found[ i ].at > found[ i + 1 ].at  )
                 sort += swap_cfgs( &found[0], i, i + 1 );
-    Print( L"Sorted\n" );
-    dump_found( &found[0] );
+
+    if( verbose )
+        dump_found( &found[0] );
+
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles, none of which are known-bad.
-
     INTN selected = -1;
     UINTN update  = 0;
 
@@ -339,7 +342,8 @@ EFI_STATUS exec_bootloader (bootloader *boot)
                 L"FDP could not construct a device path from %x + %s",
                 (UINT64) &boot->device_path, boot->loader_path );
 
-    dump_bootloader_paths( dpath );
+    if( verbose )
+        dump_bootloader_paths( dpath );
 
     res = load_image( dpath, &efi_app );
     ERROR_JUMP( res, unload, L"load-image failed" );

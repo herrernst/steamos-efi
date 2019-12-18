@@ -1,5 +1,5 @@
 Chainloader
 -----------
 
-Debug options for devs: head to `efi_main()` in `chainloader/chainloader.c`,
-and change the value of `debug` and `verbose` variables.
+Verbose option for devs: head to `efi_main()` in `chainloader/chainloader.c`,
+and change the value of the `verbose` variable.
