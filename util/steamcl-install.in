@@ -125,6 +125,11 @@ find_esp ()
     local fs=;
     local mount=;
 
+    # In case /esp is supposed to be automounted by systemd,
+    # let's make sure it's actually mounted, otherwise the
+    # output from the lsblk commands below will be incomplete.
+    ls /esp >/dev/null
+
     # Find esp according to fs, parttuid and mountpoint
     while read part dev ptuid fs mount;
     do
@@ -208,7 +213,8 @@ find_esp ()
         return 1;
     fi;
 
-    # If the esp is configured to be automounted, then it should be easy to mount it
+    # If the esp is listed in /etc/fstab or in a systemd mount unit,
+    # then it should be easy to mount it.
     if [ -z "$esp_mount" ];
     then
         mount "$esp_part"
