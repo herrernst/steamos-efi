@@ -98,7 +98,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     EFI_STATUS res = EFI_SUCCESS;
     UINTN debug = 0;
     UINTN verbose = 0;
-    bootloader steamos;
+    bootloader steamos = {0};
 
     InitializeLib( image_handle, sys_table );
     initialise( image_handle, verbose );
