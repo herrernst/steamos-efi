@@ -474,6 +474,9 @@ EFI_STATUS exec_bootloader (bootloader *boot)
                  esize, (UINT64) edata );
 
 unload:
+    // this is never masked by verbosity being turned down since we've
+    // crashed out into a bad error case: loaded image was not executable:
+    set_verbosity( 1 );
     if( child )
         dump_loaded_image( child );
 
