@@ -303,16 +303,16 @@ update_esp ()
     local esp=$1; shift;
     local bin=$1; shift;
     local ver=$1; shift;
-    local entry=;
+    local bootdir=/efi/"$dst";
     local bootnum=;
-    local bootpath=/efi/"$dst"/steamcl.efi;
+    local entry=;
 
     for entry in "$@";
     do
         local this_bootnum=${entry%%:*};
         local this_bootpath=${entry#*:};
 
-        if [ "${this_bootpath,,}" = "$bootpath" ];
+        if [ "${this_bootpath,,}" = "$bootdir/steamcl.efi" ];
         then
             bootnum="$this_bootnum";
             break;
@@ -321,20 +321,21 @@ update_esp ()
 
     if [ -n "$bootnum" ];
     then
-        echo Replacing boot entry Boot$bootnum \@ $bootpath;
+        echo Replacing boot entry Boot$bootnum \@ $bootdir/steamcl.efi;
     else
-        echo "Installing bootloader @ $bootpath (first install, no boot entry yet)";
+        echo "Installing bootloader @ $bootdir/steamcl.efi (first install, no boot entry yet)";
     fi
 
-    mkdir -p $esp${bootpath%/*};
-    cp -av $bin $ver $esp${bootpath%/*};
+    mkdir -p $esp$bootdir;
+    cp -av $bin $esp$bootdir/steamcl.efi;
+    cp -av $ver $esp$bootdir/steamcl.version;
 
     if [ $force_extra_removable = 1 ];
     then
-        bootpath=/efi/boot/bootx64.efi;
-        echo "Installing bootloader to the removable media path @ $bootpath";
-        mkdir -p $esp${bootpath%/*};
-        cp -av $bin $esp${bootpath};
+        bootdir=/efi/boot/;
+        echo "Installing bootloader to the removable media path @ $bootdir/bootx64.efi";
+        mkdir -p $esp$bootdir;
+        cp -av $bin $esp$bootdir/bootx64.efi;
         # not installing the .version file
     fi
 
