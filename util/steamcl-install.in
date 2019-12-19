@@ -305,27 +305,24 @@ update_esp ()
     local ver=$1; shift;
     local entry=;
     local bootnum=;
-    local bootpath=;
-    local expected_bootpath=/efi/"$dst"/steamcl.efi;
+    local bootpath=/efi/"$dst"/steamcl.efi;
 
     for entry in "$@";
     do
         local this_bootnum=${entry%%:*};
         local this_bootpath=${entry#*:};
 
-        if [ "${this_bootpath,,}" = "$expected_bootpath" ];
+        if [ "${this_bootpath,,}" = "$bootpath" ];
         then
             bootnum="$this_bootnum";
-            bootpath="$this_bootpath";
             break;
         fi;
     done;
 
-    if [ -n "$bootpath" ];
+    if [ -n "$bootnum" ];
     then
         echo Replacing boot entry Boot$bootnum \@ $bootpath;
     else
-        bootpath="$expected_bootpath";
         echo "Installing bootloader @ $bootpath (first install, no boot entry yet)";
     fi
 
