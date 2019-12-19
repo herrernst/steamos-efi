@@ -55,6 +55,7 @@ installpath=EFI/$distrib;
 
 force_extra_removable=0;
 force_removable_efiboot=0;
+restrict=0
 
 warn () { echo "$@" >&2; }
 
@@ -303,6 +304,7 @@ update_esp ()
     local esp=$1; shift;
     local bin=$1; shift;
     local ver=$1; shift;
+    local flagsdir=/"$dst";
     local bootdir=/efi/"$dst";
     local bootnum=;
     local entry=;
@@ -338,6 +340,14 @@ update_esp ()
         cp -av $bin $esp$bootdir/bootx64.efi;
         # not installing the .version file
     fi
+
+    if [ $restrict = 1 ];
+    then
+        echo "Enabling restricted flag @ $flagsdir/restricted";
+        mkdir -p $esp$flagsdir;
+        touch $esp$flagsdir/restricted;
+        echo "-> '$esp$flagsdir/restricted'";
+    fi;
 
     return 0;
 }
@@ -451,6 +461,11 @@ do
 
         (--force-removable-efiboot)
             force_removable_efiboot=1;
+            shift;
+            ;;
+
+        (--restrict)
+            restrict=1;
             shift;
             ;;
 
