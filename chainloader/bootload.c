@@ -215,8 +215,13 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
 
     res = efi_file_exists( root_dir, flag_path );
 
+    Print( L"orig_path=%s\n", orig_path );
+    Print( L"flag_path=%s\n", flag_path );
+
     if( res == EFI_SUCCESS )
     {
+	Print( L"Boot is restricted!!!\n" );
+
         loader->criteria.is_restricted = 1;
         loader->criteria.device_path = get_self_device_path();
 
