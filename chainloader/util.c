@@ -206,10 +206,9 @@ EFI_DEVICE_PATH * get_self_file (VOID)
 }
 
 
-VOID initialise (EFI_HANDLE image, UINTN verbose)
+VOID initialise (EFI_HANDLE image)
 {
     self_image = image;
-    set_verbosity( verbose );
 }
 
 EFI_DEVICE_PATH *

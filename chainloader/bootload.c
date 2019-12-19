@@ -187,6 +187,7 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
     static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
     CHAR16 *orig_path = NULL;
     CHAR16 *flag_path = NULL;
+    CHAR16 *verb_path = NULL;
 
     loader_file = get_self_file();
     loader->criteria.is_restricted = 0;
@@ -195,12 +196,19 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
     if( !loader_file )
         return EFI_NOT_FOUND;
 
+    // default to being verbose in early setup until we've had a chance
+    // to look for FLAGFILE_VERBOSE:
+    set_verbosity( 1 );
+
     orig_path = DevicePathToStr( loader_file );
     flag_path = resolve_path( FLAGFILE_RESTRICT, orig_path, FALSE );
+    verb_path = resolve_path( FLAGFILE_VERBOSE , orig_path, FALSE );
 
-    if( !flag_path )
+    if( !flag_path && !verb_path)
         res = EFI_INVALID_PARAMETER;
-    ERROR_JUMP( res, cleanup, L"Unable to construct path to flag file\n" );
+    ERROR_JUMP( res, cleanup,
+                L"Unable to construct %s and %s paths\n",
+                FLAGFILE_RESTRICT, FLAGFILE_VERBOSE );
 
     dh = get_self_device_handle();
     if( !dh )
@@ -213,13 +221,19 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
     res = efi_mount( fs, &root_dir );
     ERROR_JUMP( res, cleanup, L"Unable to mount bootloader filesystem\n" );
 
-    res = efi_file_exists( root_dir, flag_path );
+    // note that if we were unable to look for the flag file (verb_path unset)
+    // then we will remain in verbose mode (the default set above):
+    if( verb_path )
+        if( efi_file_exists( root_dir, verb_path ) != EFI_SUCCESS )
+            set_verbosity( 0 );
 
-    if( res == EFI_SUCCESS )
+    if( flag_path )
     {
-        loader->criteria.is_restricted = 1;
-        loader->criteria.device_path = get_self_device_path();
-
+        if( efi_file_exists( root_dir, flag_path ) == EFI_SUCCESS )
+        {
+            loader->criteria.is_restricted = 1;
+            loader->criteria.device_path = get_self_device_path();
+        }
     }
 
     res = EFI_SUCCESS;
@@ -227,6 +241,7 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
 cleanup:
     efi_free( orig_path );
     efi_free( flag_path );
+    efi_free( verb_path );
     efi_unmount( &root_dir );
 
     return res;

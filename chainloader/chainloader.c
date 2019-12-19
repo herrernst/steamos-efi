@@ -96,12 +96,10 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     EFI_HANDLE* filesystems = NULL;
     UINTN count = 0;
     EFI_STATUS res = EFI_SUCCESS;
-    UINTN debug = 0;
-    UINTN verbose = 0;
     bootloader steamos = {0};
 
     InitializeLib( image_handle, sys_table );
-    initialise( image_handle, verbose );
+    initialise( image_handle );
     set_steamos_loader_criteria( &steamos );
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
@@ -115,7 +113,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
         res = get_handle_protocol( &filesystems[i], &fs_guid, (VOID **)&fs );
         ERROR_CONTINUE( res, L"simple fs protocol" );
 
-        if( debug )
+        if( verbose )
             dump_fs_details( fs );
     }
 

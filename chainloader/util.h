@@ -42,6 +42,7 @@
 #define CHAINLDR    EFIDIR L"\\Shell\\steamcl.efi"
 
 #define FLAGFILE_RESTRICT L"steamcl-restricted"
+#define FLAGFILE_VERBOSE  L"steamcl-verbose"
 
 #ifndef EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID
 #define EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID              \
@@ -74,7 +75,7 @@ EFI_HANDLE get_self_device_handle (VOID);
 EFI_DEVICE_PATH * get_self_device_path (VOID);
 EFI_DEVICE_PATH * get_self_file (VOID);
 
-VOID initialise (EFI_HANDLE image, UINTN verbose);
+VOID initialise (EFI_HANDLE image);
 #endif
 
 CHAR16 *strwiden (CHAR8 *narrow);
