@@ -132,7 +132,7 @@ static VOID dump_found (found_cfg *c)
        dst.device_path = src.device_path; \
        dst.at          = src.at;          })
 
-UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
+static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
 {
     found_cfg c;
 
