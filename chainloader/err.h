@@ -61,6 +61,9 @@
        ERROR_JUMP( stat, tgt, L"Allocating %d bytes", (int)s );    \
        x; })
 
+#define v_msg(fmt, ...) \
+    ({ if( verbose ) Print( fmt, ##__VA_ARGS__ ); })
+
 extern UINTN verbose;
 UINTN set_verbosity (UINTN level);
 
