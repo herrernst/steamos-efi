@@ -440,6 +440,12 @@ need_new_efi_boot_entry ()
         return 1;
     fi;
 
+    # efi boot entry are not supported
+    if ! efi_vars_supported;
+    then
+        return 1;
+    fi;
+
     # efi boot entry already exists
     if check_boot_path $epart $epath;
     then
@@ -569,12 +575,8 @@ fi;
 
 if [ $esp_boot_ok = 0 ];
 then
-    if efi_vars_supported; then
-        echo EFI: Failed to create boot entry $free_boot_id;
-        exit 1;
-    else
-	echo EFI: EFI variables not supported, no boot entry was created;
-    fi;
+    echo ESP: Failed to create boot entry $free_boot_id;
+    exit 1;
 fi;
 
 exit 0;
