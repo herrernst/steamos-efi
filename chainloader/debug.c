@@ -23,12 +23,13 @@
 #include <efiprot.h>
 
 #include "util.h"
+#include "err.h"
 
 VOID dump_loaded_image (EFI_LOADED_IMAGE *image)
 {
     EFI_HANDLE current = get_self_handle();
 
-    Print( L"\n\
+    v_msg( L"\n\
 typedef struct {                                               \n\
     UINT32                          Revision;         %u       \n\
     EFI_HANDLE                      ParentHandle;     %x %s    \n\

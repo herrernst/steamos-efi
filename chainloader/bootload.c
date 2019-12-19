@@ -115,7 +115,7 @@ static UINTN update_scheduled_now (const cfg_entry *conf)
 static VOID dump_found (found_cfg *c)
 {
     for(UINTN i = 0; c && c->cfg; c++)
-        Print( L"#%u %x @%lu %s%s[%s]\n",
+        v_msg( L"#%u %x @%lu %s%s[%s]\n",
                i++,
                c->partition,
                c->at,
@@ -339,9 +339,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     found[ j ].cfg = NULL;
     efi_unmount( &root_dir );
 
-    Print( L"Went through %u filesystems, %u SteamOS loaders found\n", n_handles, j);
+    v_msg( L"Went through %u filesystems, %u SteamOS loaders found\n", n_handles, j);
 
-    Print( L"Unsorted\n" );
+    v_msg( L"Unsorted\n" );
     dump_found( &found[0] );
     // yes I know, bubble sort is terribly gauche, but we really don't care:
     // usually there will be only two entries (and at most 16, which would be
@@ -351,7 +351,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         for( UINTN i = sort = 0; i < j - 1; i++ )
             if( found[ i ].at > found[ i + 1 ].at  )
                 sort += swap_cfgs( &found[0], i, i + 1 );
-    Print( L"Sorted\n" );
+    v_msg( L"Sorted\n" );
     dump_found( &found[0] );
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles, none of which are known-bad.
@@ -420,7 +420,7 @@ static VOID dump_bootloader_paths (EFI_DEVICE_PATH *target)
     EFI_HANDLE current = get_self_handle();
 
     that = DevicePathToStr( target );
-    Print( L"Loading bootloader @ %s\n", that );
+    v_msg( L"Loading bootloader @ %s\n", that );
     FreePool( that ); 
 
     res = get_handle_protocol( &current, &lip_guid, (VOID **) &li );
@@ -430,7 +430,7 @@ static VOID dump_bootloader_paths (EFI_DEVICE_PATH *target)
                              li->FilePath );
 
     this = DevicePathToStr( fqdp );
-    Print( L"Within chainloader @ %s\n", this );
+    v_msg( L"Within chainloader @ %s\n", this );
     FreePool( this );
 }
 

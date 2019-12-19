@@ -39,18 +39,18 @@ EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
 
     ERROR_JUMP( res, out, L"Allocating %d bytes",
                 SIZE_OF_EFI_FILE_SYSTEM_VOLUME_LABEL_INFO + MAXFSNAMLEN );
-    Print( L"<<< Volume label: %s >>>\n", volume->VolumeLabel );
+    v_msg( L"<<< Volume label: %s >>>\n", volume->VolumeLabel );
 
     res = efi_file_exists( root_dir, BOOTCONFPATH );
 
     switch (res)
     {
       case EFI_SUCCESS:
-        Print(  L"<<< !! SteamOS/bootconf, pseudo-ESP, full listing >>>\n" );
+        v_msg(  L"<<< !! SteamOS/bootconf, pseudo-ESP, full listing >>>\n" );
         is_esp_ish = 1;
         break;
       case EFI_NOT_FOUND:
-        Print(  L"<<< No SteamOS/bootconf, not a pseudo-ESP >>>\n" );
+        v_msg(  L"<<< No SteamOS/bootconf, not a pseudo-ESP >>>\n" );
         break;
       default:
         WARN_STATUS( res, L"%s->Open( SteamOS/bootconf )", volume->VolumeLabel );
@@ -63,15 +63,15 @@ EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
     {
         if( efi_file_exists( root_dir, DEFAULTLDR ) == EFI_SUCCESS )
         {
-            Print( L"Default loader %s exists\n", DEFAULTLDR );
+            v_msg( L"Default loader %s exists\n", DEFAULTLDR );
             if( valid_efi_binary( root_dir, DEFAULTLDR ) == EFI_SUCCESS )
-                Print( L"... and is a PE32 executable for x86_64\n" );
+                v_msg( L"... and is a PE32 executable for x86_64\n" );
             else
-                Print( L"... but is NOT a PE32 executable\n" );
+                v_msg( L"... but is NOT a PE32 executable\n" );
         }
         else
         {
-            Print( L"Default loader %s does NOT exist on this EFI volume\n",
+            v_msg( L"Default loader %s does NOT exist on this EFI volume\n",
                    DEFAULTLDR );
         }
     }
