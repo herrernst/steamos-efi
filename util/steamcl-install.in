@@ -302,7 +302,7 @@ update_esp ()
     local dst=$1; shift;
     local esp=$1; shift;
     local bin=$1; shift;
-    local lst=$1; shift;
+    local ver=$1; shift;
     local entry=;
     local bootnum=;
     local bootpath=;
@@ -330,7 +330,7 @@ update_esp ()
     fi
 
     mkdir -p $esp${bootpath%/*};
-    cp -av $bin $lst $esp${bootpath%/*};
+    cp -av $bin $ver $esp${bootpath%/*};
 
     if [ $force_extra_removable = 1 ];
     then
@@ -349,7 +349,7 @@ add_boot_entry ()
     local dst=$1;
     local esp=$2;
     local bin=$3;
-    local lst=$4;
+    local ver=$4;
     local bid=$5;
     local dev=$6;
     local gpt=$7;
