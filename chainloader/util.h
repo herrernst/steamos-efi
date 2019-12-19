@@ -41,6 +41,8 @@
 #define STEAMOSLDR  GRUBLDR
 #define CHAINLDR    EFIDIR L"\\Shell\\steamcl.efi"
 
+#define FLAGFILE_RESTRICT L"steamcl-restricted"
+
 #ifndef EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID
 #define EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID              \
     { 0xbc62157e, 0x3e33, 0x4fec,                               \

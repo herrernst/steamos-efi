@@ -196,7 +196,7 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
         return EFI_NOT_FOUND;
 
     orig_path = DevicePathToStr( loader_file );
-    flag_path = resolve_path( L"restricted", orig_path, FALSE );
+    flag_path = resolve_path( FLAGFILE_RESTRICT, orig_path, FALSE );
 
     if( !flag_path )
         res = EFI_INVALID_PARAMETER;
