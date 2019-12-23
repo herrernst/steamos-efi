@@ -60,6 +60,40 @@ force_removable_efiboot=0;
 restricted=0;
 verbose=0;
 
+usage_message="\
+$(basename $0) [OPTION]
+
+Install the steam chainloader on the ESP partition, and create an EFI boot
+entry if needed.
+
+--flags FLAG1,FLAG2,...
+
+    Comma separated list of flags to set. For every FLAG specified, a flag file
+    named 'steamcl-FLAG' will be installed next to the chainloader.  For every
+    FLAG that is not specified, the corresponding flag file 'steamcl-FLAG' will
+    be removed.
+
+    If this option is used in conjonction with '--force-extra-removable', the
+    flag files are also set at the removable media path.
+
+    If this option is not specified, the existing flag files are not modified.
+      
+    Supported flags:
+    - restricted: Restrict the chainloader to select ONLY stage 2 bootloaders
+      that are installed on the same medium.
+    - verbose: Make the chainloader chatty.
+
+--force-extra-removable
+
+    Also install the chainloader at the removable media path (for x86_64 arch:
+    efi/boot/bootx64.efi).
+
+--force-removable-efiboot
+
+    Create an EFI boot entry, even if the chainloader is booted from a removable
+    medium.
+"
+
 warn () { echo "$@" >&2; }
 
 version_compare()
@@ -506,6 +540,11 @@ do
         (--force-removable-efiboot)
             force_removable_efiboot=1;
             shift;
+            ;;
+
+        (--help|-h)
+            echo "$usage_message";
+            exit 0;
             ;;
 
         (*)
