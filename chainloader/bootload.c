@@ -1,9 +1,9 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2019 Collabora Ltd
-// Copyright © 2018,2019 Valve Corporation
-// Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
+// Copyright © 2018,2020 Collabora Ltd
+// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -145,36 +145,32 @@ static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
 
 static BOOLEAN device_path_eq (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
 {
-    UINT16 la = 0;
-    UINT16 lb = 0;
-
-    if( a == b )
-        return TRUE;
-
-    if( !a )
+    if( !a || !b )
         return FALSE;
 
-    if( !b )
-        return FALSE;
+    // iterate over all the path components; both devices are located on the
+    // same drive only if both components reach hard-drive partitions.
+    while( !IsDevicePathEnd( a ) && !IsDevicePathEnd( b ) )
+    {
+        if( DevicePathNodeLength( a ) != DevicePathNodeLength( b ) ||
+            DevicePathType( a )       != DevicePathType( b )       ||
+	    DevicePathSubType( a )    != DevicePathSubType( b ) )
+	    return FALSE;
 
-    la = a->Length[0] + (a->Length[1] << 8);
-    lb = b->Length[0] + (b->Length[1] << 8);
+	// both components are hard-drive partitions.
+        if( DevicePathType( a )    == MEDIA_DEVICE_PATH &&
+	    DevicePathSubType( a ) == MEDIA_HARDDRIVE_DP )
+            return TRUE;
 
-    if( la != lb )
-        return FALSE;
+        for( UINT16 x = 0; x < DevicePathNodeLength( a ); x++ )
+            if( a->Length[ 2 + x ] != b->Length[ 2 + x ] )
+                return FALSE;
 
-    if( (a->Type & EFI_DP_TYPE_MASK) !=
-        (b->Type & EFI_DP_TYPE_MASK) )
-        return FALSE;
+        a = NextDevicePathNode( a );
+        b = NextDevicePathNode( b );
+    }
 
-    if( a->SubType != b->SubType )
-        return FALSE;
-
-    for( UINT16 x = 0; x < la; x++ )
-        if( a->Length[ 2 + x ] != b->Length[ 2 + x ] )
-            return FALSE;
-
-    return TRUE;
+    return FALSE;
 }
 
 EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
