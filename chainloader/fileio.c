@@ -1,9 +1,9 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2019 Collabora Ltd
-// Copyright © 2018,2019 Valve Corporation
-// Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
+// Copyright © 2018,2020 Collabora Ltd
+// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
                           UINT64 mode,
                           UINT64 attr)
 {
-    if (!mode)
+    if( !mode )
         mode = EFI_FILE_MODE_READ;
 
     return uefi_call_wrapper( dir->Open, 5, dir, opened, path, mode, attr );
@@ -50,7 +50,7 @@ EFI_STATUS efi_file_exists (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
 
     res = efi_file_open( dir, &target, path, 0, 0 );
 
-    switch (res)
+    switch( res )
     {
       case EFI_SUCCESS:
         r2 = efi_file_close( target );

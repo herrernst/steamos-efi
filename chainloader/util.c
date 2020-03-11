@@ -1,9 +1,9 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2019 Collabora Ltd
-// Copyright © 2018,2019 Valve Corporation
-// Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
+// Copyright © 2018,2020 Collabora Ltd
+// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ EFI_HANDLE self_image;
 
 CONST CHAR16 * efi_statstr (EFI_STATUS s)
 {
-    switch (s)
+    switch( s )
     {
       case EFI_SUCCESS:              return L"EFI_SUCCESS";
       case EFI_LOAD_ERROR:           return L"EFI_LOAD_ERROR";
@@ -73,7 +73,7 @@ CONST CHAR16 * efi_statstr (EFI_STATUS s)
 
 CONST CHAR16 *efi_memtypestr (EFI_MEMORY_TYPE m)
 {
-    switch (m)
+    switch( m )
     {
       case EfiReservedMemoryType:      return L"Reserved";
       case EfiLoaderCode:              return L"Loader Code";
@@ -472,10 +472,10 @@ static VOID efi_time_to_utc (EFI_TIME *time)
         return;
 
     if( time->TimeZone > 0 )
-        for (; time->TimeZone; time->TimeZone--)
+        for( ; time->TimeZone; time->TimeZone-- )
             incr_minute( time );
     else if( time->TimeZone < 0 )
-        for (; time->TimeZone; time->TimeZone++)
+        for( ; time->TimeZone; time->TimeZone++ )
             decr_minute( time );
 }
 

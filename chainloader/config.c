@@ -1,9 +1,9 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2019 Collabora Ltd
-// Copyright © 2018,2019 Valve Corporation
-// Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
+// Copyright © 2018,2020 Collabora Ltd
+// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -142,7 +142,7 @@ EFI_STATUS set_config_from_data (cfg_entry *cfg, CHAR8 *data, UINTN size)
 #ifndef NO_EFI_TYPES
 static CONST CHAR16 *_cts (cfg_entry_type t)
 {
-    switch (t)
+    switch( t )
     {
       case cfg_string: return L"string";
       case cfg_bool:   return L"bool";
@@ -157,7 +157,7 @@ static CONST CHAR16 *_cts (cfg_entry_type t)
 #else
 const char *_cts (cfg_entry_type t)
 {
-    switch (t)
+    switch( t )
     {
       case cfg_string: return "string";
       case cfg_bool:   return "bool";

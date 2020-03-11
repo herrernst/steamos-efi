@@ -264,7 +264,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     chosen->args = NULL;
     chosen->config = NULL;
 
-    for ( UINTN i = 0; i < n_handles && j < MAX_BOOTCONFS; i++ )
+    for( UINTN i = 0; i < n_handles && j < MAX_BOOTCONFS; i++ )
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs = NULL;
 

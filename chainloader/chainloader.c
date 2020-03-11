@@ -1,9 +1,9 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2019 Collabora Ltd
-// Copyright © 2018,2019 Valve Corporation
-// Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
+// Copyright © 2018,2020 Collabora Ltd
+// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
 
     res = efi_file_exists( root_dir, BOOTCONFPATH );
 
-    switch (res)
+    switch( res )
     {
       case EFI_SUCCESS:
         v_msg(  L"<<< !! SteamOS/bootconf, pseudo-ESP, full listing >>>\n" );
@@ -106,7 +106,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
     ERROR_JUMP( res, cleanup, L"get_fs_handles" );
 
-    for ( int i = 0; i < (int)count; i++ )
+    for( int i = 0; i < (int)count; i++ )
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fs = NULL;
 

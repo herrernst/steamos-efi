@@ -40,7 +40,7 @@ uint64_t set_conf_uint (const cfg_entry *cfg, const char *name, uint64_t val)
 {
     cfg_entry *c = (cfg_entry *) get_conf_item (cfg, (unsigned char *)name);
 
-    if (!c)
+    if( !c )
         return 0;
 
     switch( c->type )
@@ -65,7 +65,7 @@ uint64_t set_conf_string (const cfg_entry *cfg, const char *name, const char *va
 {
     cfg_entry *c = (cfg_entry *) get_conf_item (cfg, (unsigned char *)name);
 
-    if (!c)
+    if( !c )
         return 0;
 
     size_t l = strlen( val );
