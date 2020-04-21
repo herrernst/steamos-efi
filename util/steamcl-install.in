@@ -407,6 +407,7 @@ update_flags ()
             if [ ${!flag} = 1 ] && [ ! -e ${bootdir}/${flagfile} ];
             then
                 echo "Enabling flag @ ${bootdir}/${flagfile}";
+                mkdir -p ${esp}${bootdir};
                 touch ${esp}${bootdir}/${flagfile};
                 echo "-> '${esp}${bootdir}/${flagfile}'";
             elif [ ${!flag} = 0 ] && [ -e ${bootdir}/${flagfile} ];
