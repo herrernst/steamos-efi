@@ -365,7 +365,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         {
             // if boot-other is set, update should persist until we get to
             // a non-boot-other entry:
-            if( !update)
+            if( !update )
                 update = update_scheduled_now( found[i].cfg );
             continue;
         }
