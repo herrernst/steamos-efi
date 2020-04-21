@@ -396,7 +396,7 @@ update_flags ()
     bootdirs+=(/efi/"$dst");
     if [ $force_extra_removable = 1 ];
     then
-        bootdirs+=(/efi/boot/);
+        bootdirs+=(/efi/boot);
     fi;
 
     for bootdir in "${bootdirs[@]}";
