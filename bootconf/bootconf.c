@@ -188,7 +188,7 @@ static int show_help   (unused int n,
                         unused cfg_entry *cfg)
 {
     usage( NULL );
-    return -1;
+    exit( 0 );
 }
 
 static int set_entry (int n, int argc, char **argv, cfg_entry *cfg)
