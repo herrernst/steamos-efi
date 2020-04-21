@@ -43,7 +43,7 @@ pkglibexec_PROGRAMS = steamcl.efi
 noinst_PROGRAMS     = steamcl.elf
 if ENABLE_BASH_COMPLETION
 bashcompletiondir = $(BASH_COMPLETION_DIR)
-dist_bashcompletion_DATA = data/steamcl-install
+dist_bashcompletion_DATA = bash-completion/steamcl-install
 endif
 dist_pkgdata_DATA   = data/steamcl.version
 dist_sbin_SCRIPTS   = util/steamcl-install
