@@ -28,7 +28,14 @@ _steamcl-install()
 
     case "$prev" in
         --flags)
-            COMPREPLY=($(compgen -W "restricted verbose" -- "$cur"))
+            local curflags
+            curflags="${cur%,*}"
+            if [[ "$curflags" == "$cur" ]]; then
+                curflags=
+            else
+                curflags+=","
+            fi
+            COMPREPLY=($(compgen -W "${curflags}restricted ${curflags}verbose" -- "$cur"))
             return
             ;;
     esac
