@@ -3,8 +3,8 @@
 # Process this file with autoconf to produce a configure script.
 
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010  Free Software Foundation, Inc.
-# Copyright © 2018,2019 Collabora Ltd.
-# Copyright © 2018,2019 Valve Corporation
+# Copyright © 2018,2020 Collabora Ltd.
+# Copyright © 2020 2020 Valve Corporation
 # Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
 #
 # This configure.ac is free software; the author
@@ -325,6 +325,21 @@ AC_SUBST(HOST_CFLAGS)
 AC_SUBST(HOST_LDFLAGS)
 AC_SUBST(HOST_CPPFLAGS)
 AC_SUBST(HOST_CCASFLAGS)
+
+AC_ARG_WITH([bash-completion-dir],
+            [AS_HELP_STRING([--with-bash-completion-dir[=PATH]],
+                            [Install the bash auto-completion script in this directory. @<:@default=yes@:>@])],
+            [with_bash_completion_dir=$withval],
+            [with_bash_completion_dir=yes])
+
+AS_IF([test x"$with_bash_completion_dir" = xyes],
+      [PKG_CHECK_MODULES([BASH_COMPLETION], [bash-completion >= 2.0],
+			 [BASH_COMPLETION_DIR="`pkg-config --variable=completionsdir bash-completion`"],
+                         [BASH_COMPLETION_DIR="$datadir/bash-completion/completions"])],
+      [BASH_COMPLETION_DIR="$with_bash_completion_dir"])
+
+AC_SUBST([BASH_COMPLETION_DIR])
+AM_CONDITIONAL([ENABLE_BASH_COMPLETION],[test "x$with_bash_completion_dir" != "xno"])
 
 AC_CONFIG_FILES([Makefile util/steamcl-install])
 AC_OUTPUT
