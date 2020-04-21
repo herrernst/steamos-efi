@@ -1,0 +1,86 @@
+# vim: sw=4 sts=4 et
+
+# steamos-efi  --  SteamOS EFI Chainloader
+
+# SPDX-License-Identifier: GPL-2.0+
+# Copyright © 2020 Collabora Ltd
+# Copyright © 2020 Valve Corporation
+
+# This file is part of steamos-efi.
+
+# steamos-efi is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2.0 of the License, or
+# (at your option) any later version.
+
+# steamos-efi is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with steamos-efi.  If not, see <http://www.gnu.org/licenses/>.
+
+_get_n_arg()
+{
+    local i args cword words
+    __reassemble_comp_words_by_ref "$1" words cword
+
+    arg=
+    args=1
+    for (( i=1; i < cword; i++ )); do
+        if [[ ${words[i]} != -* && ${words[i-1]} != $2 ||
+              ${words[i]} == $3 ]]; then
+            if [[ $args -eq $4 ]]; then
+                arg=${words[i]}
+                break
+            fi
+            (( args++ ))
+        fi
+    done
+}
+
+_steamos-bootconf()
+{
+    local cur prev words cword
+    _init_completion || return
+
+    case "$prev" in
+        --output-to)
+            COMPREPLY=($(compgen -W "stdout nowhere input" -- "$cur"))
+            return
+            ;;
+    esac
+
+    local args
+    _count_args ':=' "@(--output-to)" "@(--set|--get|--del|--mode|--update-windows)"
+
+    if [[ "$args" -eq 1 ]]; then
+        _filedir
+    else
+        local arg
+        _get_n_arg ':=' "@(--output-to)" "@(--set|--get|--del|--mode|--update-windows)" 2
+
+        if [[ ! "$arg" ]]; then
+            COMPREPLY=($(compgen -W "--set --get --del --mode --update-windows -h --help" -- "$cur"))
+        else
+            case "$arg" in
+                --set|--get|--del)
+                    if [[ "$args" -eq 3 ]]; then
+                        COMPREPLY=($(compgen -W "boot-requested-at boot-other boot-attempts boot-count boot-time image-invalid update update-window-start update-window-end loader partitions comment" -- "$cur"))
+                    fi
+                    ;;
+                --mode)
+                    if [[ "$args" -eq 3 ]]; then
+                        COMPREPLY=($(compgen -W "update update-other shutdown reboot reboot-other booted" -- "$cur"))
+                    fi
+                    ;;
+            esac
+        fi
+    fi
+
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY+=($(compgen -W "-h --help --output-to" -- "$cur"))
+    fi
+} &&
+complete -F _steamos-bootconf steamos-bootconf
