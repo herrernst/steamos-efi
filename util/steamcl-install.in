@@ -35,6 +35,7 @@ libexecdir=@pkglibexecdir@;
 
 ESP_UUID=c12a7328-f81f-11d2-ba4b-00a0c93ec93b;
 esp_uuid=;  # uuid (partition type)
+esp_partuuid=; # partuuid (partition uuid)
 esp_dev=;   # /dev/sd?
 esp_part=;  # X (as in /dev/sdaX)
 esp_mount=; # usually /esp on SteamOS 3+
@@ -155,10 +156,12 @@ find_esp ()
     esp_part=;
     esp_mount=;
     esp_uuid=;
+    esp_partuuid=;
 
     local part=;
     local dev=;
     local ptuid=;
+    local ptuuid=;
     local fs=;
     local mount=;
 
@@ -168,11 +171,12 @@ find_esp ()
     ls /esp >/dev/null
 
     # Find esp according to fs, parttuid and mountpoint
-    while read part dev ptuid fs mount;
+    while read part dev ptuid ptuuid fs mount;
     do
         part=$(unquote "${part#*=}");
         dev=$(unquote "${dev#*=}");
         ptuid=$(unquote "${ptuid#*=}");
+        ptuuid=$(unquote "${ptuuid#*=}");
         fs=$(unquote "${fs#*=}");
         mount=$(unquote "${mount#*=}");
  
@@ -185,8 +189,9 @@ find_esp ()
         esp_part="$part";
         esp_mount="$mount";
         esp_uuid="$ptuid";
+        esp_partuuid="$ptuuid";
         break;
-    done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
+    done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,PARTUUID,FSTYPE,MOUNTPOINT);
 
     # If not found, loosen the requirement to fs and partuuid only
     if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
@@ -196,11 +201,13 @@ find_esp ()
         esp_part=;
         esp_mount=;
         esp_uuid=;
-        while read part dev ptuid fs mount;
+        esp_partuuid=;
+        while read part dev ptuid ptuuid fs mount;
         do
             part=$(unquote "${part#*=}");
             dev=$(unquote "${dev#*=}");
             ptuid=$(unquote "${ptuid#*=}");
+            ptuuid=$(unquote "${ptuuid#*=}");
             fs=$(unquote "${fs#*=}");
             mount=$(unquote "${mount#*=}");
 
@@ -212,8 +219,9 @@ find_esp ()
             esp_part="$part";
             esp_mount="$mount";
             esp_uuid="$ptuid";
+            esp_partuuid="$ptuuid";
             break;
-        done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
+        done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,PARTUUID,FSTYPE,MOUNTPOINT);
     fi;
 
     # If not found, be very loose and just check the mountpoint.
@@ -225,11 +233,13 @@ find_esp ()
         esp_part=;
         esp_mount=;
         esp_uuid=;
-        while read part dev ptuid fs mount;
+        esp_partuuid=;
+        while read part dev ptuid ptuuid fs mount;
         do
             part=$(unquote "${part#*=}");
             dev=$(unquote "${dev#*=}");
             ptuid=$(unquote "${ptuid#*=}");
+            ptuuid=$(unquote "${ptuuid#*=}");
             fs=$(unquote "${fs#*=}");
             mount=$(unquote "${mount#*=}");
 
@@ -240,8 +250,9 @@ find_esp ()
             esp_part="$part";
             esp_mount="$mount";
             esp_uuid="$ptuid";
+            esp_partuuid="$ptuuid";
             break;
-        done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,FSTYPE,MOUNTPOINT);
+        done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,PARTUUID,FSTYPE,MOUNTPOINT);
     fi;
 
     if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
@@ -442,7 +453,8 @@ add_boot_entry ()
 check_boot_path ()
 {
     local part=$1;
-    local path=${2,,};
+    local uuid=$2;
+    local path=${3,,};
     boot_path_found=;
 
     while read -r bootid entry;
@@ -455,6 +467,11 @@ check_boot_path ()
         epart=${epart%%,*}
 
         if [ ! ${epart:-0} -eq ${part} ]; then continue; fi;
+
+        euuid=${entry#*GPT,};
+        euuid=${euuid%%,*}
+
+        if [ ${euuid:-00000000-0000-0000-0000-000000000000} != ${uuid} ]; then continue; fi;
 
         epath=${entry##*/File\(};
         epath=${epath%\)*};
@@ -499,7 +516,8 @@ os_on_removable_media ()
 need_new_efi_boot_entry ()
 {
     local epart=$1;
-    local epath=$2;
+    local euuid=$2;
+    local epath=$3;
 
     # _not_ forcing removable efi boot and we are actually on a removable medium:
     if [ $force_removable_efiboot -eq 0 ] && os_on_removable_media;
@@ -514,7 +532,7 @@ need_new_efi_boot_entry ()
     fi;
 
     # efi boot entry already exists
-    if check_boot_path $epart $epath;
+    if check_boot_path $epart $euuid $epath;
     then
         return 1;
     fi;
@@ -574,7 +592,7 @@ do
 done
 
 find_esp;
-echo "ESP $esp_fs $esp_uuid on $esp_dev GPT#$esp_part ($esp_mount)";
+echo "ESP $esp_fs $esp_uuid on $esp_dev GPT#$esp_part PARTUUID=$esp_partuuid ($esp_mount)";
 find_boot_entries $distrib $esp_dev $esp_part;
 
 # now some diagnotics:
@@ -596,7 +614,7 @@ then
     esp_checksum=$manifest_checksum;
 fi;
 
-if ! need_new_efi_boot_entry $esp_part $installpath/steamcl.efi;
+if ! need_new_efi_boot_entry $esp_part $esp_partuuid $installpath/steamcl.efi;
 then
     esp_boot_ok=1;
 fi;
