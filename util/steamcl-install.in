@@ -4,8 +4,8 @@
 # steamos-efi  --  SteamOS EFI Chainloader
 
 # SPDX-License-Identifier: GPL-2.0+
-# Copyright © 2018,2019 Collabora Ltd
-# Copyright © 2018,2019 Valve Corporation
+# Copyright © 2018-2020Collabora Ltd
+# Copyright © 2018-2020 Valve Corporation
 # Copyright © 2018,2019 Vivek Das Mohapatra <vivek@etla.org>
 
 # This file is part of steamos-efi.
@@ -45,7 +45,7 @@ all_boot_ids=; # space separated list of HEXBOOTID
 free_boot_id=; # an unused HEXBOOTID
 boot_path_found=; # set if a matching boot entry was found by check_boot_path
 
-pretty_name=${PRETTY_NAME:-"SteamOS/Clockwerk"};
+pretty_name=${PRETTY_NAME:-"SteamOS"};
 distrib=${ID:-steamos};
 distrib=${distrib,,};
 manifest_checksum=;
