@@ -455,6 +455,11 @@ check_boot_path ()
     local part=$1;
     local uuid=$2;
     local path=${3,,};
+    local bootid=;
+    local entry=;
+    local epart=;
+    local euuid=;
+    local epath=;
     boot_path_found=;
 
     while read -r bootid entry;
