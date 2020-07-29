@@ -521,8 +521,8 @@ os_on_removable_media ()
 need_new_efi_boot_entry ()
 {
     local epart=$1;
-    local euuid=$2;
-    local epath=$3;
+    local epath=$2;
+    local euuid=${3:-};
 
     # _not_ forcing removable efi boot and we are actually on a removable medium:
     if [ $force_removable_efiboot -eq 0 ] && os_on_removable_media;
@@ -597,7 +597,7 @@ do
 done
 
 find_esp;
-echo "ESP $esp_fs $esp_uuid on $esp_dev GPT#$esp_part PARTUUID=$esp_partuuid ($esp_mount)";
+echo "ESP $esp_fs $esp_uuid on $esp_dev GPT#$esp_part ${esp_partuuid:+PARTUUID=$esp_partuuid} ($esp_mount)";
 find_boot_entries $distrib $esp_dev $esp_part;
 
 # now some diagnotics:
@@ -619,7 +619,7 @@ then
     esp_checksum=$manifest_checksum;
 fi;
 
-if ! need_new_efi_boot_entry $esp_part $esp_partuuid $installpath/steamcl.efi;
+if ! need_new_efi_boot_entry $esp_part $installpath/steamcl.efi $esp_partuuid;
 then
     esp_boot_ok=1;
 fi;
