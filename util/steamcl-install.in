@@ -193,7 +193,7 @@ find_esp ()
         break;
     done < <(lsblk -np --pairs -o NAME,PKNAME,PARTTYPE,PARTUUID,FSTYPE,MOUNTPOINT);
 
-    # If not found, loosen the requirement to fs and partuuid only
+    # If not found, loosen the requirement to fs and parttuid only
     if [ -z "$esp_dev" ] || [ -z "$esp_part" ];
     then
         esp_fs=;
