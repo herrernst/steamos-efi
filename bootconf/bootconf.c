@@ -355,7 +355,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
     }
 
     // similarly to update this partition we must boot the other one:
-    if( strcmp( action, "update") == 0 )
+    if( strcmp( action, "update" ) == 0 )
     {
         set_conf_uint( cfg, "boot-other", 1 );
         set_conf_uint( cfg, "update",     1 );
@@ -364,7 +364,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         return 1;
     }
 
-    if( strcmp( action, "shutdown") == 0 )
+    if( strcmp( action, "shutdown" ) == 0 )
     {
         set_conf_uint( cfg, "boot-other", 0 );
         set_conf_uint( cfg, "update",     0 );
@@ -372,7 +372,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         return 1;
     }
 
-    if( strcmp( action, "reboot") == 0 )
+    if( strcmp( action, "reboot" ) == 0 )
     {
         set_conf_uint( cfg, "boot-other", 0 );
         set_conf_uint( cfg, "update",     0 );
@@ -381,7 +381,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         return 1;
     }
 
-    if( strcmp( action, "reboot-other") == 0 )
+    if( strcmp( action, "reboot-other" ) == 0 )
     {
         set_conf_uint( cfg, "boot-other", 1 );
         set_conf_uint( cfg, "update",     0 );
@@ -390,7 +390,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         return 1;
     }
 
-    if( strcmp( action, "booted") == 0 )
+    if( strcmp( action, "booted" ) == 0 )
     {
         uint64_t nth = get_conf_uint( cfg, "boot-count" );
         set_conf_uint( cfg, "invalid"      , 0 );
