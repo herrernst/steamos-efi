@@ -1,8 +1,8 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2020 Collabora Ltd
-// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2021 Collabora Ltd
+// Copyright © 2018,2021 Valve Corporation
 // Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
@@ -53,7 +53,7 @@ EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
     if( bytes < hsize )
         return EFI_END_OF_FILE;
 
-    if( header[0] != 'M' || header[1] != 'Z' )
+    if( header[ 0 ] != 'M' || header[ 1 ] != 'Z' )
         return EFI_LOAD_ERROR;
 
     // The uint32 starting at offset 0x3c
@@ -270,7 +270,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         efi_unmount( &root_dir );
 
-        res = get_handle_protocol( &handles[i], &fs_guid, (VOID **)&fs );
+        res = get_handle_protocol( &handles[ i ], &fs_guid, (VOID **)&fs );
         ERROR_CONTINUE( res, L"handle #%u: no simple file system protocol", i );
 
         res = efi_mount( fs, &root_dir );
@@ -338,7 +338,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     v_msg( L"Went through %u filesystems, %u SteamOS loaders found\n", n_handles, j);
 
     v_msg( L"Unsorted\n" );
-    dump_found( &found[0] );
+    dump_found( &found[ 0 ] );
     // yes I know, bubble sort is terribly gauche, but we really don't care:
     // usually there will be only two entries (and at most 16, which would be
     // a fairly psychosis-inducing setup):
@@ -346,9 +346,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     while( sort )
         for( UINTN i = sort = 0; i < j - 1; i++ )
             if( found[ i ].at > found[ i + 1 ].at  )
-                sort += swap_cfgs( &found[0], i, i + 1 );
+                sort += swap_cfgs( &found[ 0 ], i, i + 1 );
     v_msg( L"Sorted\n" );
-    dump_found( &found[0] );
+    dump_found( &found[ 0 ] );
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles, none of which are known-bad.
 
@@ -361,12 +361,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     {
         selected = i;
 
-        if( get_conf_uint( found[i].cfg, "boot-other" ) )
+        if( get_conf_uint( found[ i ].cfg, "boot-other" ) )
         {
             // if boot-other is set, update should persist until we get to
             // a non-boot-other entry:
             if( !update )
-                update = update_scheduled_now( found[i].cfg );
+                update = update_scheduled_now( found[ i ].cfg );
             continue;
         }
 
@@ -376,13 +376,13 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     if( selected > -1 )
     {
-        chosen->device_path = found[selected].device_path;
-        chosen->loader_path = found[selected].loader;
-        chosen->partition   = found[selected].partition;
-        chosen->config      = found[selected].cfg;
+        chosen->device_path = found[ selected ].device_path;
+        chosen->loader_path = found[ selected ].loader;
+        chosen->partition   = found[ selected ].partition;
+        chosen->config      = found[ selected ].cfg;
 
-        found[selected].cfg    = NULL;
-        found[selected].loader = NULL;
+        found[ selected ].cfg    = NULL;
+        found[ selected ].loader = NULL;
 
         // we never un-set an update we inherited from boot-other
         // but we might have it set in our own config:

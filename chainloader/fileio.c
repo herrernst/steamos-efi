@@ -1,8 +1,8 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2020 Collabora Ltd
-// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2021 Collabora Ltd
+// Copyright © 2018,2021 Valve Corporation
 // Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
@@ -134,8 +134,8 @@ VOID ls (EFI_FILE_PROTOCOL *dir, UINTN indent, CONST CHAR16 *name, UINTN recurse
 
     if( indent )
         for( i = 0; (i < max_pfx) && (i < pad_to); i++ )
-            prefix[i] = (CHAR16)' ';
-    prefix[i] = (CHAR16) 0;
+            prefix[ i ] = (CHAR16)' ';
+    prefix[ i ] = (CHAR16) 0;
 
     while( ((res = efi_readdir( dir, &dirent, &buf_size )) == EFI_SUCCESS) &&
            buf_size )

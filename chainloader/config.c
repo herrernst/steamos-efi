@@ -1,8 +1,8 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2020 Collabora Ltd
-// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2021 Collabora Ltd
+// Copyright © 2018,2021 Valve Corporation
 // Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
@@ -64,7 +64,7 @@ static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
     // beginning of line does not match item->name + ':'
     if( strncmpa( (CHAR8 *)item->name, line, nl ) )
         return 0;
-    if( line[nl] != ':' )
+    if( line[ nl ] != ':' )
         return 0;
 
     for( start = line + nl + 1; start < (line + ll) && *start; start++ )
@@ -118,8 +118,8 @@ static UINTN set_config_from_line (cfg_entry *cfg, CHAR8* line)
 {
     UINTN found = 0;
 
-    for( UINTN i = 0; cfg[i].type != cfg_end; i++  )
-        found += set_config_item_from_line( &cfg[i], line );
+    for( UINTN i = 0; cfg[ i ].type != cfg_end; i++  )
+        found += set_config_item_from_line( &cfg[ i ], line );
 
     return found;
 }
@@ -180,13 +180,13 @@ static CONST CHAR8 *_vts (cfg_entry *c)
 #ifndef NO_EFI_TYPES
 VOID dump_config (cfg_entry *config)
 {
-    for( UINTN i = 0; config[i].type != cfg_end; i++ )
+    for( UINTN i = 0; config[ i ].type != cfg_end; i++ )
         Print( L"#%u <%s>%a = <%u>'%a'\n",
                i,
-               _cts( config[i].type ),
-               config[i].name,
-               config[i].value.string.size,
-               _vts( &config[i] ) );
+               _cts( config[ i ].type ),
+               config[ i ].name,
+               config[ i ].value.string.size,
+               _vts( &config[ i ] ) );
 }
 #endif
 
@@ -232,10 +232,10 @@ const cfg_entry * get_conf_item (const cfg_entry *config, const CHAR8 *name)
     if( !config )
         return NULL;
 
-    for( UINTN i = 0; config[i].type != cfg_end; i++ )
-        if( config[i].name && *(config[i].name))
-            if( strcmpa( (CHAR8 *)config[i].name, name ) == 0 )
-                return &config[i];
+    for( UINTN i = 0; config[ i ].type != cfg_end; i++ )
+        if( config[ i ].name && *(config[ i ].name))
+            if( strcmpa( (CHAR8 *)config[ i ].name, name ) == 0 )
+                return &config[ i ];
 
     return NULL;
 }
@@ -251,7 +251,7 @@ CHAR8 * get_conf_str (const cfg_entry *config, char *name)
 {
     const cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
 
-    return c ? &c->value.string.bytes[0] : NULL;
+    return c ? &c->value.string.bytes[ 0 ] : NULL;
 }
 
 cfg_entry *new_config (VOID)
@@ -262,7 +262,7 @@ cfg_entry *new_config (VOID)
                  L"Failed to allocate %d bytes for bootspec", sizeof(bootspec) );
 
     if( config )
-        CopyMem( config, &bootspec[0], sizeof(bootspec) );
+        CopyMem( config, &bootspec[ 0 ], sizeof(bootspec) );
 
     return config;
 }
@@ -274,14 +274,14 @@ VOID free_config (cfg_entry **config)
     if( !conf )
         return;
 
-    for( UINTN i = 0; conf[i].type != cfg_end; i++ )
+    for( UINTN i = 0; conf[ i ].type != cfg_end; i++ )
     {
-        conf[i].value.string.size = 0;
-        conf[i].value.number.u = 0;
-        if( !conf[i].value.string.bytes )
+        conf[ i ].value.string.size = 0;
+        conf[ i ].value.number.u = 0;
+        if( !conf[ i ].value.string.bytes )
             continue;
-        efi_free( conf[i].value.string.bytes );
-        conf[i].value.string.bytes = NULL;
+        efi_free( conf[ i ].value.string.bytes );
+        conf[ i ].value.string.bytes = NULL;
     }
 
     efi_free( conf );

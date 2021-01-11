@@ -10,28 +10,28 @@
 
 void dump_config (cfg_entry *c)
 {
-    for( uint i = 0; c[i].type != cfg_end; i++ )
-        switch( c[i].type )
+    for( uint i = 0; c[ i ].type != cfg_end; i++ )
+        switch( c[ i ].type )
         {
           case cfg_bool:
           case cfg_uint:
             fprintf( stderr, "#%u <%s>%s = '%s'→%lu\n",
-                     i, _cts( c[i].type ), c[i].name,
-                     S(c[i]) , c[i].value.number.u );
+                     i, _cts( c[ i ].type ), c[ i ].name,
+                     S(c[ i ]) , c[ i ].value.number.u );
             break;
 
           case cfg_stamp:
             fprintf( stderr, "#%u <%s>%s = '%s' [%lu]\n",
-                     i, _cts( c[i].type ),
-                     c[i].name, S(c[i]), c[i].value.number.u );
+                     i, _cts( c[ i ].type ),
+                     c[ i ].name, S(c[ i ]), c[ i ].value.number.u );
             break;
 
           case cfg_path:
           case cfg_string:
           default:
             fprintf( stderr, "#%u <%s>%s = '%s' [%lu bytes]\n",
-                     i, _cts( c[i].type ),
-                     c[i].name, S(c[i]), c[i].value.string.size );
+                     i, _cts( c[ i ].type ),
+                     c[ i ].name, S(c[ i ]), c[ i ].value.string.size );
             break;
         }
 }
@@ -206,12 +206,12 @@ size_t write_config (int fd, const cfg_entry *cfg)
     if( !(flags & (O_WRONLY|O_RDWR)) )
         return 0;
 
-    for( uint i = 0; cfg[i].type != cfg_end; i++ )
+    for( uint i = 0; cfg[ i ].type != cfg_end; i++ )
     {
-        if( !cfg[i].name || !*(cfg[i].name) )
+        if( !cfg[ i ].name || !*(cfg[ i ].name) )
             continue;
 
-        int w = write_item( &buf, &bufsiz, written, &cfg[i] );
+        int w = write_item( &buf, &bufsiz, written, &cfg[ i ] );
 
         if( w < 0 )
             goto fail;
