@@ -194,7 +194,7 @@ static int show_help   (unused int n,
 static int set_entry (int n, int argc, char **argv, cfg_entry *cfg)
 {
     if( n + 2 >= argc )
-        return usage( "Error: %s requires 2 arguments", argv[n] );
+        return usage( "Error: %s requires 2 arguments", argv[ n ] );
 
     const char *name  = argv[ n + 1 ];
     const char *value = argv[ n + 2 ];
@@ -253,7 +253,7 @@ static int get_entry (int n, int argc, char **argv, cfg_entry *cfg)
     ssize_t out = 0;
 
     if( n + 1 >= argc )
-        return usage( "Error: %s requires 1 argument", argv[n] );
+        return usage( "Error: %s requires 1 argument", argv[ n ] );
 
     const char *name  = argv[ n + 1 ];
     const cfg_entry *c = get_conf_item( cfg, (unsigned char *)name );
@@ -283,7 +283,7 @@ static int get_entry (int n, int argc, char **argv, cfg_entry *cfg)
 static int del_entry (int n, int argc, char **argv, cfg_entry *cfg)
 {
     if( n + 1 >= argc )
-        return usage( "Error: %s requires 1 argument", argv[n] );
+        return usage( "Error: %s requires 1 argument", argv[ n ] );
 
     const char *name  = argv[ n + 1 ];
 
@@ -466,7 +466,7 @@ static unsigned long timestamp_to_datestamp (unsigned long hhmm,
 static int set_window (int n, int argc, char **argv, cfg_entry *cfg)
 {
     if( n + 2 >= argc )
-        return usage( "Error: %s requires 2 arguments", argv[n] );
+        return usage( "Error: %s requires 2 arguments", argv[ n ] );
 
     const char *beg = argv[ n + 1 ];
     const char *end = argv[ n + 2 ];
@@ -498,9 +498,9 @@ static int process_early_cmdline_args (int x, int argc, char **argv)
 {
     arg_handler *handler = NULL;
 
-    for( handler = &arg_handlers[0]; handler->cmd; handler++ )
+    for( handler = &arg_handlers[ 0 ]; handler->cmd; handler++ )
     {
-        if( strcmp( handler->cmd, argv[x] ) == 0 )
+        if( strcmp( handler->cmd, argv[ x ] ) == 0 )
         {
             if( handler->parse_phase == ARG_EARLY )
                 handler->function( x, argc, argv, NULL );
@@ -522,11 +522,11 @@ static int process_cmdline_arg (int x, int argc, char **argv, cfg_entry *cfg)
     if( x == file_arg )
         return 0;
 
-    for( handler = &arg_handlers[0]; handler->cmd; handler++ )
+    for( handler = &arg_handlers[ 0 ]; handler->cmd; handler++ )
     {
         int rv = 0;
 
-        if( strcmp( handler->cmd, argv[x] ) )
+        if( strcmp( handler->cmd, argv[ x ] ) )
             continue;
 
         if( handler->function && (handler->parse_phase != ARG_EARLY) )
@@ -538,7 +538,7 @@ static int process_cmdline_arg (int x, int argc, char **argv, cfg_entry *cfg)
         return handler->params;
     }
 
-    error( EINVAL, "Unknown command line argument %s", argv[x] );
+    error( EINVAL, "Unknown command line argument %s", argv[ x ] );
 }
 
 int main (int argc, char **argv)
@@ -546,7 +546,7 @@ int main (int argc, char **argv)
     int cfg_fd = -1;
     cfg_entry *config = NULL;
 
-    progname = argv[0];
+    progname = argv[ 0 ];
 
     for( int c = 1; c < argc; c++ )
         c += process_early_cmdline_args( c, argc, argv );
@@ -562,7 +562,7 @@ int main (int argc, char **argv)
         {
             int e = errno;
             perror( "Error" );
-            error( e, "While looking for input file '%s'", argv[1] );
+            error( e, "While looking for input file '%s'", argv[ 1 ] );
         }
     }
 

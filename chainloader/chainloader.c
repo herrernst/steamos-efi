@@ -1,8 +1,8 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2020 Collabora Ltd
-// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2021 Collabora Ltd
+// Copyright © 2018,2021 Valve Corporation
 // Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
@@ -110,7 +110,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fs = NULL;
 
-        res = get_handle_protocol( &filesystems[i], &fs_guid, (VOID **)&fs );
+        res = get_handle_protocol( &filesystems[ i ], &fs_guid, (VOID **)&fs );
         ERROR_CONTINUE( res, L"simple fs protocol" );
 
         if( verbose )

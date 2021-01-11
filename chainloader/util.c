@@ -1,8 +1,8 @@
 // steamos-efi  --  SteamOS EFI Chainloader
 
 // SPDX-License-Identifier: GPL-2.0+
-// Copyright © 2018,2020 Collabora Ltd
-// Copyright © 2018,2020 Valve Corporation
+// Copyright © 2018,2021 Collabora Ltd
+// Copyright © 2018,2021 Valve Corporation
 // Copyright © 2018,2020 Vivek Das Mohapatra <vivek@etla.org>
 
 // steamos-efi is free software: you can redistribute it and/or modify
@@ -135,12 +135,12 @@ EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
     for( UINTN i = 0; !*handle && (i < max); i++ )
     {
         VOID *found = NULL;
-        res = get_handle_protocol( &handles[i], id, &found );
+        res = get_handle_protocol( &handles[ i ], id, &found );
         ERROR_CONTINUE( res, L"handle %x does not support protocol %x. what.",
-                        (UINT64) handles[i], (UINT64) id );
+                        (UINT64) handles[ i ], (UINT64) id );
 
         if( found == protocol_instance )
-            *handle = handles[i];
+            *handle = handles[ i ];
     }
 
     efi_free( handles );
@@ -252,8 +252,8 @@ strnarrow (CHAR16 *wide)
 
     // if any high bit is set, set the 8th bit in the narrow character:
     for( UINTN i = 0; i < l; i++ )
-        narrow[i] =
-          (CHAR8) (0xff & ((wide[i] & 0xff80) ? (wide[i] | 0x80) : wide[i]));
+        narrow[ i ] = (CHAR8)
+          (0xff & ((wide[ i ] & 0xff80) ? (wide[ i ] | 0x80) : wide[ i ]));
     return narrow;
 
 allocfail:
@@ -299,7 +299,7 @@ CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen)
             wide[ i ] = (CHAR16)'\\';
 
     // apth is absolute, we're good to go:
-    if( wide[0] == (CHAR16)'\\' )
+    if( wide[ 0 ] == (CHAR16)'\\' )
         return wide;
 
     rel = StrDuplicate( rel );
@@ -320,7 +320,7 @@ CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen)
 
     // add a / at the start (maybe); and in between; plus a trailing NUL
     abs = ALLOC_OR_GOTO( (plen + rlen + 3) * sizeof(CHAR16), allocfail );
-    abs[0] = (CHAR16) 0;
+    abs[ 0 ] = (CHAR16) 0;
 
     if( rel[ 0 ] != (CHAR16)'\\' )
         StrCat( abs, L"\\");
