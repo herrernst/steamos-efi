@@ -212,7 +212,6 @@ EFI_DEVICE_PATH * get_self_file (VOID)
     return li ? li->FilePath : NULL;
 }
 
-
 VOID initialise (EFI_HANDLE image)
 {
     self_image = image;

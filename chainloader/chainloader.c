@@ -36,7 +36,6 @@ EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
 
     volume = LibFileSystemVolumeLabelInfo( root_dir );
     res = (volume ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES);
-
     ERROR_JUMP( res, out, L"Allocating %d bytes",
                 SIZE_OF_EFI_FILE_SYSTEM_VOLUME_LABEL_INFO + MAXFSNAMLEN );
     v_msg( L"<<< Volume label: %s >>>\n", volume->VolumeLabel );
@@ -103,7 +102,6 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     set_steamos_loader_criteria( &steamos );
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
-
     ERROR_JUMP( res, cleanup, L"get_fs_handles" );
 
     for( int i = 0; i < (int)count; i++ )
