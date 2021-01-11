@@ -83,7 +83,7 @@ typedef struct
     UINT64 at;
 } found_cfg;
 
-static UINTN update_scheduled_now (const cfg_entry *conf)
+static BOOLEAN update_scheduled_now (const cfg_entry *conf)
 {
     if( get_conf_uint( conf, "update" ) )
     {
@@ -93,23 +93,23 @@ static UINTN update_scheduled_now (const cfg_entry *conf)
         // no beginning or end of update window specified,
         // update mode is unconditional:
         if( !end && !beg )
-            return 1;
+            return TRUE;
 
         UINT64 now = utc_datestamp();
 
         // only a window end is specified, update if we are before it:
         if( !beg )
-            return ( now <= beg ) ? 1 : 0;
+            return ( now <= beg ) ? TRUE : FALSE;
 
         // only a window start is specified, upate if we are after it:
         if( !end )
-            return ( now >= end ) ? 1 : 0;
+            return ( now >= end ) ? TRUE : FALSE;
 
         // both specified, update mode only if within time window:
         return (( now >= beg ) && ( now <= end )) ? 1 : 0;
     }
 
-    return 0;
+    return FALSE;
 }
 
 static VOID dump_found (found_cfg *c)
@@ -353,7 +353,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     // and their respective partition handles, none of which are known-bad.
 
     INTN selected = -1;
-    UINTN update  = 0;
+    BOOLEAN update = FALSE;
 
     // pick the newest entry to start with.
     // if boot-other is set, we need to bounce along to the next entry:
