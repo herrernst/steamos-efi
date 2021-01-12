@@ -41,6 +41,7 @@ static cfg_entry bootspec[] =
     { .type = cfg_stamp , .name = "boot-time"           },
     { .type = cfg_bool  , .name = "image-invalid"       },
     { .type = cfg_bool  , .name = "update"              },
+    { .type = cfg_bool  , .name = "update-disabled"     },
     { .type = cfg_stamp , .name = "update-window-start" },
     { .type = cfg_stamp , .name = "update-window-end"   },
     { .type = cfg_path  , .name = "loader"              },
