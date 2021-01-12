@@ -354,6 +354,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     INTN selected = -1;
     BOOLEAN update = FALSE;
+    BOOLEAN boot_other = FALSE;
 
     // pick the newest entry to start with.
     // if boot-other is set, we need to bounce along to the next entry:
@@ -361,11 +362,13 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     {
         selected = i;
 
+        // if boot-other is set, skip it
         if( get_conf_uint( found[ i ].cfg, "boot-other" ) )
         {
             v_msg( L"entry #%u has boot-other set, skip it...\n", i);
             // if boot-other is set, update should persist until we get to
             // a non-boot-other entry:
+            boot_other = TRUE;
             if( !update )
                 update = update_scheduled_now( found[ i ].cfg );
             continue;
@@ -375,6 +378,14 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( update && get_conf_uint( found[ i ].cfg, "update-disabled" ) )
         {
             v_msg( L"entry #%u has update-disabled set, skip it...\n", i);
+            continue;
+        }
+
+        // if boot-other is set but other is disabled, skip it
+        if( boot_other && get_conf_uint( found[ i ].cfg, "boot-other-disabled" ) )
+        {
+            Print( L"entry #%u has boot-other-disabled set, skip it...\n", i);
+
             continue;
         }
 
