@@ -389,6 +389,13 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             continue;
         }
 
+        // if update is set but update is disabled, skip it
+        if( update && get_conf_uint( found[ i ].cfg, "update-disabled" ) )
+        {
+            v_msg( L"entry #%u has update-disabled set, skip it...\n", i);
+            continue;
+        }
+
         // boot other is not set, whatever we found is good
         break;
     }
