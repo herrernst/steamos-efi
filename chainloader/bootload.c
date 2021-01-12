@@ -311,6 +311,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         // entry is known-bad. ignore it
         if( get_conf_uint( conf, "image-invalid" ) > 0 )
         {
+            v_msg( L"partition #%u has image-invalid set, ignore it...\n", i);
             free_config( &conf );
             continue;
         }
@@ -380,6 +381,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         if( get_conf_uint( found[ i ].cfg, "boot-other" ) )
         {
+            v_msg( L"entry #%u has boot-other set, skip it...\n", i);
             // if boot-other is set, update should persist until we get to
             // a non-boot-other entry:
             if( !update )
