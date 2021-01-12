@@ -162,9 +162,8 @@ static BOOLEAN device_path_eq (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
 	    DevicePathSubType( a ) == MEDIA_HARDDRIVE_DP )
             return TRUE;
 
-        for( UINT16 x = 0; x < DevicePathNodeLength( a ); x++ )
-            if( a->Length[ 2 + x ] != b->Length[ 2 + x ] )
-                return FALSE;
+        if( DevicePathNodeLength( a ) != DevicePathNodeLength( b ) )
+            return FALSE;
 
         a = NextDevicePathNode( a );
         b = NextDevicePathNode( b );
