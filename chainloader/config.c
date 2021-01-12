@@ -36,6 +36,7 @@
 static cfg_entry bootspec[] =
   { { .type = cfg_stamp , .name = "boot-requested-at"   },
     { .type = cfg_bool  , .name = "boot-other"          },
+    { .type = cfg_bool  , .name = "boot-other-disabled" },
     { .type = cfg_uint  , .name = "boot-attempts"       },
     { .type = cfg_uint  , .name = "boot-count"          },
     { .type = cfg_stamp , .name = "boot-time"           },
