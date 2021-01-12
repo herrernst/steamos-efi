@@ -130,7 +130,6 @@ static VOID dump_found (found_cfg *c)
 
 #define COPY_FOUND(src,dst) \
     ({ dst.cfg         = src.cfg;         \
-       dst.at          = src.at;          \
        dst.partition   = src.partition;   \
        dst.loader      = src.loader;      \
        dst.device_path = src.device_path; \
