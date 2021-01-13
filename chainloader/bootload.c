@@ -80,6 +80,8 @@ typedef struct
     EFI_DEVICE_PATH *device_path;
     CHAR16 *loader;
     cfg_entry *cfg;
+    CHAR16 label[12];
+    EFI_GUID uuid;
     UINT64 at;
 } found_cfg;
 
@@ -115,9 +117,11 @@ static BOOLEAN update_scheduled_now (const cfg_entry *conf)
 static VOID dump_found (found_cfg *c)
 {
     for(UINTN i = 0; c && c->cfg; c++)
-        v_msg( L"#%u %x @%lu %s%s[%s]\n",
+        v_msg( L"#%u %x %s %g @%lu %s%s[%s]\n",
                i++,
                c->partition,
+               c->label,
+               &c->uuid,
                c->at,
                get_conf_uint( c->cfg, "boot-other" ) ? L"OTHER " : L"",
                update_scheduled_now( c->cfg )        ? L"UPDATE ": L"",
@@ -130,6 +134,8 @@ static VOID dump_found (found_cfg *c)
        dst.partition   = src.partition;   \
        dst.loader      = src.loader;      \
        dst.device_path = src.device_path; \
+       StrnCpy( dst.label, src.label, sizeof(dst.label ) / sizeof( CHAR16 ) ); \
+       dst.uuid        = src.uuid;        \
        dst.at          = src.at;          })
 
 static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
@@ -141,6 +147,53 @@ static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
     COPY_FOUND( c     , f[ b ] );
 
     return 1;
+}
+
+static CHAR16 *volume_label (EFI_FILE_PROTOCOL *handle, CHAR16 *str, UINTN size)
+{
+    EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *volume = NULL;
+
+    if( !str || !size )
+        return NULL;
+
+    str[0] = 0;
+    volume = LibFileSystemVolumeLabelInfo( handle );
+    if( !volume )
+        return NULL;
+
+    StrnCpy( str, volume->VolumeLabel, size );
+    FreePool( volume );
+
+    return str;
+}
+
+static EFI_GUID partition_uuid (EFI_HANDLE *handle)
+{
+    EFI_DEVICE_PATH *dp;
+
+    if( !handle )
+        return NullGuid;
+
+    dp  = DevicePathFromHandle( handle );
+    while( !IsDevicePathEnd( dp ) )
+    {
+        if( DevicePathType( dp )    == MEDIA_DEVICE_PATH &&
+            DevicePathSubType( dp ) == MEDIA_HARDDRIVE_DP )
+        {
+            HARDDRIVE_DEVICE_PATH *hd = (HARDDRIVE_DEVICE_PATH *)dp;
+            EFI_GUID *guid;
+
+            if( hd->SignatureType != SIGNATURE_TYPE_GUID )
+	        break;
+
+            guid = (EFI_GUID *) (&hd->Signature[0]);
+            return *guid;
+	}
+
+        dp = NextDevicePathNode( dp );
+    }
+
+    return NullGuid;
 }
 
 static BOOLEAN device_path_eq (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
@@ -329,6 +382,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
+        volume_label( root_dir, found[ j ].label,
+                      sizeof(found[ j ].label) / sizeof(CHAR16) );
+        found[ j ].uuid      = partition_uuid( found[ j ].partition );
         j++;
     }
 
