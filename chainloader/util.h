@@ -89,3 +89,5 @@ UINT64 local_datestamp (VOID);
 UINT64 utc_datestamp (VOID);
 UINT64 local_timestamp (VOID);
 UINT64 utc_timestamp (VOID);
+
+UINT64 time_usec (VOID);

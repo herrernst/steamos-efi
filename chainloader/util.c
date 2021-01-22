@@ -541,3 +541,59 @@ UINT64 utc_timestamp (VOID)
              (now.Minute * 100)   +
              (now.Hour   * 10000) );
 }
+
+// Stolen from systemd (src/boot/efi/util.c).
+
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
+#ifdef __x86_64__
+static UINT64 ticks_read (VOID)
+{
+    UINT64 a, d;
+    __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d));
+    return (d << 32) | a;
+}
+#elif defined(__i386__)
+static UINT64 ticks_read (VOID)
+{
+    UINT64 val;
+    __asm__ volatile ("rdtsc" : "=A" (val));
+    return val;
+}
+#else
+static UINT64 ticks_read (VOID)
+{
+    UINT64 val = 1;
+    return val;
+}
+#endif
+
+/* count TSC ticks during a millisecond delay */
+static UINT64 ticks_freq (VOID)
+{
+    UINT64 ticks_start, ticks_end;
+
+    ticks_start = ticks_read();
+    uefi_call_wrapper(BS->Stall, 1, 1000);
+    ticks_end = ticks_read();
+
+    return (ticks_end - ticks_start) * 1000UL;
+}
+
+UINT64 time_usec (VOID)
+{
+    UINT64 ticks;
+    static UINT64 freq;
+
+    ticks = ticks_read();
+    if (ticks == 0)
+        return 0;
+
+    if (freq == 0) {
+        freq = ticks_freq();
+        if (freq == 0)
+            return 0;
+    }
+
+    return 1000UL * 1000UL * ticks / freq;
+}

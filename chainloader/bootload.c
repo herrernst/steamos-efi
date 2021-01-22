@@ -28,6 +28,7 @@
 #include "bootload.h"
 #include "debug.h"
 #include "exec.h"
+#include "variable.h"
 
 // this is x86_64 specific
 #define EFI_STUB_ARCH 0x8664

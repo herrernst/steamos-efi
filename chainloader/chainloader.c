@@ -23,6 +23,7 @@
 #include <efiprot.h>
 
 #include "chainloader.h"
+#include "variable.h"
 
 EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
 {
@@ -100,9 +101,13 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     InitializeLib( image_handle, sys_table );
     initialise( image_handle );
     set_steamos_loader_criteria( &steamos );
-    v_msg( L"FirmwareVendor: %s\n", sys_table->FirmwareVendor);
-    v_msg( L"FirmwareRevision: 0x%x\n", sys_table->FirmwareRevision);
-    v_msg( L"NumberOfTableEntries: %u\n", sys_table->NumberOfTableEntries);
+    set_loader_time_init_usec();
+    set_loader_info();
+    set_loader_firmware_info();
+    set_loader_firmware_type();
+    set_loader_features();
+    set_loader_device_part_uuid();
+    set_loader_image_identifier();
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
     ERROR_JUMP( res, cleanup, L"get_fs_handles" );
@@ -120,6 +125,8 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
     res = choose_steamos_loader( filesystems, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
+
+    set_loader_time_exec_usec();
 
     res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );
