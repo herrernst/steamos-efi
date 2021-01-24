@@ -326,6 +326,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     cfg_entry *conf = NULL;
     UINTN j = 0;
     found_cfg found[MAX_BOOTCONFS + 1] = { { NULL } };
+    EFI_GUID *found_signatures[MAX_BOOTCONFS + 1] = { NULL };
     EFI_DEVICE_PATH *restricted = NULL;
 
     if( chosen->criteria.is_restricted )
@@ -405,6 +406,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         volume_label( root_dir, found[ j ].label,
                       sizeof(found[ j ].label) / sizeof(CHAR16) );
         found[ j ].uuid      = partition_uuid( found[ j ].partition );
+        found_signatures[ j ] = &found[ j ].uuid;
         j++;
     }
 
@@ -425,6 +427,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                 sort += swap_cfgs( &found[ 0 ], i, i + 1 );
     v_msg( L"Sorted\n" );
     dump_found( &found[ 0 ] );
+    set_loader_entries( &found_signatures[ 0 ] );
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles, none of which are known-bad.
 
@@ -492,6 +495,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             efi_free( found[ i ].loader );
             free_config( &found[ i ].cfg );
         }
+
+        set_loader_entry_default( found_signatures[ j - 1 ] );
+        set_loader_entry_selected( found_signatures[ selected ] );
 
         return EFI_SUCCESS;
     }

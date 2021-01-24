@@ -255,6 +255,82 @@ exit:
     return res;
 }
 
+EFI_STATUS set_loader_entries (EFI_GUID **signatures)
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_STATUS res = EFI_SUCCESS;
+    CHAR16 data[2048];
+    int len = 0;
+
+    if( !signatures )
+        return EFI_INVALID_PARAMETER;
+
+    while( *signatures )
+    {
+        len += SPrint( &data[ len ], sizeof( data ) - len, L"auto-bootconf-%g",
+                       *signatures++ );
+        data[ len - 1 ] = 0;
+    }
+
+    v_msg( L"LoaderEntries:\n" );
+    v_hex( 1, 0, len * sizeof( CHAR16 ), data );
+    res = LibSetVariable( L"LoaderEntries", &guid, len * sizeof( CHAR16 ),
+                          data );
+    WARN_STATUS( res, L"Failed to SetVariable()" );
+
+    return res;
+}
+
+EFI_STATUS set_loader_entry_default (EFI_GUID *signature)
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_STATUS res = EFI_SUCCESS;
+    CHAR16 *str = NULL;
+
+    if( !signature )
+        return EFI_INVALID_PARAMETER;
+
+    str = PoolPrint( L"auto-bootconf-%g", signature );
+    WARN_STATUS( ( str == NULL ), L"Failed to PoolPrint()" );
+
+    if( !str )
+        return EFI_OUT_OF_RESOURCES;
+
+    v_msg( L"LoaderEntryDefault: %s\n", str );
+    res = LibSetVariable( L"LoaderEntryDefault", &guid,
+                          VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to SetVariable()" );
+
+    efi_free( str );
+
+    return res;
+}
+
+EFI_STATUS set_loader_entry_selected (EFI_GUID *signature)
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_STATUS res = EFI_SUCCESS;
+    CHAR16 *str = NULL;
+
+    if( !signature )
+        return EFI_INVALID_PARAMETER;
+
+    str = PoolPrint( L"auto-bootconf-%g", signature );
+    WARN_STATUS( ( str == NULL ), L"Failed to PoolPrint()" );
+
+    if( !str )
+        return EFI_OUT_OF_RESOURCES;
+
+    v_msg( L"LoaderEntrySelected: %s\n", str );
+    res = LibSetVariable( L"LoaderEntrySelected", &guid,
+                          VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to SetVariable()" );
+
+    efi_free( str );
+
+    return res;
+}
+
 EFI_STATUS set_loader_image_identifier ()
 {
     EFI_GUID guid = LOADER_VARIABLE_GUID;

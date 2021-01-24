@@ -27,3 +27,6 @@ EFI_STATUS set_loader_firmware_type ();
 EFI_STATUS set_loader_features ();
 EFI_STATUS set_loader_device_part_uuid ();
 EFI_STATUS set_loader_image_identifier ();
+EFI_STATUS set_loader_entries ( EFI_GUID **signatures);
+EFI_STATUS set_loader_entry_default (EFI_GUID *signature);
+EFI_STATUS set_loader_entry_selected (EFI_GUID *signature);
