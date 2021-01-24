@@ -29,6 +29,14 @@
 #include "debug.h"
 #include "exec.h"
 #include "variable.h"
+#include "console.h"
+
+// this is the console output attributes for the menu
+#define SELECTED_ATTRIBUTES (EFI_MAGENTA   | EFI_BACKGROUND_BLACK)
+#define DEFAULT_ATTRIBUTES  (EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK)
+
+// this converts micro-seconds to event timeout in 10ns
+#define EFI_TIMER_PERIOD_MICROSECONDS(s) (s * 10)
 
 // this is x86_64 specific
 #define EFI_STUB_ARCH 0x8664
@@ -315,6 +323,138 @@ cleanup:
     return res;
 }
 
+INTN text_menu_choose_steamos_loader (found_cfg *entries,
+                                      INTN entry_count,
+                                      INTN entry_default,
+                                      UINTN timeout)
+{
+    UINTN columns, column_offsets[MAX_BOOTCONFS];
+    UINTN rows, row_offset;
+    INTN i, selected;
+    EFI_STATUS res;
+    const INTN console_max_mode = con_get_max_output_mode();
+
+    if( !entries || entry_count <= 0 )
+        return -1;
+
+    res = console_mode();
+    if( EFI_ERROR( res ) && res != EFI_NOT_FOUND )
+        return res;
+
+    if( console_max_mode > 0 )
+    {
+        for( i = console_max_mode - 1; i != 0; i-- )
+        {
+            res = con_set_output_mode( i );
+            if( EFI_ERROR( res ) )
+                continue;
+
+            break;
+        }
+    }
+
+    res = con_output_mode_info( con_get_output_mode(), &columns, &rows);
+    if( EFI_ERROR( res ) )
+    {
+        columns = 80;
+        rows = 25;
+    }
+
+    selected = entry_default;
+    if( selected < 0 || selected >= entry_count )
+        selected = 0;
+
+    con_clear_screen();
+    con_enable_cursor( FALSE );
+    row_offset = (rows - entry_count) / 2;
+    for( i = 0; i < entry_count; i++ )
+    {
+        INTN offset = (columns - StrLen( entries[ i ].label )) / 2;
+        if( offset < 0 )
+            offset = 0;
+
+        column_offsets[ i ] = offset;
+
+        con_set_cursor_position( column_offsets[ i ], row_offset + i );
+        con_set_output_attribute( i == selected ?
+                                  SELECTED_ATTRIBUTES :
+                                  DEFAULT_ATTRIBUTES );
+        con_output_text( entries[ i ].label );
+    }
+
+    con_set_output_attribute( DEFAULT_ATTRIBUTES );
+    con_reset( FALSE );
+
+    if( timeout )
+    {
+        EFI_EVENT event;
+
+        event = ST->ConIn->WaitForKey;
+        res = WaitForSingleEvent( event, EFI_TIMER_PERIOD_MICROSECONDS( timeout ) );
+        if( res == EFI_TIMEOUT )
+            goto exit;
+        ERROR_JUMP( res, exit, L"Could not WaitForSingleWithTimeout: %r\n", res );
+    }
+
+    for( ;; )
+    {
+        INTN old_selected = selected;
+        EFI_INPUT_KEY key;
+
+        con_set_output_attribute( DEFAULT_ATTRIBUTES );
+
+        res = WaitForSingleEvent( ST->ConIn->WaitForKey, 0 );
+        ERROR_BREAK( res, L"Could not WaitForSingleEvent: %r\n", res );
+
+        res = con_read_key( &key );
+        ERROR_BREAK( res, L"Could not con_read_key: %r\n", res );
+
+        if( ( key.UnicodeChar == CHAR_LINEFEED ) ||
+            ( key.UnicodeChar == CHAR_CARRIAGE_RETURN ) )
+        {
+            break;
+        }
+        else if( ( key.ScanCode    == SCAN_ESC ) &&
+                 ( key.UnicodeChar == 0        ) )
+        {
+            selected = entry_default;
+            break;
+        }
+        else if( key.ScanCode == SCAN_UP )
+        {
+            if( selected > 0 )
+                selected--;
+            else
+                selected = 0;
+        }
+        else if( key.ScanCode == SCAN_DOWN )
+        {
+            if( selected < entry_count - 1 )
+                selected++;
+            else
+                selected = 0;
+        }
+
+        if( selected == -1 || selected == old_selected )
+            continue;
+
+        con_set_cursor_position( column_offsets[ old_selected ],
+                                 row_offset + old_selected );
+        con_set_output_attribute( DEFAULT_ATTRIBUTES );
+        con_output_text( entries[ old_selected ].label );
+
+        con_set_cursor_position( column_offsets[ selected ],
+                                 row_offset + selected );
+        con_set_output_attribute( SELECTED_ATTRIBUTES );
+        con_output_text( entries[ selected ].label );
+    }
+
+exit:
+    con_clear_screen();
+
+    return selected;
+}
+
 EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen)
@@ -470,6 +610,18 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         // boot other is not set, whatever we found is good
         break;
+    }
+
+    BOOLEAN menu = FALSE;
+    if( j > 1 && get_chainloader_boot_attempts() >= 3 )
+        menu = TRUE;
+
+    if( menu )
+    {
+        UINTN timeout = get_loader_config_timeout();
+
+        selected = text_menu_choose_steamos_loader( found, j, selected, timeout );
+        set_loader_time_menu_usec();
     }
 
     if( selected > -1 )

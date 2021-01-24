@@ -43,6 +43,9 @@
 #define ERROR_RETURN(s, r, fmt, ...)             \
     ERROR_X( s, return r, fmt, ##__VA_ARGS__ )
 
+#define ERROR_BREAK(s, fmt, ...) \
+    ERROR_X( s, break, fmt, ##__VA_ARGS__ )
+
 #define ERROR_CONTINUE(s, fmt, ...) \
     ERROR_X( s, continue, fmt, ##__VA_ARGS__ )
 

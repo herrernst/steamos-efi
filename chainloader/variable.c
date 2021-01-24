@@ -34,6 +34,8 @@
 #define VARIABLE_STRING(s) (UINTN)( ( StrLen( s ) + 1 ) * sizeof( CHAR16 ) ), (VOID *)( s )
 #define VARIABLE_BLOB(s) (UINTN)(sizeof( *s )), (VOID *)( s )
 
+#define EFI_LOADER_FEATURE_CONFIG_TIMEOUT          (1L << 0)
+
 /* Some facilities that does not exist in the efi lib */
 
 static EFI_STATUS
@@ -85,7 +87,9 @@ get_drive_signature (EFI_DEVICE_PATH *device_path)
 }
 
 static const CHAR16 *loader_info = L"steamcl " RELEASE_VERSION;
-static const UINT64 loader_features = 0;
+static const UINT64 loader_features =
+    EFI_LOADER_FEATURE_CONFIG_TIMEOUT          |
+    0;
 
 EFI_STATUS set_loader_time_init_usec ()
 {
@@ -103,6 +107,30 @@ EFI_STATUS set_loader_time_init_usec ()
 
     v_msg( L"LoaderTimeInitUSec: %s\n", str );
     res = LibSetVariable( L"LoaderTimeInitUSec", &guid,
+                          VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to SetVariable()" );
+
+    efi_free( str );
+
+    return res;
+}
+
+EFI_STATUS set_loader_time_menu_usec ()
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_STATUS res = EFI_SUCCESS;
+    CHAR16 *str = NULL;
+    UINT64 usec;
+
+    usec = time_usec();
+    str = PoolPrint( L"%u", usec );
+    WARN_STATUS( ( str == NULL ), L"Failed to PoolPrint()" );
+
+    if( !str )
+        return EFI_OUT_OF_RESOURCES;
+
+    v_msg( L"LoaderTimeMenuUSec: %s\n", str );
+    res = LibSetVariable( L"LoaderTimeMenuUSec", &guid,
                           VARIABLE_STRING( str ) );
     WARN_STATUS( res, L"Failed to SetVariable()" );
 
@@ -366,6 +394,23 @@ EFI_STATUS set_loader_image_identifier ()
 
 exit:
     close_protocol( LibImageHandle, &lip_guid, LibImageHandle, NULL );
+    return res;
+}
+
+INTN get_loader_config_timeout ()
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    UINTN res = 5000000;
+    UINTN size;
+    VOID *val;
+
+    val = LibGetVariableAndSize( L"LoaderConfigTimeout", &guid, &size );
+    if( val )
+    {
+        res = Atoi( val );
+        efi_free( val );
+    }
+
     return res;
 }
 
