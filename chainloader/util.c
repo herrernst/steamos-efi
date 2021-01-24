@@ -137,7 +137,7 @@ EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
         VOID *found = NULL;
         res = get_handle_protocol( &handles[ i ], id, &found );
         ERROR_CONTINUE( res, L"handle %x does not support protocol %x. what.",
-                        (UINT64) handles[ i ], (UINT64) id );
+                        (UINT64)handles[ i ], (UINT64)id );
 
         if( found == protocol_instance )
             *handle = handles[ i ];
@@ -163,7 +163,7 @@ static EFI_HANDLE get_self_loaded_image (VOID)
         ERROR_RETURN( EFI_NOT_STARTED, NULL,
                       L"Chainloader is not initialised yet\n" );
 
-    res = get_handle_protocol( &self_image, &lip_guid, (VOID **) &li );
+    res = get_handle_protocol( &self_image, &lip_guid, (VOID **)&li );
     ERROR_RETURN( res, NULL, L"No loaded image protocol on %x\n", self_image );
 
     return li;
@@ -226,7 +226,7 @@ strwiden (CHAR8 *narrow)
     CHAR16 *wide = ALLOC_OR_GOTO( l * sizeof(CHAR16), allocfail );
 
     for( UINTN i = 0; i < l; i++ )
-        wide[ i ] = (CHAR16) narrow[ i ];
+        wide[ i ] = (CHAR16)narrow[ i ];
     return wide;
 
 allocfail:
@@ -271,7 +271,7 @@ CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen)
 
     // unset or zero-length relative path treated as / (root):
     if( relative_to && (StrLen( relative_to ) > 0) )
-        rel = (CHAR16 *) relative_to;
+        rel = (CHAR16 *)relative_to;
     else
         rel = L"\\";
 
@@ -312,7 +312,7 @@ CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen)
 
     // add a / at the start (maybe); and in between; plus a trailing NUL
     abs = ALLOC_OR_GOTO( (plen + rlen + 3) * sizeof(CHAR16), allocfail );
-    abs[ 0 ] = (CHAR16) 0;
+    abs[ 0 ] = (CHAR16)0;
 
     if( rel[ 0 ] != (CHAR16)'\\' )
         StrCat( abs, L"\\");
