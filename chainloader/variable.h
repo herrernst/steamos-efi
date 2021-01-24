@@ -26,6 +26,7 @@ extern EFI_HANDLE LibImageHandle;
 #define ENTRY_FLAG_UPDATE     1UL << 2
 
 EFI_STATUS set_loader_time_init_usec ();
+EFI_STATUS set_loader_time_menu_usec ();
 EFI_STATUS set_loader_time_exec_usec ();
 EFI_STATUS set_loader_info ();
 EFI_STATUS set_loader_firmware_info ();
@@ -39,5 +40,6 @@ EFI_STATUS set_loader_entry_selected (EFI_GUID *signature);
 EFI_STATUS set_chainloader_device_part_uuid (EFI_HANDLE image_handle);
 EFI_STATUS set_chainloader_image_identifier (EFI_HANDLE image_handle);
 EFI_STATUS set_chainloader_entry_flags (UINT64 flags);
+INTN get_loader_config_timeout ();
 UINTN get_chainloader_boot_attempts ();
 EFI_STATUS set_chainloader_boot_attempts ();
