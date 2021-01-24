@@ -135,7 +135,7 @@ VOID ls (EFI_FILE_PROTOCOL *dir, UINTN indent, CONST CHAR16 *name, UINTN recurse
     if( indent )
         for( i = 0; (i < max_pfx) && (i < pad_to); i++ )
             prefix[ i ] = (CHAR16)' ';
-    prefix[ i ] = (CHAR16) 0;
+    prefix[ i ] = (CHAR16)0;
 
     while( ((res = efi_readdir( dir, &dirent, &buf_size )) == EFI_SUCCESS) &&
            buf_size )

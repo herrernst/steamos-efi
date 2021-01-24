@@ -263,7 +263,7 @@ static int get_entry (int n, int argc, char **argv, cfg_entry *cfg)
 
     out = snprint_item( buf, sizeof(buf), c );
 
-    if( out >= (ssize_t) sizeof(buf) )
+    if( out >= (ssize_t)sizeof(buf) )
     {
         char *dbuf = calloc( 1, out + 1 );
 

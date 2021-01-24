@@ -38,7 +38,7 @@ void dump_config (cfg_entry *c)
 
 uint64_t set_conf_uint (const cfg_entry *cfg, const char *name, uint64_t val)
 {
-    cfg_entry *c = (cfg_entry *) get_conf_item (cfg, (unsigned char *)name);
+    cfg_entry *c = (cfg_entry *)get_conf_item (cfg, (unsigned char *)name);
 
     if( !c )
         return 0;
@@ -63,7 +63,7 @@ uint64_t set_conf_uint (const cfg_entry *cfg, const char *name, uint64_t val)
 
 uint64_t set_conf_string (const cfg_entry *cfg, const char *name, const char *val)
 {
-    cfg_entry *c = (cfg_entry *) get_conf_item (cfg, (unsigned char *)name);
+    cfg_entry *c = (cfg_entry *)get_conf_item (cfg, (unsigned char *)name);
 
     if( !c )
         return 0;
@@ -123,7 +123,7 @@ uint64_t set_conf_stamp_time(const cfg_entry *cfg, const char *name, time_t when
 
 uint64_t del_conf_item (const cfg_entry *cfg, const char *name)
 {
-    cfg_entry *c = (cfg_entry *) get_conf_item (cfg, (unsigned char *)name);
+    cfg_entry *c = (cfg_entry *)get_conf_item (cfg, (unsigned char *)name);
 
     if( !c )
         return 1;
