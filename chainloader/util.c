@@ -25,12 +25,12 @@
 #include "err.h"
 #include "util.h"
 
-VOID * efi_alloc (UINTN s) { return AllocateZeroPool( s ); }
-VOID   efi_free  (VOID *p) { if( p ) FreePool( p); }
+VOID *efi_alloc (UINTN s) { return AllocateZeroPool( s ); }
+VOID  efi_free  (VOID *p) { if( p ) FreePool( p); }
 
 EFI_HANDLE self_image;
 
-CONST CHAR16 * efi_statstr (EFI_STATUS s)
+CONST CHAR16 *efi_statstr (EFI_STATUS s)
 {
     switch( s )
     {
@@ -156,7 +156,7 @@ EFI_HANDLE get_self_handle (VOID)
 static EFI_HANDLE get_self_loaded_image (VOID)
 {
     EFI_STATUS res;
-    EFI_GUID lip_guid  = LOADED_IMAGE_PROTOCOL;
+    EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
     EFI_LOADED_IMAGE *li = NULL;
 
     if( !self_image )
@@ -176,8 +176,7 @@ EFI_HANDLE get_self_device_handle (VOID)
     return li ? li->DeviceHandle : NULL;
 }
 
-
-EFI_DEVICE_PATH * get_self_device_path (VOID)
+EFI_DEVICE_PATH *get_self_device_path (VOID)
 {
     EFI_STATUS res;
     EFI_GUID dp_guid   = DEVICE_PATH_PROTOCOL;
@@ -198,7 +197,7 @@ EFI_DEVICE_PATH * get_self_device_path (VOID)
     return dpath ?: lpath;
 }
 
-EFI_DEVICE_PATH * get_self_file (VOID)
+EFI_DEVICE_PATH *get_self_file (VOID)
 {
     EFI_LOADED_IMAGE *li = get_self_loaded_image();
 
@@ -466,7 +465,6 @@ static inline void decr_minute (EFI_TIME *time)
 // now.zoneis ± 24 hours (1440 minutes)
 static VOID efi_time_to_utc (EFI_TIME *time)
 {
-
     if( time->TimeZone == EFI_UNSPECIFIED_TIMEZONE )
         return;
 
