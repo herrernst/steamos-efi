@@ -30,6 +30,9 @@ extern EFI_HANDLE LibImageHandle;
 #define LOADER_VARIABLE_GUID \
     { 0x4a67b082, 0x0a4c, 0x41cf, {0xb6, 0xc7, 0x44, 0x0b, 0x29, 0xbb, 0x8c, 0x4f} }
 
+#define CHAINLOADER_VARIABLE_GUID \
+    { 0x399abb9b, 0x4bee, 0x4a18, {0xab, 0x5b, 0x45, 0xc6, 0xe0, 0xe8, 0xc7, 0x16} }
+
 #define VARIABLE_STRING(s) (UINTN)( ( StrLen( s ) + 1 ) * sizeof( CHAR16 ) ), (VOID *)( s )
 #define VARIABLE_BLOB(s) (UINTN)(sizeof( *s )), (VOID *)( s )
 
@@ -365,5 +368,18 @@ EFI_STATUS set_loader_image_identifier ()
 
 exit:
     close_protocol( LibImageHandle, &lip_guid, LibImageHandle, NULL );
+    return res;
+}
+
+EFI_STATUS set_chainloader_entry_flags (UINT64 flags)
+{
+    EFI_GUID guid = CHAINLOADER_VARIABLE_GUID;
+    EFI_STATUS res = EFI_SUCCESS;
+
+    v_msg( L"ChainLoaderEntryFlags: 0x%016x\n", flags );
+    res = LibSetVariable( L"ChainLoaderEntryFlags", &guid,
+                          VARIABLE_BLOB( &flags ) );
+    WARN_STATUS( res, L"Failed to SetVariable()" );
+
     return res;
 }

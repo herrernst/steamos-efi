@@ -324,6 +324,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
     static EFI_GUID dp_guid = DEVICE_PATH_PROTOCOL;
     cfg_entry *conf = NULL;
+    UINT64 flags = 0;
     UINTN j = 0;
     found_cfg found[MAX_BOOTCONFS + 1] = { { NULL } };
     EFI_GUID *found_signatures[MAX_BOOTCONFS + 1] = { NULL };
@@ -486,8 +487,13 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( !update )
             update = update_scheduled_now( chosen->config );
 
+        flags = 0;
+
+        if( boot_other )
+            flags |= ENTRY_FLAG_BOOT_OTHER;
+
         if( update )
-            chosen->args = L" steamos-update=1 ";
+            flags |= ENTRY_FLAG_UPDATE;
 
         // free the unused configs:
         for( INTN i = 0; i < (INTN) j; i++ )
@@ -496,6 +502,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             free_config( &found[ i ].cfg );
         }
 
+        set_chainloader_entry_flags( flags );
         set_loader_entry_default( found_signatures[ j - 1 ] );
         set_loader_entry_selected( found_signatures[ selected ] );
 
