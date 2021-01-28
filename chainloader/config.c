@@ -226,7 +226,7 @@ allocfail:
 }
 #endif
 
-const cfg_entry * get_conf_item (const cfg_entry *config, const CHAR8 *name)
+const cfg_entry *get_conf_item (const cfg_entry *config, const CHAR8 *name)
 {
     if( !name )
         return NULL;
@@ -249,7 +249,7 @@ UINT64 get_conf_uint (const cfg_entry *config, char *name)
     return c ? c->value.number.u : 0;
 }
 
-CHAR8 * get_conf_str (const cfg_entry *config, char *name)
+CHAR8 *get_conf_str (const cfg_entry *config, char *name)
 {
     const cfg_entry *c = get_conf_item( config, (CHAR8 *)name );
 
@@ -261,7 +261,8 @@ cfg_entry *new_config (VOID)
     cfg_entry *config = efi_alloc( sizeof(bootspec) );
 
     WARN_STATUS( (config != NULL) ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES,
-                 L"Failed to allocate %d bytes for bootspec", sizeof(bootspec) );
+                 L"Failed to allocate %d bytes for bootspec",
+                 sizeof(bootspec) );
 
     if( config )
         CopyMem( config, &bootspec[ 0 ], sizeof(bootspec) );

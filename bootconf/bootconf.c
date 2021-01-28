@@ -349,7 +349,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
     {
         set_conf_uint( cfg, "boot-other", 0 );
         set_conf_uint( cfg, "update",     1 );
-        set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_conf_stamp_time( cfg, "boot-requested-at", time( NULL ) );
         set_timestamped_note( cfg, "bootconf mode: update (other)" );
         return 1;
     }
@@ -359,7 +359,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
     {
         set_conf_uint( cfg, "boot-other", 1 );
         set_conf_uint( cfg, "update",     1 );
-        set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_conf_stamp_time( cfg, "boot-requested-at", time( NULL ) );
         set_timestamped_note( cfg, "bootconf mode: update (self)" );
         return 1;
     }
@@ -376,7 +376,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
     {
         set_conf_uint( cfg, "boot-other", 0 );
         set_conf_uint( cfg, "update",     0 );
-        set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_conf_stamp_time( cfg, "boot-requested-at", time( NULL ) );
         set_timestamped_note( cfg, "bootconf mode: reboot (self)" );
         return 1;
     }
@@ -385,7 +385,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
     {
         set_conf_uint( cfg, "boot-other", 1 );
         set_conf_uint( cfg, "update",     0 );
-        set_conf_stamp_time( cfg, "boot-requested-at", time(NULL) );
+        set_conf_stamp_time( cfg, "boot-requested-at", time( NULL ) );
         set_timestamped_note( cfg, "bootconf mode: reboot (other)" );
         return 1;
     }
@@ -396,7 +396,7 @@ static int set_mode (int n, int argc, char **argv, cfg_entry *cfg)
         set_conf_uint( cfg, "invalid"      , 0 );
         set_conf_uint( cfg, "boot-attempts", 0 );
         set_conf_uint( cfg, "boot-count"   , nth + 1 );
-        set_conf_stamp_time( cfg, "boot-time", time(NULL) );
+        set_conf_stamp_time( cfg, "boot-time", time( NULL ) );
         set_timestamped_note( cfg, "bootconf mode: boot-ok" );
         return 1;
     }

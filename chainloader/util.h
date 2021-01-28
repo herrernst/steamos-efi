@@ -51,11 +51,11 @@
 #endif
 
 #ifndef NO_EFI_TYPES
-VOID * efi_alloc (IN UINTN s);
-VOID   efi_free  (IN VOID *p);
+VOID *efi_alloc (IN UINTN s);
+VOID  efi_free  (IN VOID *p);
 
-CONST CHAR16 * efi_statstr (EFI_STATUS s);
-CONST CHAR16 * efi_memtypestr (EFI_MEMORY_TYPE m);
+CONST CHAR16 *efi_statstr (EFI_STATUS s);
+CONST CHAR16 *efi_memtypestr (EFI_MEMORY_TYPE m);
 
 EFI_STATUS get_handle_protocol (EFI_HANDLE *handle,
                                 EFI_GUID *id,
@@ -73,11 +73,11 @@ EFI_STATUS get_protocol (EFI_GUID *id,
                          VOID *registration,
                          OUT VOID **protocol);
 
-EFI_DEVICE_PATH * make_absolute_device_path (EFI_HANDLE device, CHAR16 *path);
+EFI_DEVICE_PATH *make_absolute_device_path (EFI_HANDLE device, CHAR16 *path);
 EFI_HANDLE get_self_handle (VOID);
 EFI_HANDLE get_self_device_handle (VOID);
-EFI_DEVICE_PATH * get_self_device_path (VOID);
-EFI_DEVICE_PATH * get_self_file (VOID);
+EFI_DEVICE_PATH *get_self_device_path (VOID);
+EFI_DEVICE_PATH *get_self_file (VOID);
 
 VOID initialise (EFI_HANDLE image);
 #endif
