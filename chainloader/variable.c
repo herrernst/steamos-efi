@@ -25,8 +25,6 @@
 #include "util.h"
 #include "variable.h"
 
-extern EFI_HANDLE LibImageHandle;
-
 #define LOADER_VARIABLE_GUID \
     { 0x4a67b082, 0x0a4c, 0x41cf, {0xb6, 0xc7, 0x44, 0x0b, 0x29, 0xbb, 0x8c, 0x4f} }
 
@@ -369,6 +367,87 @@ EFI_STATUS set_loader_image_identifier ()
 
 exit:
     CloseProtocol( LibImageHandle, &LoadedImageProtocol, LibImageHandle, NULL );
+    return res;
+}
+
+EFI_STATUS set_chainloader_device_part_uuid (EFI_HANDLE image_handle)
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_LOADED_IMAGE *loaded_image;
+    EFI_DEVICE_PATH *device_path;
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_GUID signature;
+    CHAR16 *str = NULL;
+
+    if( !image_handle )
+        return EFI_INVALID_PARAMETER;
+
+    res = OpenProtocol( image_handle, &LoadedImageProtocol,
+                        (VOID **)&loaded_image, image_handle, NULL,
+                        EFI_OPEN_PROTOCOL_GET_PROTOCOL );
+    WARN_STATUS( res, L"Failed to OpenProtocol()" );
+
+    device_path = DevicePathFromHandle( loaded_image->DeviceHandle );
+    WARN_STATUS( res, L"Failed to DevicePathFromHandle()" );
+
+    signature = GetMediaHardDriveSignature( device_path );
+    WARN_STATUS( ( CompareMem( &signature, &NullGuid, sizeof (EFI_GUID) ) == 0 ),
+                 L"Failed to GetMediaHardDriveSignature" );
+
+    str = PoolPrint( L"%g", &signature );
+    WARN_STATUS( ( str == NULL ), L"Failed to PoolPrint()" );
+
+    if( !str )
+    {
+        res = EFI_OUT_OF_RESOURCES;
+        goto exit;
+    }
+
+    v_msg( L"ChainLoaderDevicePartUUID: %s\n", str );
+    res = LibSetVariable( L"ChainLoaderDevicePartUUID", &guid,
+                          VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to SetVariable()" );
+
+    FreePool( str );
+
+exit:
+    CloseProtocol( image_handle, &LoadedImageProtocol, image_handle, NULL );
+    return res;
+}
+
+EFI_STATUS set_chainloader_image_identifier (EFI_HANDLE image_handle)
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_LOADED_IMAGE *loaded_image;
+    EFI_STATUS res = EFI_SUCCESS;
+    CHAR16 *str = NULL;
+
+    if( !image_handle )
+        return EFI_INVALID_PARAMETER;
+
+    res = OpenProtocol( image_handle, &LoadedImageProtocol,
+                        (VOID **)&loaded_image, image_handle, NULL,
+                        EFI_OPEN_PROTOCOL_GET_PROTOCOL );
+    WARN_STATUS( res, L"Failed to OpenProtocol()" );
+
+    str = DevicePathToStr(loaded_image->FilePath);
+    WARN_STATUS( ( str == NULL ), L"Failed to DevicePathToStr()" );
+
+    if( !str )
+    {
+        res = EFI_OUT_OF_RESOURCES;
+        goto exit;
+    }
+
+    v_msg( L"ChainLoaderImageIdentifier: %s\n", str );
+    res = LibSetVariable( L"ChainLoaderImageIdentifier", &guid,
+                          VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to SetVariable()" );
+
+    FreePool( str );
+
+exit:
+    CloseProtocol( image_handle, &LoadedImageProtocol, image_handle, NULL );
     return res;
 }
 

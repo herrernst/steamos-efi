@@ -19,6 +19,8 @@
 
 #pragma once
 
+extern EFI_HANDLE LibImageHandle;
+
 #define ENTRY_FLAG_INVALID    1UL << 0
 #define ENTRY_FLAG_BOOT_OTHER 1UL << 1
 #define ENTRY_FLAG_UPDATE     1UL << 2
@@ -34,4 +36,6 @@ EFI_STATUS set_loader_image_identifier ();
 EFI_STATUS set_loader_entries ( EFI_GUID **signatures);
 EFI_STATUS set_loader_entry_default (EFI_GUID *signature);
 EFI_STATUS set_loader_entry_selected (EFI_GUID *signature);
+EFI_STATUS set_chainloader_device_part_uuid (EFI_HANDLE image_handle);
+EFI_STATUS set_chainloader_image_identifier (EFI_HANDLE image_handle);
 EFI_STATUS set_chainloader_entry_flags (UINT64 flags);

@@ -108,6 +108,8 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     set_loader_features();
     set_loader_device_part_uuid();
     set_loader_image_identifier();
+    set_chainloader_device_part_uuid( LibImageHandle );
+    set_chainloader_image_identifier( LibImageHandle );
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
     ERROR_JUMP( res, cleanup, L"get_fs_handles" );
