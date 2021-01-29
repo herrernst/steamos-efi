@@ -292,9 +292,9 @@ efi_vars_supported ()
 # find matching efiboot entries:
 find_boot_entries ()
 {
-    local distributor=${1:-debian}; shift;
-    local dev=$1;                   shift;
-    local part=${1:-999};           shift;
+    local distributor=${1:-steamos}; shift;
+    local dev=$1;                    shift;
+    local part=${1:-999};            shift;
     local bootid=;
     local entry=;
     local label=;
