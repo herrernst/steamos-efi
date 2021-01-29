@@ -133,7 +133,7 @@ static VOID dump_found (found_cfg *c)
        dst.partition   = src.partition;   \
        dst.loader      = src.loader;      \
        dst.device_path = src.device_path; \
-       StrnCpy( dst.label, src.label, sizeof(dst.label ) / sizeof( CHAR16 ) ); \
+       StrnCpy( dst.label, src.label, sizeof(dst.label) / sizeof(CHAR16) ); \
        dst.uuid        = src.uuid;        \
        dst.at          = src.at;          })
 
