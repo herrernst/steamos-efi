@@ -502,6 +502,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             free_config( &found[ i ].cfg );
         }
 
+        set_chainloader_boot_attempts ();
         set_chainloader_entry_flags( flags );
         set_loader_entry_default( found_signatures[ j - 1 ] );
         set_loader_entry_selected( found_signatures[ selected ] );

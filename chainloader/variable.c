@@ -464,3 +464,37 @@ EFI_STATUS set_chainloader_entry_flags (UINT64 flags)
 
     return res;
 }
+
+UINTN get_chainloader_boot_attempts ()
+{
+    EFI_GUID guid = CHAINLOADER_VARIABLE_GUID;
+    UINTN res = 0;
+    UINTN size;
+    VOID *val;
+
+    val = LibGetVariableAndSize( L"ChainLoaderBootAttempts", &guid, &size );
+
+    if( val )
+    {
+        res = *(UINTN *)val;
+        efi_free( val );
+    }
+
+    return res;
+}
+
+EFI_STATUS set_chainloader_boot_attempts ()
+{
+    EFI_GUID guid = CHAINLOADER_VARIABLE_GUID;
+    EFI_STATUS res = EFI_SUCCESS;
+    UINTN attempts = 0;
+
+    attempts = get_chainloader_boot_attempts();
+    attempts++;
+    v_msg( L"ChainLoaderBootAttempts: %d\n", attempts );
+    res = LibSetNVVariable( L"ChainLoaderBootAttempts", &guid,
+                            VARIABLE_BLOB( &attempts ) );
+    WARN_STATUS( res, L"Failed to SetNVVariable()" );
+
+    return res;
+}

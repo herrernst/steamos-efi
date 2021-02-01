@@ -39,3 +39,5 @@ EFI_STATUS set_loader_entry_selected (EFI_GUID *signature);
 EFI_STATUS set_chainloader_device_part_uuid (EFI_HANDLE image_handle);
 EFI_STATUS set_chainloader_image_identifier (EFI_HANDLE image_handle);
 EFI_STATUS set_chainloader_entry_flags (UINT64 flags);
+UINTN get_chainloader_boot_attempts ();
+EFI_STATUS set_chainloader_boot_attempts ();
