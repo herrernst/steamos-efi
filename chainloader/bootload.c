@@ -642,9 +642,15 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     if( j > 1 && get_chainloader_boot_attempts() >= 3 )
         menu = TRUE;
 
+    BOOLEAN oneshot = is_loader_config_timeout_oneshot_set();
+    if( oneshot )
+        menu = TRUE;
+
     if( menu )
     {
         UINTN timeout = get_loader_config_timeout();
+        if( oneshot )
+            timeout = get_loader_config_timeout_oneshot();
 
         selected = text_menu_choose_steamos_loader( found, j, selected, timeout );
         set_loader_time_menu_usec();

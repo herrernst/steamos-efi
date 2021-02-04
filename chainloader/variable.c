@@ -35,6 +35,7 @@
 #define VARIABLE_BLOB(s) (UINTN)(sizeof( *s )), (VOID *)( s )
 
 #define EFI_LOADER_FEATURE_CONFIG_TIMEOUT          (1L << 0)
+#define EFI_LOADER_FEATURE_CONFIG_TIMEOUT_ONE_SHOT (1L << 1)
 
 /* Some facilities that does not exist in the efi lib */
 
@@ -89,6 +90,7 @@ get_drive_signature (EFI_DEVICE_PATH *device_path)
 static const CHAR16 *loader_info = L"steamcl " RELEASE_VERSION;
 static const UINT64 loader_features =
     EFI_LOADER_FEATURE_CONFIG_TIMEOUT          |
+    EFI_LOADER_FEATURE_CONFIG_TIMEOUT_ONE_SHOT |
     0;
 
 EFI_STATUS set_loader_time_init_usec ()
@@ -409,6 +411,42 @@ INTN get_loader_config_timeout ()
     {
         res = Atoi( val );
         efi_free( val );
+    }
+
+    return res;
+}
+
+BOOLEAN is_loader_config_timeout_oneshot_set ()
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    UINTN size;
+    VOID *val;
+
+    val = LibGetVariableAndSize( L"LoaderConfigTimeoutOneShot", &guid, &size );
+    if( val )
+    {
+        efi_free( val );
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+INTN get_loader_config_timeout_oneshot ()
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    UINTN res = 0;
+    UINTN size;
+    VOID *val;
+
+    val = LibGetVariableAndSize( L"LoaderConfigTimeoutOneShot", &guid, &size );
+    if( val )
+    {
+        res = Atoi( val );
+        efi_free( val );
+
+        LibDeleteVariable( L"LoaderConfigTimeoutOneShot", &guid );
     }
 
     return res;
