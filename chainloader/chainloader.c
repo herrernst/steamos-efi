@@ -25,6 +25,69 @@
 #include "chainloader.h"
 #include "variable.h"
 
+static EFI_STATUS reset_system (IN EFI_RESET_TYPE type,
+                                IN EFI_STATUS     status,
+                                IN UINTN          size,
+                                IN CHAR16        *data OPTIONAL)
+{
+    return uefi_call_wrapper( RT->ResetSystem, 4, type, status, size, data );
+}
+
+BOOLEAN reboot_into_firmware_is_supported (VOID)
+{
+    UINT64 os_indications_supported;
+    UINTN size;
+    VOID *val;
+
+    val = LibGetVariableAndSize( L"OsIndicationsSupported",
+                                 &gEfiGlobalVariableGuid, &size );
+    if( !val )
+        return FALSE;
+
+    v_msg( L"OsIndicationsSupported: %016x\n", *(UINT64 *)val);
+    os_indications_supported = *(UINT64 *)val;
+    efi_free( val );
+
+    if( os_indications_supported & EFI_OS_INDICATIONS_BOOT_TO_FW_UI )
+        return TRUE;
+
+    return FALSE;
+}
+
+EFI_STATUS reboot_into_firmware (VOID)
+{
+    UINT64 os_indications = EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
+    UINTN size, res;
+    VOID *val;
+
+    val = LibGetVariableAndSize( L"OsIndications",
+                                 &gEfiGlobalVariableGuid, &size );
+    if( val )
+    {
+        v_msg( L"OsIndications: %016x\n", *(UINT64 *)val);
+        os_indications |= *(UINT64 *)val;
+        efi_free( val );
+    }
+
+    v_msg( L"OsIndications: %016x\n", os_indications );
+    res = LibSetNVVariable( L"OsIndications", &gEfiGlobalVariableGuid,
+                            sizeof(os_indications), &os_indications );
+    if( EFI_ERROR( res ) )
+    {
+        Print( L"Failed to LibSetNVVariable: %r\n", res );
+        return res;
+    }
+
+    res = reset_system( EfiResetCold, EFI_SUCCESS, 0, NULL );
+    if( EFI_ERROR( res ) )
+    {
+        Print( L"Failed to reset_system: %r\n", res );
+        return res;
+    }
+
+    return EFI_SUCCESS;
+}
+
 EFI_STATUS dump_fs_details (IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs)
 {
     EFI_STATUS res = EFI_NOT_STARTED;
@@ -135,6 +198,16 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
 cleanup:
     efi_free( filesystems );
+
+    if( reboot_into_firmware_is_supported() )
+    {
+        Print( L"Rebooting into firmware...\n" );
+        res = reboot_into_firmware();
+        Print( L"Failed to reboot into firmware: %r\n", res );
+    }
+
+    Print( L"Rebooting into 5s...\n" );
+    sleep( 5 );
 
     return res;
 }
