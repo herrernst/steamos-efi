@@ -444,7 +444,7 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
         else if( ( key.ScanCode    == SCAN_ESC ) &&
                  ( key.UnicodeChar == 0        ) )
         {
-            selected = entry_default;
+            selected = -1;
             break;
         }
         else if( key.ScanCode == SCAN_UP )
