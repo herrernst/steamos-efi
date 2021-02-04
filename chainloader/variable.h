@@ -41,5 +41,7 @@ EFI_STATUS set_chainloader_device_part_uuid (EFI_HANDLE image_handle);
 EFI_STATUS set_chainloader_image_identifier (EFI_HANDLE image_handle);
 EFI_STATUS set_chainloader_entry_flags (UINT64 flags);
 INTN get_loader_config_timeout ();
+BOOLEAN is_loader_config_timeout_oneshot_set ();
+INTN get_loader_config_timeout_oneshot ();
 UINTN get_chainloader_boot_attempts ();
 EFI_STATUS set_chainloader_boot_attempts ();
