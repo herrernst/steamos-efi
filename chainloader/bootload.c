@@ -183,11 +183,11 @@ static EFI_GUID partition_uuid (EFI_HANDLE *handle)
             EFI_GUID *guid;
 
             if( hd->SignatureType != SIGNATURE_TYPE_GUID )
-	        break;
+                break;
 
             guid = (EFI_GUID *) (&hd->Signature[0]);
             return *guid;
-	}
+        }
 
         dp = NextDevicePathNode( dp );
     }
@@ -206,12 +206,12 @@ static BOOLEAN device_path_eq (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
     {
         if( DevicePathNodeLength( a ) != DevicePathNodeLength( b ) ||
             DevicePathType( a )       != DevicePathType( b )       ||
-	    DevicePathSubType( a )    != DevicePathSubType( b ) )
-	    return FALSE;
+            DevicePathSubType( a )    != DevicePathSubType( b ) )
+            return FALSE;
 
-	// both components are hard-drive partitions.
+        // both components are hard-drive partitions.
         if( DevicePathType( a )    == MEDIA_DEVICE_PATH &&
-	    DevicePathSubType( a ) == MEDIA_HARDDRIVE_DP )
+            DevicePathSubType( a ) == MEDIA_HARDDRIVE_DP )
             return TRUE;
 
         if( DevicePathNodeLength( a ) != DevicePathNodeLength( b ) )
