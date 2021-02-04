@@ -23,6 +23,62 @@ typedef struct _SIMPLE_INPUT_INTERFACE INPUT_INTERFACE;
 typedef struct _SIMPLE_TEXT_OUTPUT_INTERFACE OUTPUT_INTERFACE;
 
 //
+// Console control protocol (deprecated)
+//
+
+#define EFI_CONSOLE_CONTROL_PROTOCOL_GUID \
+        { 0xf42f7782, 0x012e, 0x4c12, { 0x99, 0x56, 0x49, 0xf9, 0x43, 0x04, 0xf7, 0x21 } }
+#define CONSOLE_CONTROL_PROTOCOL_GUID EFI_CONSOLE_CONTROL_PROTOCOL_GUID
+
+struct _CONSOLE_CONTROL_PROTOCOL;
+
+INTERFACE_DECL(_CONSOLE_CONTROL_PROTOCOL_GUID);
+
+typedef enum
+{
+    CONCTL_SCREEN_TEXT,
+    CONCTL_SCREEN_GRAPHICS,
+    CONCTL_SCREEN_MAX,
+} EFI_CONSOLE_CONTROL_SCREEN_MODE;
+
+typedef EFI_STATUS
+(EFIAPI *EFI_CONSOLE_CONTROL_PROTOCOL_GET_MODE)
+    (struct _CONSOLE_CONTROL_PROTOCOL *ctl,
+     EFI_CONSOLE_CONTROL_SCREEN_MODE  *mode,
+     BOOLEAN                          *have_uga,
+     BOOLEAN                          *stdin_locked);
+
+typedef EFI_STATUS
+(EFIAPI *EFI_CONSOLE_CONTROL_PROTOCOL_SET_MODE)
+    (struct _CONSOLE_CONTROL_PROTOCOL *ctl,
+     EFI_CONSOLE_CONTROL_SCREEN_MODE mode);
+
+typedef EFI_STATUS
+(EFIAPI *EFI_CONSOLE_CONTROL_PROTOCOL_LOCK_STDIN)
+    (struct _CONSOLE_CONTROL_PROTOCOL         *ctl,
+     CHAR16                                   *passphrase);
+
+typedef struct _CONSOLE_CONTROL_PROTOCOL
+{
+    EFI_CONSOLE_CONTROL_PROTOCOL_GET_MODE   get_mode;
+    EFI_CONSOLE_CONTROL_PROTOCOL_SET_MODE   set_mode;
+    EFI_CONSOLE_CONTROL_PROTOCOL_LOCK_STDIN lock_stdin;
+} EFI_CONSOLE_CONTROL_PROTOCOL;
+
+EFI_STATUS
+conctl_get_mode (EFI_CONSOLE_CONTROL_PROTOCOL    *ctl,
+                 EFI_CONSOLE_CONTROL_SCREEN_MODE *mode,
+                 BOOLEAN                         *have_uga,
+                 BOOLEAN                         *stdin_locked);
+
+EFI_STATUS
+conctl_set_mode (EFI_CONSOLE_CONTROL_PROTOCOL    *ctl,
+                 EFI_CONSOLE_CONTROL_SCREEN_MODE  mode);
+EFI_STATUS
+conctl_lock_stdin (EFI_CONSOLE_CONTROL_PROTOCOL *ctl,
+                   CHAR16                       *passphrase);
+
+//
 // Text input protocol
 //
 

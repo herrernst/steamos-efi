@@ -323,6 +323,32 @@ cleanup:
     return res;
 }
 
+EFI_STATUS console_mode ()
+{
+    EFI_CONSOLE_CONTROL_SCREEN_MODE mode;
+    EFI_CONSOLE_CONTROL_PROTOCOL *ccp;
+    EFI_STATUS res;
+    BOOLEAN locked;
+    BOOLEAN uga;
+    EFI_GUID ccp_guid = EFI_CONSOLE_CONTROL_PROTOCOL_GUID;
+
+    res = get_protocol( &ccp_guid, NULL, (VOID **)&ccp );
+    if( res == EFI_NOT_FOUND )
+        return res;
+    ERROR_RETURN( res, res, "Could not get_protocol: %r\n", res );
+
+    res = conctl_get_mode( ccp, &mode, &uga, &locked );
+    ERROR_RETURN( res, res, "Could not conctl_get_mode: %r\n", res );
+
+    if( mode == CONCTL_SCREEN_TEXT )
+        return EFI_SUCCESS;
+
+    res = conctl_set_mode( ccp, CONCTL_SCREEN_TEXT );
+    ERROR_RETURN( res, res, "Could not ConsoleControlSetMode: %r\n", res );
+
+    return EFI_SUCCESS;
+}
+
 INTN text_menu_choose_steamos_loader (found_cfg *entries,
                                       INTN entry_count,
                                       INTN entry_default,

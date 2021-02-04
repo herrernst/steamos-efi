@@ -25,6 +25,33 @@
 #include "console.h"
 
 //
+// Console control protocol (deprecated)
+//
+
+EFI_STATUS
+conctl_get_mode (EFI_CONSOLE_CONTROL_PROTOCOL     *ctl,
+                 EFI_CONSOLE_CONTROL_SCREEN_MODE  *mode,
+                 BOOLEAN                          *have_uga,
+                 BOOLEAN                          *stdin_locked)
+{
+    return uefi_call_wrapper( ctl->get_mode, 4, ctl, mode, have_uga, stdin_locked );
+}
+
+EFI_STATUS
+conctl_set_mode (EFI_CONSOLE_CONTROL_PROTOCOL    *ctl,
+                 EFI_CONSOLE_CONTROL_SCREEN_MODE  mode)
+{
+    return uefi_call_wrapper( ctl->set_mode, 2, ctl, mode );
+}
+
+EFI_STATUS
+conctl_lock_stdin (EFI_CONSOLE_CONTROL_PROTOCOL *ctl,
+                   CHAR16                       *passphrase)
+{
+    return uefi_call_wrapper( ctl->lock_stdin, 2, ctl, passphrase );
+}
+
+//
 // Text input protocol
 //
 
