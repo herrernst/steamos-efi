@@ -185,11 +185,11 @@ static EFI_GUID partition_uuid (EFI_HANDLE *handle)
             EFI_GUID *guid;
 
             if( hd->SignatureType != SIGNATURE_TYPE_GUID )
-	        break;
+                break;
 
             guid = (EFI_GUID *) (&hd->Signature[0]);
             return *guid;
-	}
+        }
 
         dp = NextDevicePathNode( dp );
     }
