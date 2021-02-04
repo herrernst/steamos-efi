@@ -303,6 +303,44 @@ cleanup:
     return res;
 }
 
+EFI_STATUS console_mode ()
+{
+    EFI_CONSOLE_CONTROL_SCREEN_MODE mode;
+    EFI_CONSOLE_CONTROL_PROTOCOL *ccp;
+    EFI_STATUS res;
+    BOOLEAN locked; 
+    BOOLEAN uga;
+
+    res = LibLocateProtocol( &gEfiConsoleControlProtocolGuid, (VOID **)&ccp );
+    if( EFI_ERROR( res ) )
+    {
+        if( res == EFI_NOT_FOUND )
+            return EFI_SUCCESS;
+
+        Print( L"Could not LibLocateProtocol: %r\n", res );
+        return res;
+    }
+
+    res = ConsoleControlGetMode( ccp, &mode, &uga, &locked );
+    if( EFI_ERROR( res ) )
+    {
+        Print( L"Could not ConsoleControlGetMode: %r\n", res );
+        return res;
+    }
+
+    if( mode == EfiConsoleControlScreenText )
+        return EFI_SUCCESS;
+
+    res = ConsoleControlSetMode( ccp, EfiConsoleControlScreenText );
+    if( EFI_ERROR( res ) )
+    {
+        Print( L"Could not ConsoleControlSetMode: %r\n", res );
+        return res;
+    }
+
+    return EFI_SUCCESS;
+}
+
 INTN text_menu_choose_steamos_loader (found_cfg *entries,
                                       INTN entry_count,
                                       INTN entry_default,
@@ -315,6 +353,10 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
 
     if( !entries || entry_count <= 0 )
         return -1;
+
+    res = console_mode();
+    if( EFI_ERROR( res ) )
+        return res;
 
     if( ST->ConOut->Mode->MaxMode > 0 )
     {

@@ -20,6 +20,72 @@
 #pragma once
 
 //
+// Console control protocol (deprecated)
+//
+
+#define EFI_CONSOLE_CONTROL_PROTOCOL_GUID \
+        { 0xf42f7782, 0x012e, 0x4c12, { 0x99, 0x56, 0x49, 0xf9, 0x43, 0x04, 0xf7, 0x21 } }
+#define CONSOLE_CONTROL_PROTOCOL_GUID EFI_CONSOLE_CONTROL_PROTOCOL_GUID
+
+struct _CONSOLE_CONTROL_PROTOCOL;
+
+INTERFACE_DECL(_CONSOLE_CONTROL_PROTOCOL_GUID);
+
+typedef enum {
+    EfiConsoleControlScreenText,
+    EfiConsoleControlScreenGraphics,
+    EfiConsoleControlScreenMaxValue,
+} EFI_CONSOLE_CONTROL_SCREEN_MODE;
+
+typedef EFI_STATUS
+(EFIAPI *EFI_CONSOLE_CONTROL_PROTOCOL_GET_MODE) (
+    struct _CONSOLE_CONTROL_PROTOCOL         *This,
+    EFI_CONSOLE_CONTROL_SCREEN_MODE          *Mode,
+    BOOLEAN                                  *UgaExists,
+    BOOLEAN                                  *StdInLocked
+);
+
+typedef EFI_STATUS
+(EFIAPI *EFI_CONSOLE_CONTROL_PROTOCOL_SET_MODE) (
+    struct _CONSOLE_CONTROL_PROTOCOL         *This,
+    EFI_CONSOLE_CONTROL_SCREEN_MODE          Mode
+);
+
+typedef EFI_STATUS
+(EFIAPI *EFI_CONSOLE_CONTROL_PROTOCOL_LOCK_STD_IN) (
+    struct _CONSOLE_CONTROL_PROTOCOL         *This,
+    CHAR16                                   *Password
+);
+
+typedef struct _CONSOLE_CONTROL_PROTOCOL {
+    EFI_CONSOLE_CONTROL_PROTOCOL_GET_MODE    GetMode;
+    EFI_CONSOLE_CONTROL_PROTOCOL_SET_MODE    SetMode;
+    EFI_CONSOLE_CONTROL_PROTOCOL_LOCK_STD_IN LockStdIn;
+} EFI_CONSOLE_CONTROL_PROTOCOL;
+
+EFI_STATUS
+ConsoleControlGetMode (
+    struct _CONSOLE_CONTROL_PROTOCOL         *This,
+    EFI_CONSOLE_CONTROL_SCREEN_MODE          *Mode,
+    BOOLEAN                                  *UgaExists,
+    BOOLEAN                                  *StdInLocked
+    );
+
+EFI_STATUS
+ConsoleControlSetMode (
+    struct _CONSOLE_CONTROL_PROTOCOL         *This,
+    EFI_CONSOLE_CONTROL_SCREEN_MODE          Mode
+    );
+
+EFI_STATUS
+ConsoleControlLockStdIn (
+    struct _CONSOLE_CONTROL_PROTOCOL         *This,
+    CHAR16                                   *Password
+    );
+
+extern EFI_GUID gEfiConsoleControlProtocolGuid;
+
+//
 // Text input protocol
 //
 
