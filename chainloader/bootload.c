@@ -89,7 +89,7 @@ typedef struct
     EFI_DEVICE_PATH *device_path;
     CHAR16 *loader;
     cfg_entry *cfg;
-    CHAR16 label[12];
+    CHAR16 *label;
     EFI_GUID uuid;
     UINT64 at;
 } found_cfg;
@@ -142,7 +142,7 @@ static VOID dump_found (found_cfg *c)
        dst.partition   = src.partition;   \
        dst.loader      = src.loader;      \
        dst.device_path = src.device_path; \
-       StrnCpy( dst.label, src.label, sizeof(dst.label) / sizeof(CHAR16) ); \
+       dst.label       = src.label;       \
        dst.uuid        = src.uuid;        \
        dst.at          = src.at;          })
 
@@ -157,22 +157,15 @@ static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
     return 1;
 }
 
-static CHAR16 *volume_label (EFI_FILE_PROTOCOL *handle, CHAR16 *str, UINTN size)
+static CHAR16 *volume_label (EFI_FILE_PROTOCOL *handle)
 {
     EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *volume = NULL;
 
-    if( !str || !size )
-        return NULL;
-
-    str[0] = 0;
     volume = LibFileSystemVolumeLabelInfo( handle );
     if( !volume )
         return NULL;
 
-    StrnCpy( str, volume->VolumeLabel, size );
-    FreePool( volume );
-
-    return str;
+    return volume->VolumeLabel;
 }
 
 static EFI_GUID partition_uuid (EFI_HANDLE *handle)
@@ -571,8 +564,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
-        volume_label( root_dir, found[ j ].label,
-                      sizeof(found[ j ].label) / sizeof(CHAR16) );
+        found[ j ].label     = volume_label( root_dir );
         found[ j ].uuid      = partition_uuid( found[ j ].partition );
         found_signatures[ j ] = &found[ j ].uuid;
         j++;
@@ -655,6 +647,22 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     if( menu )
     {
+        BOOLEAN unique = TRUE;
+        for( UINTN i = 0; i < j; i++ )
+            for( UINTN k = i + 1; k < j; k++ )
+                if( StrCmp( found[ i ].label, found[ k ].label ) == 0 )
+                    unique = FALSE;
+        if( !unique )
+        {
+            for( UINTN i = 0; i < j; i++ )
+            {
+                CHAR16 *old = found[ i ].label;
+                found[ i ].label = PoolPrint( L"%s-%g", found[ i ].label,
+                                                        &found[ i ].uuid );
+                FreePool( old );
+            }
+        }
+
         UINTN timeout = get_loader_config_timeout();
         if( oneshot )
             timeout = get_loader_config_timeout_oneshot();
@@ -692,6 +700,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         for( INTN i = 0; i < (INTN) j; i++ )
         {
             efi_free( found[ i ].loader );
+            if( found[ i ].label )
+                efi_free( found[ i ].label );
             free_config( &found[ i ].cfg );
         }
 
