@@ -36,6 +36,7 @@
 
 #define EFI_LOADER_FEATURE_CONFIG_TIMEOUT          (1L << 0)
 #define EFI_LOADER_FEATURE_CONFIG_TIMEOUT_ONE_SHOT (1L << 1)
+#define EFI_LOADER_FEATURE_ENTRY_ONESHOT           (1L << 3)
 
 /* Some facilities that does not exist in the efi lib */
 
@@ -94,6 +95,7 @@ static const CHAR16 *loader_info = L"steamcl " RELEASE_VERSION;
 static const UINT64 loader_features = 
     EFI_LOADER_FEATURE_CONFIG_TIMEOUT          |
     EFI_LOADER_FEATURE_CONFIG_TIMEOUT_ONE_SHOT |
+    EFI_LOADER_FEATURE_ENTRY_ONESHOT           |
     0;
 
 EFI_STATUS set_loader_time_init_usec ()
@@ -310,6 +312,57 @@ EFI_STATUS set_loader_entries (EFI_GUID **signatures)
     res = LibSetVariable( L"LoaderEntries", &guid, len * sizeof( CHAR16 ),
                           data );
     WARN_STATUS( res, L"Failed to SetVariable()" );
+
+    return res;
+}
+
+EFI_GUID get_loader_entry_oneshot ()
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_GUID res = NullGuid;
+    UINTN size;
+    VOID *val;
+
+    val = LibGetVariableAndSize( L"LoaderEntryOneShot", &guid, &size );
+    if( val )
+    {
+	CHAR16 *prefix, *str;
+	UINTN len;
+
+	str = (CHAR16 *)val;
+        v_msg( L"LoaderEntryDefault: %s\n", str );
+
+	prefix = L"auto-";
+	len = StrLen( prefix );
+        if( StrnCmp( prefix, str, len ) == 0 )
+            str += len;
+
+	prefix = L"bootconf-";
+	len = StrLen( prefix );
+        if( StrnCmp( prefix, str, len ) == 0 )
+            str += len;
+
+        if( str[ 8 ] == '-'  && str[ 13 ] == '-' && str[ 18 ] == '-' &&
+            str[ 23 ] == '-' && str[ 36 ] == '\0' )
+        {
+            UINT64 data4 = xtoi( &str[ 19 ] ) << 48 | xtoi( &str[ 24 ] );
+            res.Data1 = xtoi( &str[  0 ] );
+            res.Data2 = xtoi( &str[  9 ] );
+            res.Data3 = xtoi( &str[ 14 ] );
+            res.Data4[ 0 ] = (data4 & 0xFF00000000000000UL) >> 56;
+            res.Data4[ 1 ] = (data4 & 0x00FF000000000000UL) >> 48;
+            res.Data4[ 2 ] = (data4 & 0x0000FF0000000000UL) >> 40;
+            res.Data4[ 3 ] = (data4 & 0x000000FF00000000UL) >> 32;
+            res.Data4[ 4 ] = (data4 & 0x00000000FF000000UL) >> 24;
+            res.Data4[ 5 ] = (data4 & 0x0000000000FF0000UL) >> 16;
+            res.Data4[ 6 ] = (data4 & 0x000000000000FF00UL) >>  8;
+            res.Data4[ 7 ] = (data4 & 0x00000000000000FFUL) >>  0;
+        }
+
+        FreePool( val );
+
+	LibDeleteVariable( L"LoaderEntryOneShot", &guid );
+    }
 
     return res;
 }

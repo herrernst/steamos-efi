@@ -639,6 +639,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         break;
     }
 
+    EFI_GUID entry = get_loader_entry_oneshot ();
+    if( CompareGuid( &entry, &NullGuid ) != 0 )
+        for( UINTN i = 0; i < j - 1; i++ )
+            if( CompareGuid( &entry, &found[ i ].uuid ) == 0 )
+                selected = i;
+
     BOOLEAN menu = FALSE;
     if( get_chainloader_boot_attempts() >= 3 )
         menu = TRUE;
