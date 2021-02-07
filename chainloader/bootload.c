@@ -26,7 +26,6 @@
 #include "util.h"
 #include "fileio.h"
 #include "bootload.h"
-#include "debug.h"
 #include "exec.h"
 #include "variable.h"
 #include "console.h"
@@ -121,20 +120,6 @@ static BOOLEAN update_scheduled_now (const cfg_entry *conf)
     }
 
     return FALSE;
-}
-
-static VOID dump_found (found_cfg *c)
-{
-    for(UINTN i = 0; c && c->cfg; c++)
-        v_msg( L"#%u %x %s %g @%lu %s%s[%s]\n",
-               i++,
-               c->partition,
-               c->label,
-               &c->uuid,
-               c->at,
-               get_conf_uint( c->cfg, "boot-other" ) ? L"OTHER " : L"",
-               update_scheduled_now( c->cfg )        ? L"UPDATE ": L"",
-               c->loader );
 }
 
 #define COPY_FOUND(src,dst) \
@@ -573,10 +558,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     found[ j ].cfg = NULL;
     efi_unmount( &root_dir );
 
-    v_msg( L"Went through %u filesystems, %u SteamOS loaders found\n", n_handles, j);
-
-    v_msg( L"Unsorted\n" );
-    dump_found( &found[ 0 ] );
     // yes I know, bubble sort is terribly gauche, but we really don't care:
     // usually there will be only two entries (and at most 16, which would be
     // a fairly psychosis-inducing setup):
@@ -585,8 +566,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         for( UINTN i = sort = 0; i < j - 1; i++ )
             if( found[ i ].at > found[ i + 1 ].at  )
                 sort += swap_cfgs( &found[ 0 ], i, i + 1 );
-    v_msg( L"Sorted\n" );
-    dump_found( &found[ 0 ] );
     set_loader_entries( &found_signatures[ 0 ] );
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles, none of which are known-bad.
@@ -716,31 +695,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     return EFI_NOT_FOUND;
 }
 
-static VOID dump_bootloader_paths (EFI_DEVICE_PATH *target)
-{
-    CHAR16 *this = NULL;
-    CHAR16 *that = NULL;
-    EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
-    EFI_LOADED_IMAGE *li;
-    EFI_STATUS res;
-    EFI_DEVICE_PATH *fqdp = NULL;
-    EFI_HANDLE current = get_self_handle();
-
-    that = DevicePathToStr( target );
-    v_msg( L"Loading bootloader @ %s\n", that );
-    FreePool( that ); 
-
-    res = get_handle_protocol( &current, &lip_guid, (VOID **) &li );
-    ERROR_RETURN( res, , L"No loaded image protocol. wat." );
-
-    fqdp = AppendDevicePath( DevicePathFromHandle( li->DeviceHandle ),
-                             li->FilePath );
-
-    this = DevicePathToStr( fqdp );
-    v_msg( L"Within chainloader @ %s\n", this );
-    FreePool( this );
-}
-
 EFI_STATUS exec_bootloader (bootloader *boot)
 {
     EFI_STATUS res = EFI_SUCCESS;
@@ -758,8 +712,6 @@ EFI_STATUS exec_bootloader (bootloader *boot)
                 L"FDP could not construct a device path from %x + %s",
                 (UINT64) &boot->device_path, boot->loader_path );
 
-    dump_bootloader_paths( dpath );
-
     res = load_image( dpath, &efi_app );
     ERROR_JUMP( res, unload, L"load-image failed" );
 
@@ -771,22 +723,11 @@ EFI_STATUS exec_bootloader (bootloader *boot)
     res = set_image_cmdline( &efi_app, boot->args, &child );
     ERROR_JUMP( res, unload, L"command line not set" );
 
-#if DEBUG_ABORT
-    res = EFI_ABORTED;
-    ERROR_JUMP( res, unload, L"aborting deliberately to show config data" );
-#endif
-
     res = exec_image( efi_app, &esize, &edata );
     WARN_STATUS( res, L"start image returned with exit code: %u; data @ 0x%x",
                  esize, (UINT64) edata );
 
 unload:
-    // this is never masked by verbosity being turned down since we've
-    // crashed out into a bad error case: loaded image was not executable:
-    set_verbosity( 1 );
-    if( child )
-        dump_loaded_image( child );
-
     if( efi_app )
     {
         EFI_STATUS r2 = uefi_call_wrapper( BS->UnloadImage, 1, efi_app );

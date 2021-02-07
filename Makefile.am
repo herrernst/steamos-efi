@@ -70,7 +70,6 @@ data/steamcl.version: steamcl.efi Makefile
 steamcl_elf_SOURCES  = chainloader/chainloader.c \
                        chainloader/fileio.c \
                        chainloader/util.c \
-                       chainloader/debug.c \
                        chainloader/exec.c \
                        chainloader/config.c \
                        chainloader/err.c \
