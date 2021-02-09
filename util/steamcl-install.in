@@ -99,12 +99,7 @@ warn () { echo "$@" >&2; }
 
 version_compare()
 {
-    if command -v vercmp >/dev/null 2>&1
-    then
-        test "$(vercmp "$1" "$3")" "-$2" 0
-    else
-        dpkg --compare-version "$@"    
-    fi
+    test "$(vercmp "$1" "$3")" "-$2" 0
 }
 
 ############################################################################
