@@ -383,7 +383,7 @@ update_esp ()
 
     mkdir -p ${esp}${bootdir};
     cp -av ${bin} ${esp}${bootdir}/steamcl.efi;
-    cp -av ${ver} ${esp}${bootdir}/steamcl.version;
+    cp -av ${ver} ${esp}${bootdir}/steamcl-version;
 
     if [ $force_extra_removable = 1 ];
     then
@@ -610,7 +610,7 @@ pkg_checksum=;  # checksum of the loader binary in the OS package
 esp_checksum=;  # checksum of the loader binary on the ESP
 pkg_is_newer=0; # OS package has a newer loader than the ESP
 
-read_manifest "$esp_mount/$installpath"/steamcl.version;
+read_manifest "$esp_mount/$installpath"/steamcl-version;
 calculate_checksum "$esp_mount/$installpath"/steamcl.efi;
 if [ ${checksum:-0} = ${manifest_checksum:-1} ];
 then
@@ -624,7 +624,7 @@ then
     esp_boot_ok=1;
 fi;
 
-read_manifest "$datadir"/steamcl.version;
+read_manifest "$datadir"/steamcl-version;
 calculate_checksum "$libexecdir"/steamcl.efi;
 if [ ${checksum:-0} = ${manifest_checksum:-1} ];
 then
@@ -658,7 +658,7 @@ then
     if [ $pkg_csum_ok = 1 ]
     then
         if update_esp $distrib $esp_mount \
-                      $libexecdir/steamcl.efi $datadir/steamcl.version \
+                      $libexecdir/steamcl.efi $datadir/steamcl-version \
                       $boot_entries;
         then
             install_ok=1;
@@ -679,7 +679,7 @@ if [ $esp_boot_ok = 0 ];
 then
     choose_free_boot_id $all_boot_ids;
     if add_boot_entry $distrib $esp_mount \
-                      $libexecdir/steamcl.efi $datadir/steamcl.version \
+                      $libexecdir/steamcl.efi $datadir/steamcl-version \
                       $free_boot_id $esp_dev $esp_part "$pretty_name";
     then
         esp_boot_ok=1;

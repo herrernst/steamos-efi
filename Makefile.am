@@ -46,9 +46,9 @@ bashcompletiondir   = $(BASH_COMPLETION_DIR)
 dist_bashcompletion_DATA = bash-completion/steamcl-install \
                            bash-completion/steamos-bootconf
 endif
-dist_pkgdata_DATA   = data/steamcl.version
+dist_pkgdata_DATA   = data/steamcl-version
 dist_sbin_SCRIPTS   = util/steamcl-install
-CLEANFILES          = data/steamcl.version
+CLEANFILES          = data/steamcl-version
 
 # we need a non-standard step here to turn the elf output of the normal-ish
 # link stage into a PE32 blob:
@@ -59,7 +59,7 @@ CLEANFILES          = data/steamcl.version
 steamcl.efi$(EXEEXT): steamcl.elf
 
 # the checksum/version file:
-data/steamcl.version: steamcl.efi Makefile
+data/steamcl-version: steamcl.efi Makefile
 	@SUM=$$(sha256sum $<) && echo -n $${SUM%% *} > $@;
 	@echo " @RELEASE_VERSION@" >> $@;
 
