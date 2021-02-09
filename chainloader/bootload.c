@@ -588,14 +588,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( parse_config( root_dir, &conf ) != EFI_SUCCESS )
             continue;
 
-        // entry is known-bad. ignore it
-        if( get_conf_uint( conf, "image-invalid" ) > 0 )
-        {
-            v_msg( L"partition #%u has image-invalid set, ignore it...\n", i);
-            free_config( &conf );
-            continue;
-        }
-
         // TODO? allow the 'loader' config entry to specify an alternative
         // bootloader. This code was causing EFI runtime service errors
         // that made the kernel explode on boot, so it's been backed out for
@@ -686,6 +678,13 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             continue;
         }
 
+        // if image-invalid is set, skip it
+        if( get_conf_uint( conf, "image-invalid" ) > 0 )
+        {
+            v_msg( L"entry #%u has image-invalid set, skip it...\n", i);
+            continue;
+        }
+
         // boot other is not set, whatever we found is good
         break;
     }
@@ -751,6 +750,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             update = update_scheduled_now( chosen->config );
 
         flags = 0;
+
+        if( get_conf_uint( conf, "image-invalid" ) > 0 )
+            flags |= ENTRY_FLAG_INVALID;
 
         if( boot_other )
             flags |= ENTRY_FLAG_BOOT_OTHER;
