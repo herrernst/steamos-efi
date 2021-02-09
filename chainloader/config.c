@@ -34,7 +34,8 @@
 #include "config.h"
 
 static cfg_entry bootspec[] =
-  { { .type = cfg_stamp , .name = "boot-requested-at"   },
+  { { .type = cfg_string, .name = "title"               },
+    { .type = cfg_stamp , .name = "boot-requested-at"   },
     { .type = cfg_bool  , .name = "boot-other"          },
     { .type = cfg_bool  , .name = "boot-other-disabled" },
     { .type = cfg_uint  , .name = "boot-attempts"       },

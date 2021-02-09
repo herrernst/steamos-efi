@@ -96,6 +96,30 @@ static EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *volume_label_info (IN EFI_FILE_HANDLE 
     return buffer;
 }
 
+CHAR16 *a2u (CHAR8 *str)
+{
+    CHAR16 *ptr = NULL;
+    UINTN len;
+    int i;
+
+    if( !str )
+        return NULL;
+
+    len = strlena( str );
+    if( !str )
+        return NULL;
+
+    ptr = efi_alloc( len * sizeof(CHAR16) + 1 );
+    if( !ptr )
+        return NULL;
+
+    for( i = 0; str[i]; i++ )
+        ptr[ i ] = (CHAR16)str[ i ];
+    ptr[ i ] = 0;
+
+    return ptr;
+}
+
 EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
 {
     EFI_STATUS res;
@@ -144,7 +168,7 @@ typedef struct
     EFI_DEVICE_PATH *device_path;
     CHAR16 *loader;
     cfg_entry *cfg;
-    CHAR16 *label;
+    CHAR16 *title;
     EFI_GUID uuid;
     UINT64 at;
 } found_cfg;
@@ -183,7 +207,7 @@ static BOOLEAN update_scheduled_now (const cfg_entry *conf)
        dst.partition   = src.partition;   \
        dst.loader      = src.loader;      \
        dst.device_path = src.device_path; \
-       dst.label       = src.label;       \
+       dst.title       = src.title;       \
        dst.uuid        = src.uuid;        \
        dst.at          = src.at;          })
 
@@ -428,7 +452,7 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
     row_offset = (rows - entry_count) / 2;
     for( i = 0; i < entry_count; i++ )
     {
-        INTN offset = (columns - StrLen( entries[ i ].label )) / 2;
+        INTN offset = (columns - StrLen( entries[ i ].title )) / 2;
         if( offset < 0 )
             offset = 0;
 
@@ -438,7 +462,7 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
         con_set_output_attribute( i == selected ?
                                   SELECTED_ATTRIBUTES :
                                   DEFAULT_ATTRIBUTES );
-        con_output_text( entries[ i ].label );
+        con_output_text( entries[ i ].title );
     }
 
     con_set_output_attribute( DEFAULT_ATTRIBUTES );
@@ -500,12 +524,12 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
         con_set_cursor_position( column_offsets[ old_selected ],
                                  row_offset + old_selected );
         con_set_output_attribute( DEFAULT_ATTRIBUTES );
-        con_output_text( entries[ old_selected ].label );
+        con_output_text( entries[ old_selected ].title );
 
         con_set_cursor_position( column_offsets[ selected ],
                                  row_offset + selected );
         con_set_output_attribute( SELECTED_ATTRIBUTES );
-        con_output_text( entries[ selected ].label );
+        con_output_text( entries[ selected ].title );
     }
 
 exit:
@@ -603,7 +627,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
-        found[ j ].label     = volume_label( root_dir );
+        found[ j ].title     = a2u( get_conf_str( conf, "title" ) );
+        if( !found[ j ].title )
+            found[ j ].title = volume_label( root_dir );
         found[ j ].uuid      = partition_uuid( found[ j ].partition );
         found_signatures[ j ] = &found[ j ].uuid;
         j++;
@@ -688,14 +714,14 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         BOOLEAN unique = TRUE;
         for( UINTN i = 0; i < j; i++ )
             for( UINTN k = i + 1; k < j; k++ )
-                if( StrCmp( found[ i ].label, found[ k ].label ) == 0 )
+                if( StrCmp( found[ i ].title, found[ k ].title ) == 0 )
                     unique = FALSE;
         if( !unique )
         {
             for( UINTN i = 0; i < j; i++ )
             {
-                CHAR16 *old = found[ i ].label;
-                found[ i ].label = PoolPrint( L"%s-%g", found[ i ].label,
+                CHAR16 *old = found[ i ].title;
+                found[ i ].title = PoolPrint( L"%s-%g", found[ i ].title,
                                                         &found[ i ].uuid );
                 efi_free( old );
             }
@@ -736,8 +762,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         for( INTN i = 0; i < (INTN) j; i++ )
         {
             efi_free( found[ i ].loader );
-            if( found[ i ].label )
-                efi_free( found[ i ].label );
+            if( found[ i ].title )
+                efi_free( found[ i ].title );
             free_config( &found[ i ].cfg );
         }
 

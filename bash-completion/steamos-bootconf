@@ -67,7 +67,7 @@ _steamos-bootconf()
             case "$arg" in
                 --set|--get|--del)
                     if [[ "$args" -eq 3 ]]; then
-                        COMPREPLY=($(compgen -W "boot-requested-at boot-other boot-attempts boot-count boot-time image-invalid update update-window-start update-window-end loader partitions comment" -- "$cur"))
+                        COMPREPLY=($(compgen -W "title boot-requested-at boot-other boot-attempts boot-count boot-time image-invalid update update-window-start update-window-end loader partitions comment" -- "$cur"))
                     fi
                     ;;
                 --mode)
