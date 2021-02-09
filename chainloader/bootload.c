@@ -40,6 +40,49 @@
 // this is x86_64 specific
 #define EFI_STUB_ARCH 0x8664
 
+// this is a rewrite of function LibFileSystemVolumeLabelInfo() to handle buggy
+// firmwares that does not return a NULL-terminated string and/or that makes
+// mismatch with the sizes of UTF-16 characters
+EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *
+__LibFileSystemVolumeLabelInfo (
+    IN EFI_FILE_HANDLE      FHand
+    )
+{
+    EFI_STATUS                        Status;
+    EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *Buffer;
+    UINTN                             BufferSize;
+
+    //
+    // Initialize for GrowBuffer loop
+    //
+
+    Buffer = NULL;
+    BufferSize = SIZE_OF_EFI_FILE_SYSTEM_VOLUME_LABEL_INFO + 200;
+
+    //
+    // Call the real function
+    //
+
+    while (GrowBuffer (&Status, (VOID **) &Buffer, BufferSize)) {
+        // For firmwares that does not returning NULL-terminated strings
+        SetMem(Buffer, BufferSize, '\0');
+        // For firmwares than makes mismatch with the size of UTF-16 characters
+        BufferSize /= sizeof(CHAR16);
+        Status = uefi_call_wrapper(
+                    FHand->GetInfo,
+                        4,
+                    FHand,
+                    &FileSystemVolumeLabelInfo,
+                    &BufferSize,
+                    Buffer
+                    );
+        // For firmwares than makes mismatch with the size of UTF-16 characters
+        break;
+    }
+
+    return Buffer;
+}
+
 EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
 {
     EFI_STATUS res;
@@ -146,7 +189,7 @@ static CHAR16 *volume_label (EFI_FILE_PROTOCOL *handle)
 {
     EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *volume = NULL;
 
-    volume = LibFileSystemVolumeLabelInfo( handle );
+    volume = __LibFileSystemVolumeLabelInfo( handle );
     if( !volume )
         return NULL;
 
