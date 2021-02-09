@@ -439,8 +439,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         // if boot-other is set but other is disabled, skip it
         if( boot_other && get_conf_uint( found[ i ].cfg, "boot-other-disabled" ) )
         {
-            Print( L"entry #%u has boot-other-disabled set, skip it...\n", i);
-
+            v_msg( L"entry #%u has boot-other-disabled set, skip it...\n", i);
             continue;
         }
 
