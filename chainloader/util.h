@@ -69,6 +69,10 @@ EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
                                          VOID *protocol,
                                          OUT EFI_HANDLE *handle);
 
+EFI_STATUS get_protocol (EFI_GUID *id,
+                         VOID *registration,
+                         OUT VOID **protocol);
+
 EFI_DEVICE_PATH * make_absolute_device_path (EFI_HANDLE device, CHAR16 *path);
 EFI_HANDLE get_self_handle (VOID);
 EFI_HANDLE get_self_device_handle (VOID);

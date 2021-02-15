@@ -148,6 +148,13 @@ EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
     return EFI_SUCCESS;
 }
 
+EFI_STATUS get_protocol (EFI_GUID *id,
+                         VOID *registration,
+                         OUT VOID **protocol)
+{
+    return uefi_call_wrapper( BS->LocateProtocol, 3, id, registration, protocol );
+}
+
 EFI_HANDLE get_self_handle (VOID)
 {
     return self_image;
