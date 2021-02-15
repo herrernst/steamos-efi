@@ -678,6 +678,11 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     if( oneshot )
         menu = TRUE;
 
+    EFI_INPUT_KEY key;
+    res = ConInReadKeyStroke( &key );
+    if( ! EFI_ERROR( res ) && ( key.ScanCode == SCAN_F3 ) )
+        menu = TRUE;
+
     if( menu )
     {
         BOOLEAN unique = TRUE;
