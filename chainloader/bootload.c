@@ -143,6 +143,13 @@ static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
     return 1;
 }
 
+// This code compares the _medium_ part of two EFI_DEVICE_PATHS,
+// and returns TRUE if they are the same.
+//
+// It does NOT consider the filesystem-path part of the EFI_DEVICE_PATHS.
+//
+// Its main use is to determine if two files reside on the same
+// filesystem instance (ie same hardware, same partition).
 static BOOLEAN device_path_eq (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
 {
     if( !a || !b )
@@ -154,16 +161,26 @@ static BOOLEAN device_path_eq (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
     {
         if( DevicePathNodeLength( a ) != DevicePathNodeLength( b ) ||
             DevicePathType( a )       != DevicePathType( b )       ||
-	    DevicePathSubType( a )    != DevicePathSubType( b ) )
-	    return FALSE;
+            DevicePathSubType( a )    != DevicePathSubType( b ) )
+            return FALSE;
 
-	// both components are hard-drive partitions.
+        // both components are hard-drive partitions.
+        // if we get this far then our job is done, the two
+        // files are on the same device and partition.
         if( DevicePathType( a )    == MEDIA_DEVICE_PATH &&
-	    DevicePathSubType( a ) == MEDIA_HARDDRIVE_DP )
+            DevicePathSubType( a ) == MEDIA_HARDDRIVE_DP )
             return TRUE;
 
+        // These structs use windows style ‘put a pointer to an array
+        // at the end of a struct and deliberately overflow it’ storage.
+        // (ie allocated storage is larger than the declared struct size).
+        // See /usr/include/efi/efidevp.h
+        // As such we must trust DevicePathNodeLength and not let the
+        // compiler worry about the theoretical length of the struct
+        // because that happens to be a lie:
         for( UINT16 x = 0; x < DevicePathNodeLength( a ); x++ )
-            if( a->Length[ 2 + x ] != b->Length[ 2 + x ] )
+            if( *((UINT8 *)&(a->Length[ 0 ]) + 2 + x) !=
+                *((UINT8 *)&(b->Length[ 0 ]) + 2 + x) )
                 return FALSE;
 
         a = NextDevicePathNode( a );
