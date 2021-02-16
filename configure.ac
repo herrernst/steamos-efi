@@ -307,7 +307,7 @@ AC_SUBST([EFI_EXTRALIBS])
 AC_SUBST([EFI_SECT])
 AC_SUBST([EFI_OBJCOPYARGS])
 
-TARGET_LDFLAGS="$TARGET_LDFLAGS -no-pie -znocombreloc -zdefs"
+TARGET_LDFLAGS="$TARGET_LDFLAGS -fno-pie -znocombreloc -zdefs"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-PIE -fno-pie"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-stack-protector"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-strict-aliasing"
