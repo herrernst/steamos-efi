@@ -307,8 +307,35 @@ AC_SUBST([EFI_EXTRALIBS])
 AC_SUBST([EFI_SECT])
 AC_SUBST([EFI_OBJCOPYARGS])
 
-TARGET_LDFLAGS="$TARGET_LDFLAGS -no-pie -znocombreloc -zdefs"
-TARGET_CFLAGS="$TARGET_CFLAGS -fno-PIE -fno-pie"
+cc_has_PIE()
+
+AS_IF([test x"$cv_cc_has_pie" = xyes],
+      [EFI_CFLAGS="$EFI_CFLAGS -fPIC"])
+
+link_disable_PIE()
+link_understands_NO_PIE()
+link_understands_NOPIE()
+
+AS_IF([test x"$cv_cc_has_pie" = xyes],
+      [EFI_CFLAGS="${EFI_CFLAGS} -fno-pie -fno-PIE"])
+
+dnl If PIE linking is supported but the compiler has been told explicitly
+dnl to disable it, make sure the linker also disables it:
+AS_CASE([$EFI_CFLAGS],
+        [*-fno-pie*|*-fno-PIE*],
+        AC_MSG_NOTICE([PIE disabled for compiler `$CC`])
+        [cv_link_disable_pie=yes])
+
+dnl If we need to disable PIE linking use the flag(s) the linker understands:
+AS_IF([test x"$cv_link_disable_pie" = xyes],
+      [AS_IF([test x"$cv_link_understands_no_pie" = xyes],
+             AC_MSG_NOTICE([Adding -no-pie to linker `$CC` flags])
+             [TARGET_LDFLAGS="$TARGET_LDLAGS -no-pie"])
+       AS_IF([test x"$cv_link_understands_nopie" = xyes],
+             AC_MSG_NOTICE([Adding -nopie to linker `$CC` flags])
+             [TARGET_LDFLAGS="$TARGET_LDLAGS -nopie"])])
+
+TARGET_LDFLAGS="$TARGET_LDFLAGS -znocombreloc -zdefs"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-stack-protector"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-strict-aliasing"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-stack-protector"

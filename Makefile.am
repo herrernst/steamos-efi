@@ -109,7 +109,6 @@ steamos_bootconf_SOURCES = bootconf/bootconf.c     \
                            chainloader/partset.h   \
                            chainloader/util.h      \
                            chainloader/err.h
-steamos_bootconf_CFLAGS  = $(CFLAGS) -DNO_EFI_TYPES -fshort-wchar --std=gnu99
-steamos_bootconf_LDFLAGS = $(LDFLAGS) -static
-
+steamos_bootconf_CFLAGS  = -fno-pic -DNO_EFI_TYPES -fshort-wchar --std=gnu99
+steamos_bootconf_LDFLAGS = -static
 
