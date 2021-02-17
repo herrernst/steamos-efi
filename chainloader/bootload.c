@@ -377,7 +377,7 @@ EFI_STATUS console_mode ()
         return EFI_SUCCESS;
 
     res = conctl_set_mode( ccp, CONCTL_SCREEN_TEXT );
-    ERROR_RETURN( res, res, "Could not ConsoleControlSetMode: %r\n", res );
+    ERROR_RETURN( res, res, "Could not conctl_set_mode: %r\n", res );
 
     return EFI_SUCCESS;
 }
