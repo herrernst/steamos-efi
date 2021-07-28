@@ -1,0 +1,20 @@
+stages:
+  - build
+
+build:
+  stage: build
+  image: debian:bullseye-slim
+  before_script:
+    - apt update
+    - apt install -y build-essential
+    - apt install -y gnu-efi autoconf autoconf-archive pkg-config
+  script:
+    - autoreconf -ivf
+    - ./configure --prefix=/usr
+    - make
+    - make install DESTDIR=./steamos-efi
+  artifacts:
+    paths:
+      - steamos-efi
+  tags:
+    - autoscaled
