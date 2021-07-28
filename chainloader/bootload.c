@@ -730,7 +730,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             flags |= ENTRY_FLAG_BOOT_OTHER;
 
         if( update )
+        {
+            // Our stage II bootloader looks for this command line string
+            // Do not remove it unless you also change stage II
+            chosen->args = L" steamos-update=1 ";
             flags |= ENTRY_FLAG_UPDATE;
+        }
 
         // free the unused configs:
         for( INTN i = 0; i < (INTN) j; i++ )
