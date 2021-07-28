@@ -63,6 +63,8 @@ data/steamcl.version: steamcl.efi Makefile
 	@SUM=$$(sha256sum $<) && echo -n $${SUM%% *} > $@;
 	@echo " @RELEASE_VERSION@" >> $@;
 
+steamcl_efi_SOURCES = steamcl.elf
+
 # this builds an ELF DSO with the right characteristics to be turned into
 # an EFI blob in the final stage.
 # We can't just subvert the link stage to do this because of the way the link
