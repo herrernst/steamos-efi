@@ -42,7 +42,7 @@ bin_PROGRAMS        = steamos-bootconf
 pkglibexec_PROGRAMS = steamcl.efi
 noinst_PROGRAMS     = steamcl.elf
 if ENABLE_BASH_COMPLETION
-bashcompletiondir   = $(BASH_COMPLETION_DIR)
+bashcompletiondir   = @bashcompletiondir@
 dist_bashcompletion_DATA = bash-completion/steamcl-install \
                            bash-completion/steamos-bootconf
 endif
@@ -60,6 +60,7 @@ steamcl.efi$(EXEEXT): steamcl.elf
 
 # the checksum/version file:
 data/steamcl.version: steamcl.efi Makefile
+	@$(MKDIR_P) $(@D)
 	@SUM=$$(sha256sum $<) && echo -n $${SUM%% *} > $@;
 	@echo " @RELEASE_VERSION@" >> $@;
 
@@ -70,14 +71,24 @@ steamcl_efi_SOURCES = steamcl.elf
 # We can't just subvert the link stage to do this because of the way the link
 # command is contructed (I think)
 steamcl_elf_SOURCES  = chainloader/chainloader.c \
+                       chainloader/chainloader.h \
                        chainloader/fileio.c \
+                       chainloader/fileio.h \
                        chainloader/util.c \
+                       chainloader/util.h \
                        chainloader/exec.c \
+                       chainloader/exec.h \
                        chainloader/config.c \
+                       chainloader/config.h \
+                       chainloader/console.c \
+                       chainloader/console.h \
                        chainloader/err.c \
+                       chainloader/err.h \
                        chainloader/bootload.c \
+                       chainloader/bootload.h \
                        chainloader/variable.c \
-                       chainloader/console.c
+                       chainloader/variable.h
+
 steamcl_elf_CFLAGS   = $(CFLAGS) $(EFI_CFLAGS) -DRELEASE_VERSION="\"$(RELEASE_VERSION)\""
 steamcl_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}
 steamcl_elf_LDFLAGS  = $(LDFLAGS) $(EFI_LDFLAGS) 
@@ -85,9 +96,15 @@ steamcl_elf_LDADD    = $(EFI_EXTRALIBS)
 steamcl_elf_LINK     = $(LD) $(steamcl_elf_LDFLAGS) -o $@
 
 steamos_bootconf_SOURCES = bootconf/bootconf.c     \
+                           bootconf/bootconf.h     \
                            bootconf/config-extra.c \
+                           bootconf/config-extra.h \
                            bootconf/efi.c          \
-                           chainloader/config.c
+                           bootconf/efi.h          \
+                           chainloader/config.c    \
+                           chainloader/config.h    \
+                           chainloader/util.h      \
+                           chainloader/err.h
 steamos_bootconf_CFLAGS  = $(CFLAGS) -DNO_EFI_TYPES -fshort-wchar -g
 steamos_bootconf_LDFLAGS = $(LDFLAGS)
 
