@@ -688,9 +688,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                 selected = i;
 
     BOOLEAN menu = FALSE;
-    if( j > 1 && get_chainloader_boot_attempts() >= 3 )
-        menu = TRUE;
-
     BOOLEAN oneshot = is_loader_config_timeout_oneshot_set();
     if( oneshot )
         menu = TRUE;
