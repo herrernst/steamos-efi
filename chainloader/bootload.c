@@ -689,14 +689,22 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     BOOLEAN menu = FALSE;
     BOOLEAN oneshot = is_loader_config_timeout_oneshot_set();
-    if( oneshot )
-        menu = TRUE;
 
-    EFI_INPUT_KEY key;
-    res = con_read_key( &key );
-    if( ! EFI_ERROR( res ) && ( key.ScanCode == SCAN_F3 ) )
+    // if a oneshot boot was requested from the last OS run or
+    // we somehow failed to pick a valid image, display a menu:
+    if( oneshot || (selected < 0) )
+    {
         menu = TRUE;
+    }
+    else
+    {
+        EFI_INPUT_KEY key;
+        res = con_read_key( &key );
+        if( ! EFI_ERROR( res ) && ( key.ScanCode == SCAN_F3 ) )
+            menu = TRUE;
+    }
 
+    // Let the user pick via menu:
     if( menu )
     {
         BOOLEAN unique = TRUE;
