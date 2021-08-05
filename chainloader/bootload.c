@@ -147,6 +147,7 @@ typedef struct
     CHAR16 *label;
     EFI_GUID uuid;
     UINT64 at;
+    BOOLEAN disabled;
 } found_cfg;
 
 static BOOLEAN update_scheduled_now (const cfg_entry *conf)
@@ -514,6 +515,24 @@ exit:
     return selected;
 }
 
+// disabled entries are considered older than enabled ones
+// this is so they sort as less important when choosing
+BOOLEAN earlier_entry_is_newer (found_cfg *a, found_cfg *b)
+{
+    if( a->disabled && !b->disabled )
+        return FALSE;
+
+    if( !a->disabled && b->disabled )
+        return TRUE;
+
+    // entries at same level of disabled-flag-ness:
+    // pick the most recently boot-requested image.
+    if( a->at > b->at )
+        return TRUE;
+
+    return FALSE;
+}
+
 EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen)
@@ -564,14 +583,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( parse_config( root_dir, &conf ) != EFI_SUCCESS )
             continue;
 
-        // entry is known-bad. ignore it
-        if( get_conf_uint( conf, "image-invalid" ) > 0 )
-        {
-            v_msg( L"partition #%u has image-invalid set, ignore it...\n", i);
-            free_config( &conf );
-            continue;
-        }
-
         // TODO? allow the 'loader' config entry to specify an alternative
         // bootloader. This code was causing EFI runtime service errors
         // that made the kernel explode on boot, so it's been backed out for
@@ -600,6 +611,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             continue;
         }
 
+        found[ j ].disabled  = get_conf_uint( conf, "image-invalid" ) > 0;
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
@@ -618,11 +630,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     UINTN sort = j > 1 ? 1 : 0;
     while( sort )
         for( UINTN i = sort = 0; i < j - 1; i++ )
-            if( found[ i ].at > found[ i + 1 ].at  )
+            if( earlier_entry_is_newer( &found[ i ], &found[ i + 1 ] ) )
                 sort += swap_cfgs( &found[ 0 ], i, i + 1 );
     set_loader_entries( &found_signatures[ 0 ] );
     // we now have a sorted (oldest to newest) list of configs
-    // and their respective partition handles, none of which are known-bad.
+    // and their respective partition handles.
+    // NOTE: some of these images may be flagged as invalid.
 
     INTN selected = -1;
     BOOLEAN update = FALSE;
@@ -630,6 +643,10 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     // pick the newest entry to start with.
     // if boot-other is set, we need to bounce along to the next entry:
+    // we walk the above list from newest to oldest, with invalid-flagged
+    // images considered older than unflagged ones - so if there is a valid
+    // image available, we'll pick it, and failing that resort to an invalid
+    // flagged one:
     for( INTN i = (INTN) j - 1; i >= 0; i-- )
     {
         selected = i;
