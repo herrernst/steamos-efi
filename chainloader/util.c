@@ -29,6 +29,7 @@ VOID *efi_alloc (UINTN s) { return AllocateZeroPool( s ); }
 VOID  efi_free  (VOID *p) { if( p ) FreePool( p); }
 
 EFI_HANDLE self_image;
+EFI_GUID NULL_GUID = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
 CONST CHAR16 *efi_statstr (EFI_STATUS s)
 {
@@ -625,4 +626,15 @@ INTN strcmp_w (const CHAR16 *a, const CHAR16 *b)
 INTN strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len)
 {
     return StrnCmp( a, b, len );
+}
+
+// memory utility functions
+VOID mem_copy (void *dest, const VOID *src, UINTN len)
+{
+    CopyMem( dest, src, len );
+}
+
+INTN guid_cmp (const VOID *a, const VOID *b)
+{
+    return CompareMem( a, b, sizeof(EFI_GUID) );
 }

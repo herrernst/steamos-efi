@@ -83,7 +83,7 @@ static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
 
     item->value.string.bytes = ALLOC_OR_GOTO( vsize + 1, allocfail );
     item->value.string.size  = vsize;
-    CopyMem( item->value.string.bytes, start, vsize );
+    mem_copy( item->value.string.bytes, start, vsize );
     item->value.string.bytes[ vsize ] = (CHAR8)0;
 
     switch( item->type )
@@ -265,7 +265,7 @@ cfg_entry *new_config (VOID)
                  sizeof(bootspec) );
 
     if( config )
-        CopyMem( config, &bootspec[ 0 ], sizeof(bootspec) );
+        mem_copy( config, &bootspec[ 0 ], sizeof(bootspec) );
 
     return config;
 }

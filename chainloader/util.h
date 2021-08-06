@@ -52,6 +52,8 @@
 #endif
 
 #ifndef NO_EFI_TYPES
+extern EFI_GUID NULL_GUID;
+
 VOID *efi_alloc (IN UINTN s);
 VOID  efi_free  (IN VOID *p);
 
@@ -87,6 +89,9 @@ UINTN strlen_a (const CHAR8 *str);
 
 INTN  strcmp_w  (const CHAR16 *a, const CHAR16 *b);
 INTN  strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len);
+
+VOID mem_copy (void *dest, const VOID *src, UINTN len);
+INTN guid_cmp (const VOID *a, const VOID *b);
 #endif
 
 CHAR16 *strwiden (CHAR8 *narrow);

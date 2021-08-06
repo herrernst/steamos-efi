@@ -216,7 +216,7 @@ static EFI_GUID partition_uuid (EFI_HANDLE *handle)
     EFI_DEVICE_PATH *dp;
 
     if( !handle )
-        return NullGuid;
+        return NULL_GUID;
 
     dp  = DevicePathFromHandle( handle );
     while( !IsDevicePathEnd( dp ) )
@@ -237,7 +237,7 @@ static EFI_GUID partition_uuid (EFI_HANDLE *handle)
         dp = NextDevicePathNode( dp );
     }
 
-    return NullGuid;
+    return NULL_GUID;
 }
 
 // This code compares the _medium_ part of two EFI_DEVICE_PATHS,
@@ -693,9 +693,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     }
 
     EFI_GUID entry = get_loader_entry_oneshot ();
-    if( CompareGuid( &entry, &NullGuid ) != 0 )
+    if( guid_cmp( &entry, &NULL_GUID ) != 0 )
         for( UINTN i = 0; i < j - 1; i++ )
-            if( CompareGuid( &entry, &found[ i ].uuid ) == 0 )
+            if( guid_cmp( &entry, &found[ i ].uuid ) == 0 )
                 selected = i;
 
     BOOLEAN menu = FALSE;

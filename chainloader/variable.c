@@ -87,7 +87,7 @@ static EFI_GUID
 get_drive_signature (EFI_DEVICE_PATH *device_path)
 {
     HARDDRIVE_DEVICE_PATH *harddrive;
-    EFI_GUID *guid = &NullGuid;
+    EFI_GUID *guid = &NULL_GUID;
 
     while( device_path && !IsDevicePathEnd( device_path ) )
     {
@@ -285,7 +285,7 @@ EFI_STATUS set_loader_device_part_uuid ()
     WARN_STATUS( res, L"Failed to DevicePathFromHandle()" );
 
     signature = get_drive_signature( device_path );
-    WARN_STATUS( ( CompareMem( &signature, &NullGuid, sizeof (EFI_GUID) ) == 0 ),
+    WARN_STATUS( ( guid_cmp( &signature, &NULL_GUID ) == 0 ),
                  L"Failed to get_drive_signature" );
 
     str = PoolPrint( L"%g", &signature );
@@ -338,7 +338,7 @@ EFI_STATUS set_loader_entries (EFI_GUID **signatures)
 EFI_GUID get_loader_entry_oneshot ()
 {
     EFI_GUID guid = LOADER_VARIABLE_GUID;
-    EFI_GUID res = NullGuid;
+    EFI_GUID res = NULL_GUID;
     UINTN size;
     VOID *val;
 
@@ -550,7 +550,7 @@ EFI_STATUS set_chainloader_device_part_uuid ()
     WARN_STATUS( res, L"Failed to DevicePathFromHandle()" );
 
     signature = get_drive_signature( device_path );
-    WARN_STATUS( ( CompareMem( &signature, &NullGuid, sizeof (EFI_GUID) ) == 0 ),
+    WARN_STATUS( ( guid_cmp( &signature, &NULL_GUID ) == 0 ),
                  L"Failed to get_drive_signature" );
 
     str = PoolPrint( L"%g", &signature );

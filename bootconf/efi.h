@@ -35,7 +35,7 @@
 #define strlen_a(x)     strlen((char *)x)
 #define strncmpa(x,y,z) strncmp((char *)x,(char *)y,z)
 #define strcmpa(x,y)    strcmp((char *)x,(char *)y)
-#define CopyMem(d,s,l)  memcpy(d,s,l)
+#define mem_copy(d,s,l) memcpy(d,s,l)
 #define efi_alloc(s)    calloc(1, s)
 #define efi_free(p)     free(p)
 
