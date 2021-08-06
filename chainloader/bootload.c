@@ -721,7 +721,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         BOOLEAN unique = TRUE;
         for( UINTN i = 0; i < j; i++ )
             for( UINTN k = i + 1; k < j; k++ )
-                if( StrCmp( found[ i ].label, found[ k ].label ) == 0 )
+                if( strcmp_w( found[ i ].label, found[ k ].label ) == 0 )
                     unique = FALSE;
         if( !unique )
         {

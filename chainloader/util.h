@@ -84,6 +84,9 @@ VOID initialise (EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table);
 
 UINTN strlen_w (const CHAR16 *str);
 UINTN strlen_a (const CHAR8 *str);
+
+INTN  strcmp_w  (const CHAR16 *a, const CHAR16 *b);
+INTN  strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len);
 #endif
 
 CHAR16 *strwiden (CHAR8 *narrow);

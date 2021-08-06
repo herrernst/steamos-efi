@@ -616,3 +616,13 @@ UINTN strlen_a (const CHAR8 *str)
 {
     return strlena( str );
 }
+
+INTN strcmp_w (const CHAR16 *a, const CHAR16 *b)
+{
+    return StrCmp( a, b );
+}
+
+INTN strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len)
+{
+    return StrnCmp( a, b, len );
+}

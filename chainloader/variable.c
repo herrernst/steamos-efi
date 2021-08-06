@@ -333,12 +333,12 @@ EFI_GUID get_loader_entry_oneshot ()
 
         prefix = L"auto-";
         len = strlen_w( prefix );
-        if( StrnCmp( prefix, str, len ) == 0 )
+        if( strncmp_w( prefix, str, len ) == 0 )
             str += len;
 
         prefix = L"bootconf-";
         len = strlen_w( prefix );
-        if( StrnCmp( prefix, str, len ) == 0 )
+        if( strncmp_w( prefix, str, len ) == 0 )
             str += len;
 
         if( str[ 8 ] == '-'  && str[ 13 ] == '-' && str[ 18 ] == '-' &&

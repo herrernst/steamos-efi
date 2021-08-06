@@ -141,8 +141,8 @@ VOID ls (EFI_FILE_PROTOCOL *dir, UINTN indent, CONST CHAR16 *name, UINTN recurse
            buf_size )
     {
         // skip the pseudo dirents for self and parent:
-        if( !StrCmp( dirent->FileName, L"."  ) ||
-            !StrCmp( dirent->FileName, L".." ) )
+        if( !strcmp_w( dirent->FileName, L"."  ) ||
+            !strcmp_w( dirent->FileName, L".." ) )
             continue;
 
         Print( L"%s%s %lu bytes %cr%c- [%c%c%c%c]\n",
