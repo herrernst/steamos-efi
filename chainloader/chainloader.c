@@ -38,9 +38,9 @@ BOOLEAN reboot_into_firmware_is_supported (VOID)
     UINT64 os_indications_supported;
     UINTN size;
     VOID *val;
+    EFI_GUID gv_guid = EFI_GLOBAL_VARIABLE_GUID;
 
-    val = LibGetVariableAndSize( L"OsIndicationsSupported",
-                                 &gEfiGlobalVariableGuid, &size );
+    val = get_efivar( L"OsIndicationsSupported", &gv_guid, &size );
     if( !val )
         return FALSE;
 
@@ -59,9 +59,9 @@ EFI_STATUS reboot_into_firmware (VOID)
     UINT64 os_indications = EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
     UINTN size, res;
     VOID *val;
+    EFI_GUID gv_guid = EFI_GLOBAL_VARIABLE_GUID;
 
-    val = LibGetVariableAndSize( L"OsIndications",
-                                 &gEfiGlobalVariableGuid, &size );
+    val = get_efivar( L"OsIndications", &gv_guid, &size );
     if( val )
     {
         v_msg( L"OsIndications: %016x\n", *(UINT64 *)val);
@@ -79,11 +79,7 @@ EFI_STATUS reboot_into_firmware (VOID)
     }
 
     res = reset_system( EfiResetCold, EFI_SUCCESS, 0, NULL );
-    if( EFI_ERROR( res ) )
-    {
-        Print( L"Failed to reset_system: %r\n", res );
-        return res;
-    }
+    ERROR_RETURN( res, res, "Failed to reset system" );
 
     return EFI_SUCCESS;
 }

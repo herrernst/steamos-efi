@@ -63,6 +63,26 @@ close_protocol (IN EFI_HANDLE handle,
                               handle, protocol, agent, controller );
 }
 
+void *get_efivar (CHAR16 *name, EFI_GUID *ns, UINTN *size)
+{
+    return LibGetVariableAndSize( name, ns, size );
+}
+
+EFI_STATUS del_efivar (CHAR16 *name, EFI_GUID *ns)
+{
+    return LibDeleteVariable( name, ns );
+}
+
+EFI_STATUS set_volatile_efivar (CHAR16 *name, EFI_GUID *ns, UINTN len, void *d)
+{
+    return LibSetVariable( name, ns, len, d );
+}
+
+EFI_STATUS set_persistent_efivar (CHAR16 *name, EFI_GUID *ns, UINTN len, void *d)
+{
+    return LibSetNVVariable( name, ns, len, d );
+}
+
 static EFI_GUID
 get_drive_signature (EFI_DEVICE_PATH *device_path)
 {
@@ -110,9 +130,9 @@ EFI_STATUS set_loader_time_init_usec ()
         return EFI_OUT_OF_RESOURCES;
 
     v_msg( L"LoaderTimeInitUSec: %s\n", str );
-    res = LibSetVariable( L"LoaderTimeInitUSec", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderTimeInitUSec", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store loader init time" );
 
     efi_free( str );
 
@@ -134,9 +154,9 @@ EFI_STATUS set_loader_time_menu_usec ()
         return EFI_OUT_OF_RESOURCES;
 
     v_msg( L"LoaderTimeMenuUSec: %s\n", str );
-    res = LibSetVariable( L"LoaderTimeMenuUSec", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderTimeMenuUSec", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store loader menu time" );
 
     efi_free( str );
 
@@ -158,9 +178,9 @@ EFI_STATUS set_loader_time_exec_usec ()
         return EFI_OUT_OF_RESOURCES;
 
     v_msg( L"LoaderTimeExecUSec: %s\n", str );
-    res = LibSetVariable( L"LoaderTimeExecUSec", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderTimeExecUSec", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store loader exec time" );
 
     efi_free( str );
 
@@ -173,9 +193,9 @@ EFI_STATUS set_loader_info ()
     EFI_STATUS res = EFI_SUCCESS;
 
     v_msg( L"LoaderInfo: %s\n", loader_info );
-    res = LibSetVariable( L"LoaderInfo", &guid,
-                          VARIABLE_STRING( loader_info ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderInfo", &guid,
+                               VARIABLE_STRING( loader_info ) );
+    WARN_STATUS( res, L"Failed to store loader info" );
 
     return res;
 }
@@ -196,9 +216,9 @@ EFI_STATUS set_loader_firmware_info ()
         return EFI_OUT_OF_RESOURCES;
 
     v_msg( L"LoaderFirmwareInfo: %s\n", str );
-    res = LibSetVariable( L"LoaderFirmwareInfo", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderFirmwareInfo", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store loader firmware info" );
 
     efi_free( str );
 
@@ -220,9 +240,9 @@ EFI_STATUS set_loader_firmware_type ()
         return EFI_OUT_OF_RESOURCES;
 
     v_msg( L"LoaderFirmwareType: %s\n", str );
-    res = LibSetVariable( L"LoaderFirmwareType", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderFirmwareType", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store loader firmware type" );
 
     efi_free( str );
 
@@ -235,9 +255,9 @@ EFI_STATUS set_loader_features ()
     EFI_STATUS res = EFI_SUCCESS;
 
     v_msg( L"LoaderFeatures: 0x%016x\n", loader_features );
-    res = LibSetVariable( L"LoaderFeatures", &guid,
-                          VARIABLE_BLOB( &loader_features ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderFeatures", &guid,
+                               VARIABLE_BLOB( &loader_features ) );
+    WARN_STATUS( res, L"Failed to store loader features" );
 
     return res;
 }
@@ -278,9 +298,9 @@ EFI_STATUS set_loader_device_part_uuid ()
     }
 
     v_msg( L"LoaderDevicePartUUID: %s\n", str );
-    res = LibSetVariable( L"LoaderDevicePartUUID", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderDevicePartUUID", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to loader device part-UUID" );
 
     efi_free( str );
 
@@ -308,9 +328,9 @@ EFI_STATUS set_loader_entries (EFI_GUID **signatures)
 
     v_msg( L"LoaderEntries:\n" );
     v_hex( 1, 0, len * sizeof( CHAR16 ), data );
-    res = LibSetVariable( L"LoaderEntries", &guid, len * sizeof( CHAR16 ),
-                          data );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderEntries", &guid, len * sizeof( CHAR16 ),
+                               data );
+    WARN_STATUS( res, L"Failed to loader entries" );
 
     return res;
 }
@@ -322,7 +342,7 @@ EFI_GUID get_loader_entry_oneshot ()
     UINTN size;
     VOID *val;
 
-    val = LibGetVariableAndSize( L"LoaderEntryOneShot", &guid, &size );
+    val = get_efivar( L"LoaderEntryOneShot", &guid, &size );
     if( val )
     {
         CHAR16 *prefix, *str;
@@ -360,7 +380,7 @@ EFI_GUID get_loader_entry_oneshot ()
 
         efi_free( val );
 
-        LibDeleteVariable( L"LoaderEntryOneShot", &guid );
+        del_efivar( L"LoaderEntryOneShot", &guid );
     }
 
     return res;
@@ -382,9 +402,9 @@ EFI_STATUS set_loader_entry_default (EFI_GUID *signature)
         return EFI_OUT_OF_RESOURCES;
 
     v_msg( L"LoaderEntryDefault: %s\n", str );
-    res = LibSetVariable( L"LoaderEntryDefault", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderEntryDefault", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store default entry" );
 
     efi_free( str );
 
@@ -407,9 +427,9 @@ EFI_STATUS set_loader_entry_selected (EFI_GUID *signature)
         return EFI_OUT_OF_RESOURCES;
 
     v_msg( L"LoaderEntrySelected: %s\n", str );
-    res = LibSetVariable( L"LoaderEntrySelected", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderEntrySelected", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to selected entry" );
 
     efi_free( str );
 
@@ -443,9 +463,9 @@ EFI_STATUS set_loader_image_identifier ()
     }
 
     v_msg( L"LoaderImageIdentifier: %s\n", str );
-    res = LibSetVariable( L"LoaderImageIdentifier", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"LoaderImageIdentifier", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store loader image ID" );
 
     efi_free( str );
 
@@ -461,7 +481,7 @@ INTN get_loader_config_timeout ()
     UINTN size;
     VOID *val;
 
-    val = LibGetVariableAndSize( L"LoaderConfigTimeout", &guid, &size );
+    val = get_efivar( L"LoaderConfigTimeout", &guid, &size );
     if( val )
     {
         res = Atoi( val );
@@ -477,7 +497,7 @@ BOOLEAN is_loader_config_timeout_oneshot_set ()
     UINTN size;
     VOID *val;
 
-    val = LibGetVariableAndSize( L"LoaderConfigTimeoutOneShot", &guid, &size );
+    val = get_efivar( L"LoaderConfigTimeoutOneShot", &guid, &size );
     if( val )
     {
         efi_free( val );
@@ -495,13 +515,13 @@ INTN get_loader_config_timeout_oneshot ()
     UINTN size;
     VOID *val;
 
-    val = LibGetVariableAndSize( L"LoaderConfigTimeoutOneShot", &guid, &size );
+    val = get_efivar( L"LoaderConfigTimeoutOneShot", &guid, &size );
     if( val )
     {
         res = Atoi( val );
         efi_free( val );
 
-        LibDeleteVariable( L"LoaderConfigTimeoutOneShot", &guid );
+        del_efivar( L"LoaderConfigTimeoutOneShot", &guid );
     }
 
     return res;
@@ -543,9 +563,9 @@ EFI_STATUS set_chainloader_device_part_uuid ()
     }
 
     v_msg( L"ChainLoaderDevicePartUUID: %s\n", str );
-    res = LibSetVariable( L"ChainLoaderDevicePartUUID", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"ChainLoaderDevicePartUUID", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store chainloader part-UUID" );
 
     efi_free( str );
 
@@ -581,9 +601,9 @@ EFI_STATUS set_chainloader_image_identifier ()
     }
 
     v_msg( L"ChainLoaderImageIdentifier: %s\n", str );
-    res = LibSetVariable( L"ChainLoaderImageIdentifier", &guid,
-                          VARIABLE_STRING( str ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"ChainLoaderImageIdentifier", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store chainloader image ID" );
 
     efi_free( str );
 
@@ -598,9 +618,9 @@ EFI_STATUS set_chainloader_entry_flags (UINT64 flags)
     EFI_STATUS res = EFI_SUCCESS;
 
     v_msg( L"ChainLoaderEntryFlags: 0x%016x\n", flags );
-    res = LibSetVariable( L"ChainLoaderEntryFlags", &guid,
-                          VARIABLE_BLOB( &flags ) );
-    WARN_STATUS( res, L"Failed to SetVariable()" );
+    res = set_volatile_efivar( L"ChainLoaderEntryFlags", &guid,
+                               VARIABLE_BLOB( &flags ) );
+    WARN_STATUS( res, L"Failed to chainloader boot entry flags" );
 
     return res;
 }
@@ -612,7 +632,7 @@ UINTN get_chainloader_boot_attempts ()
     UINTN size;
     VOID *val;
 
-    val = LibGetVariableAndSize( L"ChainLoaderBootAttempts", &guid, &size );
+    val = get_efivar( L"ChainLoaderBootAttempts", &guid, &size );
 
     if( val )
     {
@@ -632,9 +652,9 @@ EFI_STATUS set_chainloader_boot_attempts ()
     attempts = get_chainloader_boot_attempts();
     attempts++;
     v_msg( L"ChainLoaderBootAttempts: %d\n", attempts );
-    res = LibSetNVVariable( L"ChainLoaderBootAttempts", &guid,
-                            VARIABLE_BLOB( &attempts ) );
-    WARN_STATUS( res, L"Failed to SetNVVariable()" );
+    res = set_persistent_efivar( L"ChainLoaderBootAttempts", &guid,
+                                 VARIABLE_BLOB( &attempts ) );
+    WARN_STATUS( res, L"Failed to chainloader boot count" );
 
     return res;
 }

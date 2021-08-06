@@ -23,6 +23,15 @@
 #define ENTRY_FLAG_BOOT_OTHER 1UL << 1
 #define ENTRY_FLAG_UPDATE     1UL << 2
 
+#define EFI_GLOBAL_VARIABLE_GUID                                \
+    { 0x8BE4DF61, 0x93CA, 0x11d2,                               \
+      { 0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B, 0x8C } }
+
+void *get_efivar (CHAR16 *name, EFI_GUID *ns, UINTN *size);
+EFI_STATUS del_efivar (CHAR16 *name, EFI_GUID *ns);
+EFI_STATUS set_volatile_efivar   (CHAR16 *name, EFI_GUID *ns, UINTN len, void *d);
+EFI_STATUS set_persistent_efivar (CHAR16 *name, EFI_GUID *ns, UINTN len, void *d);
+
 EFI_STATUS set_loader_time_init_usec ();
 EFI_STATUS set_loader_time_menu_usec ();
 EFI_STATUS set_loader_time_exec_usec ();
