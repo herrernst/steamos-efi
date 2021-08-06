@@ -11,14 +11,28 @@
 #include <sys/stat.h>
 // #include <unistd.h>
 
-// definitions so we can reuse chainloader/config.c with as little
-// duplication/reimplementation as possible:
+// ==========================================================================
+// IMPORTANT NOTE
+
+// We build two types of binary from this source tree: UEFI executables
+// (the chainloader itself) and OS utilities (eg steamos-bootconf) for
+// managing chainloader metadata.
+
+// We want the metadata parsing and saving tools to share their
+// implementations BUT UEFI is not very psox shaped, so these #defines
+// are here to allow utility functions with the same signatures to be
+// used transparently in both the UEFI and POSIX/ELF implementations
+// without changing the parser/etc code.
+
+// This allows chainloader/config.c to be reused in both classes of binary
+// with as little duplication/reimplementation as possible:
+// ==========================================================================
 
 #define IN
 #define OUT
 #define CONST const
 
-#define strlena(x)      strlen((char *)x)
+#define strlen_a(x)     strlen((char *)x)
 #define strncmpa(x,y,z) strncmp((char *)x,(char *)y,z)
 #define strcmpa(x,y)    strcmp((char *)x,(char *)y)
 #define CopyMem(d,s,l)  memcpy(d,s,l)

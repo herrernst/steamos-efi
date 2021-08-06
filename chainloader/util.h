@@ -81,6 +81,9 @@ EFI_DEVICE_PATH *get_self_device_path (VOID);
 EFI_DEVICE_PATH *get_self_file (VOID);
 
 VOID initialise (EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table);
+
+UINTN strlen_w (const CHAR16 *str);
+UINTN strlen_a (const CHAR8 *str);
 #endif
 
 CHAR16 *strwiden (CHAR8 *narrow);

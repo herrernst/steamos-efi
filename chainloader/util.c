@@ -605,3 +605,14 @@ UINT64 time_usec (VOID)
 
     return 1000UL * 1000UL * ticks / freq;
 }
+
+// string utility functions:
+UINTN strlen_w (const CHAR16 *str)
+{
+    return StrLen( str );
+}
+
+UINTN strlen_a (const CHAR8 *str)
+{
+    return strlena( str );
+}

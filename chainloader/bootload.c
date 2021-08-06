@@ -438,7 +438,7 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
     row_offset = (rows - entry_count) / 2;
     for( i = 0; i < entry_count; i++ )
     {
-        INTN offset = (columns - StrLen( entries[ i ].label )) / 2;
+        INTN offset = (columns - strlen_w( entries[ i ].label )) / 2;
         if( offset < 0 )
             offset = 0;
 

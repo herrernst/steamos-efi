@@ -51,7 +51,7 @@ EFI_STATUS set_image_cmdline (EFI_HANDLE *image, CONST CHAR16 *cmdline,
     if( cmdline )
     {
         (*child)->LoadOptions = (CHAR16 *)cmdline;
-        (*child)->LoadOptionsSize = StrLen( cmdline );
+        (*child)->LoadOptionsSize = strlen_w( cmdline );
     }
     else
     {

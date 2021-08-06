@@ -31,7 +31,7 @@
 #define CHAINLOADER_VARIABLE_GUID \
     { 0x399abb9b, 0x4bee, 0x4a18, {0xab, 0x5b, 0x45, 0xc6, 0xe0, 0xe8, 0xc7, 0x16} }
 
-#define VARIABLE_STRING(s) (UINTN)( ( StrLen( s ) + 1 ) * sizeof( CHAR16 ) ), (VOID *)( s )
+#define VARIABLE_STRING(s) (UINTN)( ( strlen_w( s ) + 1 ) * sizeof( CHAR16 ) ), (VOID *)( s )
 #define VARIABLE_BLOB(s) (UINTN)(sizeof( *s )), (VOID *)( s )
 
 #define EFI_LOADER_FEATURE_CONFIG_TIMEOUT          (1L << 0)
@@ -332,12 +332,12 @@ EFI_GUID get_loader_entry_oneshot ()
         v_msg( L"LoaderEntryDefault: %s\n", str );
 
         prefix = L"auto-";
-        len = StrLen( prefix );
+        len = strlen_w( prefix );
         if( StrnCmp( prefix, str, len ) == 0 )
             str += len;
 
         prefix = L"bootconf-";
-        len = StrLen( prefix );
+        len = strlen_w( prefix );
         if( StrnCmp( prefix, str, len ) == 0 )
             str += len;
 

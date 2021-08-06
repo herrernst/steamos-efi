@@ -52,8 +52,8 @@ static cfg_entry bootspec[] =
 
 static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
 {
-    UINTN nl = strlena( (CHAR8 *)item->name );
-    UINTN ll = strlena( line );
+    UINTN nl = strlen_a( (CHAR8 *)item->name );
+    UINTN ll = strlen_a( line );
     CHAR8 *start = NULL;
     UINTN vsize = 0;
     CHAR8 *nstart = NULL;
