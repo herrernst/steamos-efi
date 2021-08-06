@@ -80,7 +80,7 @@ EFI_HANDLE get_self_device_handle (VOID);
 EFI_DEVICE_PATH *get_self_device_path (VOID);
 EFI_DEVICE_PATH *get_self_file (VOID);
 
-VOID initialise (EFI_HANDLE image);
+VOID initialise (EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table);
 #endif
 
 CHAR16 *strwiden (CHAR8 *narrow);

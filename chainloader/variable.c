@@ -251,12 +251,13 @@ EFI_STATUS set_loader_device_part_uuid ()
     EFI_GUID signature;
     CHAR16 *str = NULL;
     EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
+    EFI_HANDLE image_handle = get_self_handle();
 
-    if( !LibImageHandle )
+    if( !image_handle )
         return EFI_INVALID_PARAMETER;
 
-    res = open_protocol( LibImageHandle, &lip_guid,
-                         (VOID **)&loaded_image, LibImageHandle, NULL,
+    res = open_protocol( image_handle, &lip_guid,
+                         (VOID **)&loaded_image, image_handle, NULL,
                          EFI_OPEN_PROTOCOL_GET_PROTOCOL );
     WARN_STATUS( res, L"Failed to open_protocol()" );
 
@@ -284,7 +285,7 @@ EFI_STATUS set_loader_device_part_uuid ()
     efi_free( str );
 
 exit:
-    close_protocol( LibImageHandle, &lip_guid, LibImageHandle, NULL );
+    close_protocol( image_handle, &lip_guid, image_handle, NULL );
     return res;
 }
 
@@ -422,12 +423,13 @@ EFI_STATUS set_loader_image_identifier ()
     EFI_STATUS res = EFI_SUCCESS;
     CHAR16 *str = NULL;
     EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
+    EFI_HANDLE image_handle = get_self_handle();
 
-    if( !LibImageHandle )
+    if( !image_handle )
         return EFI_INVALID_PARAMETER;
 
-    res = open_protocol( LibImageHandle, &lip_guid,
-                         (VOID **)&loaded_image, LibImageHandle, NULL,
+    res = open_protocol( image_handle, &lip_guid,
+                         (VOID **)&loaded_image, image_handle, NULL,
                          EFI_OPEN_PROTOCOL_GET_PROTOCOL );
     WARN_STATUS( res, L"Failed to open_protocol()" );
 
@@ -448,7 +450,7 @@ EFI_STATUS set_loader_image_identifier ()
     efi_free( str );
 
 exit:
-    close_protocol( LibImageHandle, &lip_guid, LibImageHandle, NULL );
+    close_protocol( image_handle, &lip_guid, image_handle, NULL );
     return res;
 }
 
@@ -505,7 +507,7 @@ INTN get_loader_config_timeout_oneshot ()
     return res;
 }
 
-EFI_STATUS set_chainloader_device_part_uuid (EFI_HANDLE image_handle)
+EFI_STATUS set_chainloader_device_part_uuid ()
 {
     EFI_GUID guid = LOADER_VARIABLE_GUID;
     EFI_LOADED_IMAGE *loaded_image;
@@ -514,6 +516,7 @@ EFI_STATUS set_chainloader_device_part_uuid (EFI_HANDLE image_handle)
     EFI_GUID signature;
     CHAR16 *str = NULL;
     EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
+    EFI_HANDLE image_handle = get_self_handle();
 
     if( !image_handle )
         return EFI_INVALID_PARAMETER;
@@ -551,13 +554,14 @@ exit:
     return res;
 }
 
-EFI_STATUS set_chainloader_image_identifier (EFI_HANDLE image_handle)
+EFI_STATUS set_chainloader_image_identifier ()
 {
     EFI_GUID guid = LOADER_VARIABLE_GUID;
     EFI_LOADED_IMAGE *loaded_image;
     EFI_STATUS res = EFI_SUCCESS;
     CHAR16 *str = NULL;
     EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
+    EFI_HANDLE image_handle = get_self_handle();
 
     if( !image_handle )
         return EFI_INVALID_PARAMETER;

@@ -98,8 +98,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     EFI_STATUS res = EFI_SUCCESS;
     bootloader steamos = {0};
 
-    InitializeLib( image_handle, sys_table );
-    initialise( image_handle );
+    initialise( image_handle, sys_table );
     set_steamos_loader_criteria( &steamos );
 
     if( nvram_debug )
@@ -111,8 +110,8 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
         set_loader_features();
         set_loader_device_part_uuid();
         set_loader_image_identifier();
-        set_chainloader_device_part_uuid( LibImageHandle );
-        set_chainloader_image_identifier( LibImageHandle );
+        set_chainloader_device_part_uuid();
+        set_chainloader_image_identifier();
     }
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );

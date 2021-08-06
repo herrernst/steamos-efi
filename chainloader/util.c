@@ -211,8 +211,9 @@ EFI_DEVICE_PATH *get_self_file (VOID)
     return li ? li->FilePath : NULL;
 }
 
-VOID initialise (EFI_HANDLE image)
+VOID initialise (EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table)
 {
+    InitializeLib( image, sys_table );
     self_image = image;
 }
 
