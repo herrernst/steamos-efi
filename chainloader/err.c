@@ -21,12 +21,22 @@
 #include "err.h"
 
 UINTN verbose;
+UINTN nvram_debug;
 
 UINTN set_verbosity (UINTN level)
 {
     UINTN old_level = verbose;
 
     verbose = level;
+
+    return old_level;
+}
+
+UINTN set_nvram_debug (UINTN level)
+{
+    UINTN old_level = nvram_debug;
+
+    nvram_debug = level;
 
     return old_level;
 }

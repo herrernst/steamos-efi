@@ -71,5 +71,7 @@
     ({ if( verbose ) DumpHex( indent, offset, size, data ); })
 
 extern UINTN verbose;
-UINTN set_verbosity (UINTN level);
+extern UINTN nvram_debug;
 
+UINTN set_verbosity (UINTN level);
+UINTN set_nvram_debug (UINTN level);

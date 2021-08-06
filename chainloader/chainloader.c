@@ -69,13 +69,13 @@ EFI_STATUS reboot_into_firmware (VOID)
         efi_free( val );
     }
 
-    v_msg( L"OsIndications: %016x\n", os_indications );
-    res = LibSetNVVariable( L"OsIndications", &gEfiGlobalVariableGuid,
-                            sizeof(os_indications), &os_indications );
-    if( EFI_ERROR( res ) )
+    if( nvram_debug )
     {
-        Print( L"Failed to LibSetNVVariable: %r\n", res );
-        return res;
+        v_msg( L"OsIndications: %016x\n", os_indications );
+        res = set_persistent_efivar( L"OsIndications", &gv_guid,
+                                     sizeof(os_indications), &os_indications );
+        ERROR_RETURN( res, res,
+                      "Failed to set persistent OsIndications variable" );
     }
 
     res = reset_system( EfiResetCold, EFI_SUCCESS, 0, NULL );
@@ -101,15 +101,19 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     InitializeLib( image_handle, sys_table );
     initialise( image_handle );
     set_steamos_loader_criteria( &steamos );
-    set_loader_time_init_usec();
-    set_loader_info();
-    set_loader_firmware_info();
-    set_loader_firmware_type();
-    set_loader_features();
-    set_loader_device_part_uuid();
-    set_loader_image_identifier();
-    set_chainloader_device_part_uuid( LibImageHandle );
-    set_chainloader_image_identifier( LibImageHandle );
+
+    if( nvram_debug )
+    {
+        set_loader_time_init_usec();
+        set_loader_info();
+        set_loader_firmware_info();
+        set_loader_firmware_type();
+        set_loader_features();
+        set_loader_device_part_uuid();
+        set_loader_image_identifier();
+        set_chainloader_device_part_uuid( LibImageHandle );
+        set_chainloader_image_identifier( LibImageHandle );
+    }
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
     ERROR_JUMP( res, cleanup, L"get_fs_handles" );
@@ -125,7 +129,8 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     res = choose_steamos_loader( filesystems, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
 
-    set_loader_time_exec_usec();
+    if( nvram_debug )
+        set_loader_time_exec_usec();
 
     res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );

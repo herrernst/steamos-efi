@@ -298,6 +298,7 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
     CHAR16 *orig_path = NULL;
     CHAR16 *flag_path = NULL;
     CHAR16 *verb_path = NULL;
+    CHAR16 *vdbg_path = NULL;
 
     loader_file = get_self_file();
     loader->criteria.is_restricted = 0;
@@ -306,19 +307,21 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
     if( !loader_file )
         return EFI_NOT_FOUND;
 
-    // default to being verbose in early setup until we've had a chance
-    // to look for FLAGFILE_VERBOSE:
+    // default to being verbose & log to nvram in early setup until we've had
+    // a chance to look for FLAGFILE_VERBOSE:
     set_verbosity( 1 );
+    set_nvram_debug( 1 );
 
     orig_path = DevicePathToStr( loader_file );
     flag_path = resolve_path( FLAGFILE_RESTRICT, orig_path, FALSE );
     verb_path = resolve_path( FLAGFILE_VERBOSE , orig_path, FALSE );
+    vdbg_path = resolve_path( FLAGFILE_NVDEBUG , orig_path, FALSE );
 
-    if( !flag_path && !verb_path)
+    if( !flag_path && !verb_path && !vdbg_path)
         res = EFI_INVALID_PARAMETER;
     ERROR_JUMP( res, cleanup,
-                L"Unable to construct %s and %s paths\n",
-                FLAGFILE_RESTRICT, FLAGFILE_VERBOSE );
+                L"Unable to construct %s, %s, and %s paths\n",
+                FLAGFILE_RESTRICT, FLAGFILE_VERBOSE, FLAGFILE_NVDEBUG );
 
     dh = get_self_device_handle();
     if( !dh )
@@ -336,6 +339,12 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
     if( verb_path )
         if( efi_file_exists( root_dir, verb_path ) != EFI_SUCCESS )
             set_verbosity( 0 );
+
+    // likewise we turn nvram debug off if the path is potentially
+    // valid but the file definitely is not there:
+    if( vdbg_path )
+        if( efi_file_exists( root_dir, vdbg_path ) != EFI_SUCCESS )
+            set_nvram_debug( 0 );
 
     if( flag_path )
     {
@@ -632,10 +641,12 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         for( UINTN i = sort = 0; i < j - 1; i++ )
             if( earlier_entry_is_newer( &found[ i ], &found[ i + 1 ] ) )
                 sort += swap_cfgs( &found[ 0 ], i, i + 1 );
-    set_loader_entries( &found_signatures[ 0 ] );
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles.
     // NOTE: some of these images may be flagged as invalid.
+
+    if( nvram_debug )
+        set_loader_entries( &found_signatures[ 0 ] );
 
     INTN selected = -1;
     BOOLEAN update = FALSE;
@@ -728,7 +739,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             timeout = get_loader_config_timeout_oneshot();
 
         selected = text_menu_choose_steamos_loader( found, j, selected, timeout );
-        set_loader_time_menu_usec();
+
+        if( nvram_debug )
+            set_loader_time_menu_usec();
     }
 
     if( selected > -1 )
@@ -768,10 +781,18 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             free_config( &found[ i ].cfg );
         }
 
-        set_chainloader_boot_attempts ();
+        if( nvram_debug )
+        {
+            set_chainloader_boot_attempts ();
+            set_loader_entry_default( found_signatures[ j - 1 ] );
+            set_loader_entry_selected( found_signatures[ selected ] );
+        }
+
+        // This sets a volatile variable (it is _not_ in NVRAM) which
+        // passes the update (or not) flag. This is redundant with
+        // the command line update argumant steamos-update=1 above.
         set_chainloader_entry_flags( flags );
-        set_loader_entry_default( found_signatures[ j - 1 ] );
-        set_loader_entry_selected( found_signatures[ selected ] );
+
 
         return EFI_SUCCESS;
     }

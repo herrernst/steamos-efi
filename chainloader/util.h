@@ -43,6 +43,7 @@
 
 #define FLAGFILE_RESTRICT L"steamcl-restricted"
 #define FLAGFILE_VERBOSE  L"steamcl-verbose"
+#define FLAGFILE_NVDEBUG  L"steamcl-nvram-deug"
 
 #ifndef EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID
 #define EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID              \
