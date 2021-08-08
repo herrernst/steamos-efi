@@ -236,7 +236,7 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
     set_verbosity( 1 );
     set_nvram_debug( 1 );
 
-    orig_path = DevicePathToStr( loader_file );
+    orig_path = device_path_string( loader_file );
     flag_path = resolve_path( FLAGFILE_RESTRICT, orig_path, FALSE );
     verb_path = resolve_path( FLAGFILE_VERBOSE , orig_path, FALSE );
     vdbg_path = resolve_path( FLAGFILE_NVDEBUG , orig_path, FALSE );

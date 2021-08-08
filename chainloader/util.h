@@ -95,6 +95,7 @@ INTN guid_cmp (const VOID *a, const VOID *b);
 
 EFI_DEVICE_PATH *handle_device_path (EFI_HANDLE *handle);
 EFI_GUID device_path_partition_uuid (EFI_DEVICE_PATH *dp);
+CHAR16 *device_path_string (EFI_DEVICE_PATH *dp);
 BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b);
 #endif
 

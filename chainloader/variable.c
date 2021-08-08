@@ -428,7 +428,7 @@ EFI_STATUS set_loader_image_identifier ()
                          EFI_OPEN_PROTOCOL_GET_PROTOCOL );
     WARN_STATUS( res, L"Failed to open_protocol()" );
 
-    str = DevicePathToStr(loaded_image->FilePath);
+    str = device_path_string( loaded_image->FilePath );
     WARN_STATUS( ( str == NULL ), L"Failed to DevicePathToStr()" );
 
     if( !str )
@@ -566,7 +566,7 @@ EFI_STATUS set_chainloader_image_identifier ()
                          EFI_OPEN_PROTOCOL_GET_PROTOCOL );
     WARN_STATUS( res, L"Failed to open_protocol()" );
 
-    str = DevicePathToStr( loaded_image->FilePath );
+    str = device_path_string( loaded_image->FilePath );
     WARN_STATUS( ( str == NULL ), L"Failed to DevicePathToStr()" );
 
     if( !str )

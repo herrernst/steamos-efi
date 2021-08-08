@@ -671,6 +671,11 @@ EFI_GUID device_path_partition_uuid (EFI_DEVICE_PATH *dp)
     return NULL_GUID;
 }
 
+CHAR16 *device_path_string (EFI_DEVICE_PATH *dp)
+{
+    return DevicePathToStr( dp );
+}
+
 // This code compares the _medium_ part of two EFI_DEVICE_PATHS,
 // and returns TRUE if they are the same.
 //
