@@ -639,6 +639,38 @@ INTN guid_cmp (const VOID *a, const VOID *b)
     return CompareMem( a, b, sizeof(EFI_GUID) );
 }
 
+// device path/media utilities:
+EFI_DEVICE_PATH *handle_device_path (EFI_HANDLE *handle)
+{
+    return DevicePathFromHandle( handle );
+}
+
+EFI_GUID device_path_partition_uuid (EFI_DEVICE_PATH *dp)
+{
+    if( !dp )
+        return NULL_GUID;
+
+    while( dp && !IsDevicePathEnd( dp ) )
+    {
+        if( DevicePathType( dp )    == MEDIA_DEVICE_PATH &&
+            DevicePathSubType( dp ) == MEDIA_HARDDRIVE_DP )
+        {
+            HARDDRIVE_DEVICE_PATH *hd = (HARDDRIVE_DEVICE_PATH *)dp;
+            EFI_GUID *guid;
+
+            if( hd->SignatureType != SIGNATURE_TYPE_GUID )
+                break;
+
+            guid = (EFI_GUID *) (&hd->Signature[0]);
+            return *guid;
+        }
+
+        dp = NextDevicePathNode( dp );
+    }
+
+    return NULL_GUID;
+}
+
 // This code compares the _medium_ part of two EFI_DEVICE_PATHS,
 // and returns TRUE if they are the same.
 //

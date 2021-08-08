@@ -211,35 +211,6 @@ static CHAR16 *volume_label (EFI_FILE_PROTOCOL *handle)
     return volume->VolumeLabel;
 }
 
-static EFI_GUID partition_uuid (EFI_HANDLE *handle)
-{
-    EFI_DEVICE_PATH *dp;
-
-    if( !handle )
-        return NULL_GUID;
-
-    dp  = DevicePathFromHandle( handle );
-    while( !IsDevicePathEnd( dp ) )
-    {
-        if( DevicePathType( dp )    == MEDIA_DEVICE_PATH &&
-            DevicePathSubType( dp ) == MEDIA_HARDDRIVE_DP )
-        {
-            HARDDRIVE_DEVICE_PATH *hd = (HARDDRIVE_DEVICE_PATH *)dp;
-            EFI_GUID *guid;
-
-            if( hd->SignatureType != SIGNATURE_TYPE_GUID )
-                break;
-
-            guid = (EFI_GUID *) (&hd->Signature[0]);
-            return *guid;
-        }
-
-        dp = NextDevicePathNode( dp );
-    }
-
-    return NULL_GUID;
-}
-
 EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
 {
     EFI_STATUS res = EFI_SUCCESS;
@@ -573,12 +544,13 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             continue;
         }
 
+        EFI_DEVICE_PATH *fdp = handle_device_path( found[ j ].partition );
         found[ j ].disabled  = get_conf_uint( conf, "image-invalid" ) > 0;
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
         found[ j ].label     = volume_label( root_dir );
-        found[ j ].uuid      = partition_uuid( found[ j ].partition );
+        found[ j ].uuid      = device_path_partition_uuid( fdp );
         found_signatures[ j ] = &found[ j ].uuid;
         j++;
     }

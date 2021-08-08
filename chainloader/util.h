@@ -93,6 +93,8 @@ INTN  strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len);
 VOID mem_copy (void *dest, const VOID *src, UINTN len);
 INTN guid_cmp (const VOID *a, const VOID *b);
 
+EFI_DEVICE_PATH *handle_device_path (EFI_HANDLE *handle);
+EFI_GUID device_path_partition_uuid (EFI_DEVICE_PATH *dp);
 BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b);
 #endif
 

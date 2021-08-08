@@ -83,31 +83,6 @@ EFI_STATUS set_persistent_efivar (CHAR16 *name, EFI_GUID *ns, UINTN len, void *d
     return LibSetNVVariable( name, ns, len, d );
 }
 
-static EFI_GUID
-get_drive_signature (EFI_DEVICE_PATH *device_path)
-{
-    HARDDRIVE_DEVICE_PATH *harddrive;
-    EFI_GUID *guid = &NULL_GUID;
-
-    while( device_path && !IsDevicePathEnd( device_path ) )
-    {
-        if( DevicePathType( device_path ) == MEDIA_DEVICE_PATH &&
-            DevicePathSubType( device_path ) == MEDIA_HARDDRIVE_DP )
-        {
-            harddrive = (HARDDRIVE_DEVICE_PATH *)device_path;
-            if( harddrive->SignatureType != SIGNATURE_TYPE_GUID )
-                break;
-
-            guid = (EFI_GUID *)&harddrive->Signature[0];
-            break;
-        }
-
-        device_path = NextDevicePathNode( device_path );
-    }
-
-    return *guid;
-}
-
 static const CHAR16 *loader_info = L"steamcl " RELEASE_VERSION;
 static const UINT64 loader_features =
     EFI_LOADER_FEATURE_CONFIG_TIMEOUT          |
@@ -281,10 +256,10 @@ EFI_STATUS set_loader_device_part_uuid ()
                          EFI_OPEN_PROTOCOL_GET_PROTOCOL );
     WARN_STATUS( res, L"Failed to open_protocol()" );
 
-    device_path = DevicePathFromHandle( loaded_image->DeviceHandle );
+    device_path = handle_device_path( loaded_image->DeviceHandle );
     WARN_STATUS( res, L"Failed to DevicePathFromHandle()" );
 
-    signature = get_drive_signature( device_path );
+    signature = device_path_partition_uuid( device_path );
     WARN_STATUS( ( guid_cmp( &signature, &NULL_GUID ) == 0 ),
                  L"Failed to get_drive_signature" );
 
@@ -546,10 +521,10 @@ EFI_STATUS set_chainloader_device_part_uuid ()
                          EFI_OPEN_PROTOCOL_GET_PROTOCOL );
     WARN_STATUS( res, L"Failed to open_protocol()" );
 
-    device_path = DevicePathFromHandle( loaded_image->DeviceHandle );
+    device_path = handle_device_path( loaded_image->DeviceHandle );
     WARN_STATUS( res, L"Failed to DevicePathFromHandle()" );
 
-    signature = get_drive_signature( device_path );
+    signature = device_path_partition_uuid( device_path );
     WARN_STATUS( ( guid_cmp( &signature, &NULL_GUID ) == 0 ),
                  L"Failed to get_drive_signature" );
 
