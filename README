@@ -1,5 +1,79 @@
-Chainloader
------------
+# Chainloader #
 
-Debug options for devs: head to `efi_main()` in `chainloader/chainloader.c`,
-and change the value of `debug` and `verbose` variables.
+This is the SteamOS stage 1 bootloader (chainloader).
+
+It is a standalone UEFI application built on top of gnu-efi: Although it
+should be possible to port to Tiano instead (and some effort has been made
+to keep the gnu-efi call isolated to one or two files to make this easier)
+this has not been attempted yet.
+
+The broad goals and reason for the design are given in the SteamOS
+documentation repo (eg in SteamOS/bootloader-and-partition-layout.md):
+This file will focus more on the actual implementation details.
+
+## Boot Sequence ##
+
+## Stage 1: Chainloader ####
+
+ * The chainloader starts
+ * It checks the directory it was loaded from for the following flag files:
+   * FLAGFILE_RESTRICT "steamcl-restricted"
+     * If present, do not consider any other media to boot from,
+       ie don't check USB sticks or other hard discs for SteamOS images
+   * FLAGFILE_VERBOSE  "steamcl-verbose"
+     * Emit some debug messages to stdout.
+   * FLAGFILE_NVDEBUG  "steamcl-nvram-debug"
+     * Log some extra debug info in UEFI variables
+     * The chainloader does not write to disc
+     * The chainloader does set some volatile UEFI variables even if
+       this is not present, but it should never write to NVRAM without it
+  * All UEFI bootable filesystems (basically VFAT) are checked
+    * If FLAGFILE_RESTRICT is in effect those on other media (discs) are ignored
+    * Any files at /SteamOS/bootconf on candidate fses are loaded and parsed
+      * See README.bootconf for specification
+    * The bootconf files are sorted by boot-requested-at value, oldest to newest
+      * Any bootconfs that have image-invalid set are considered older than
+        any that don't
+    * Each sorted bootconf is then checked, starting with the newest.
+      * If boot-other is set, we skip this config and proceed to the next
+      * If not, we choose this image
+  * The chainloader checks for the "oneshot" UEFI variable
+    * If any of the following are true:
+      * oneshot is set
+      * No config was picked
+      * <f3> is being held down
+        * A boot menu is displayed to let the user choose a boot option
+  * If no boot option has been picked yet the newest SteamOS entry is selected
+  * If the chosen entry was flagged for update
+    * steamos-update=1 is added to the bootloader command line
+    * ENTRY_FLAG_UPDATE is ORed into chainloader entry flags UEFI variable
+  * These two mechanisms are redundant, either will trigger an update
+    * The chosen bootloader is executed. By default:
+      /EFI/SteamOS/grubx64.efi on the same fs as this /SteamOS/bootconf
+
+### Stage 2: The bootloader ###
+
+This is a mostly vanilla boot sequence with the following additions:
+
+ * If the chainloader boot attempts NVRAM UEFI variable is set, it is zeroed
+ * The loader flags variable is read into memory if set (see above)
+ * The bootconf file is parsed
+   * boot-attempts is incremented by 1 (in memory)
+   * If any of the following are true:
+     * steamos-update=1 is present on the command line
+     * the flags contain ENTRY_FLAG_UPDATE
+     * the config contains an update boot window and we're in that time range
+       * the update flag is set
+   * If boot-attempts exceeds a built in value, the image-invalid flag is set
+   * The bootconf file is saved - this can set the following items on disc:
+     * image-invalid may go from 0 to 1
+     * boot-attempts can increase by 1
+   * If the update flag is set the following is added to the kernel command line
+     * systemd.unit=steamos-update-os.target
+   * The kernel + initrd are loaded and executed
+
+### Stage 3: The OS ###
+
+Not much to say here, except it is up to the OS to run some
+diagnostics and set the bootconf boot-attempts value to 0 if the boot
+process has been deemed a success.

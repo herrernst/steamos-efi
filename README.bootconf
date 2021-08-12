@@ -1,0 +1,47 @@
+The bootconf file may contain the following values:
+
+Note: UEFI does not provide easy access to a `time_t` value - we will
+use a datestamp of the form YYYYmmDDHHMMSS (always UTC).
+
+    boot-requested-at: <0|DATESTAMP_T>
+    boot-other: <0|1>
+    boot-attempts: <0|POSITIVE_INTEGER>
+    boot-count: <0|POSITIVE_INTEGER>
+    boot-time: <0|DATESTAMP_T>
+    image-invalid: <0|1>
+    update: <0|1>
+    update-window-start: <0|DATESTAMP_T>
+    update-window-end: <0|DATESTAMP_T>
+    loader: <|PATH>
+    partitions: <DEVICE_LIST>
+
+The meanings of these entries are as follows:
+
+* boot-requested-at: datestamp value at which reboot was requested
+* boot-other: if the image in question wanted you to boot the _other_ image
+* boot-attempts: the number of _failed_ boot attempts
+  * the bootloader increments this at the start of each attempt
+  * the OS sets it back to 0 on success
+* boot-count: number of _successful_ boot attempts
+* boot-time: datestamp value when a successful boot of this image last occurred
+* image-invalid: set by the bootloader (or possibly OS) to indicate the image
+  is considered damaged in some way. This reduces the priority of this boot
+  image relative to any unflagged images.
+  * should be cleared on successful boot
+* update: 1 if an update should occur
+  * may be combined with boot-other to indicate the other image should be updated
+* loader: normally a well-known path to the bootloader will be used by the
+  chainloader. If this ever changes this key can be set to indicate an alternate
+  bootloader should be invoked. Relative to the boot config file path or
+  absolute, eg:
+  * altboot.efi
+  * /EFI/steamos/altboot.efi)
+* update-window-start, update-window-end: datestamp values
+  * an boot sequence which has 'update' set and which occurs within the
+    update window should trigger a boot with the update init target passed
+    via the kernel command line
+  * If update-window-start and update-window-end are both 0 then an update
+    is driven solely by the 'update' key
+* partitions: DEPRECATED
+  * superseded by the partsets directory, not looked at by either bootload stage
+
