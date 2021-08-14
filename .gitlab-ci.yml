@@ -11,10 +11,11 @@ build:
   script:
     - autoreconf -ivf
     - ./configure --prefix=/usr
-    - make
+    - make distcheck
     - make install DESTDIR=./steamos-efi
   artifacts:
     paths:
+      - steamos-efi-*.tar.gz
       - steamos-efi
   tags:
     - autoscaled
