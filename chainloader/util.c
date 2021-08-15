@@ -28,7 +28,7 @@
 VOID *efi_alloc (UINTN s) { return AllocateZeroPool( s ); }
 VOID  efi_free  (VOID *p) { if( p ) FreePool( p); }
 
-EFI_HANDLE self_image;
+static EFI_HANDLE self_image;
 EFI_GUID NULL_GUID = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
 
 CONST CHAR16 *efi_statstr (EFI_STATUS s)
