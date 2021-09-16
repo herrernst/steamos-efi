@@ -80,7 +80,7 @@ entry if needed.
     flag files are also set at the removable media path.
 
     If this option is not specified, the existing flag files are not modified.
-      
+
     Supported flags:
     - restricted: Restrict the chainloader to select ONLY stage 2 bootloaders
       that are installed on the same medium.
@@ -140,7 +140,7 @@ calculate_checksum ()
 unquote()
 {
     local tmp="$1"
-    
+
     tmp="${tmp%\"}"
     tmp="${tmp#\"}"
     echo "$tmp"
@@ -176,7 +176,7 @@ find_esp ()
         ptuuid=$(unquote "${ptuuid#*=}");
         fs=$(unquote "${fs#*=}");
         mount=$(unquote "${mount#*=}");
- 
+
         if [ "$fs"    != vfat        ]; then continue; fi;
         if [ "$ptuid" != "$ESP_UUID" ]; then continue; fi;
         if [ "$mount" != /esp        ]; then continue; fi;

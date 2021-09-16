@@ -93,7 +93,7 @@ AC_ARG_WITH([release-version],
 # Explode if the default for the platform is not EFI
 AS_IF([test x"$with_platform" = x],
       [AS_CASE([$target_cpu-$target_vendor],
-               [i386-apple], [platform=efi],       
+               [i386-apple], [platform=efi],
                [x86_64-*],   [platform=efi],
                [ia64-*],     [platform=efi],
                [arm64-*],    [platform=efi],
