@@ -131,7 +131,7 @@ EFI_STATUS get_protocol_instance_handle (EFI_GUID *id,
     *handle = NULL;
 
     res = get_protocol_handles( id, &handles, &max );
-    ERROR_RETURN( res, res, "", (UINT64)id );
+    ERROR_RETURN( res, res, L"", (UINT64)id );
 
     for( UINTN i = 0; !*handle && (i < max); i++ )
     {
