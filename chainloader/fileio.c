@@ -32,7 +32,25 @@ EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
                           UINT64 attr)
 {
     if( !mode )
+    {
         mode = EFI_FILE_MODE_READ;
+    }
+    else
+    {
+        if (mode & EFI_FILE_MODE_CREATE) { mode |= EFI_FILE_MODE_WRITE; }
+        if (mode & EFI_FILE_MODE_WRITE)  { mode |= EFI_FILE_MODE_READ;  }
+    }
+
+    switch (mode)
+    {
+      case EFI_FILE_MODE_CREATE|EFI_FILE_MODE_WRITE|EFI_FILE_MODE_READ:
+      case EFI_FILE_MODE_WRITE|EFI_FILE_MODE_READ:
+      case EFI_FILE_MODE_READ:
+        break;
+      default:
+        *opened = NULL;
+        return EFI_INVALID_PARAMETER;
+    }
 
     return uefi_call_wrapper( dir->Open, 5, dir, opened, path, mode, attr );
 }
@@ -99,6 +117,13 @@ EFI_STATUS efi_file_read (EFI_FILE_PROTOCOL *fh,
                           IN OUT UINTN *bytes)
 {
     return uefi_call_wrapper( fh->Read, 3, fh, bytes, buf );
+}
+
+EFI_STATUS efi_file_write (EFI_FILE_PROTOCOL *fh,
+                           IN CHAR8 *buf,
+                           IN OUT UINTN *bytes)
+{
+    return uefi_call_wrapper( fh->Write, 3, fh->Write, fh, bytes, buf );
 }
 
 EFI_STATUS efi_mount (EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,

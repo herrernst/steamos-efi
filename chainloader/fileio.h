@@ -40,6 +40,10 @@ EFI_STATUS efi_file_read (EFI_FILE_PROTOCOL *fh,
                           IN OUT CHAR8 *buf,
                           IN OUT UINTN *bytes);
 
+EFI_STATUS efi_file_write (EFI_FILE_PROTOCOL *fh,
+                           IN CHAR8 *buf,
+                           IN OUT UINTN *bytes);
+
 EFI_STATUS efi_mount (EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
                       OUT EFI_FILE_PROTOCOL **root);
 
