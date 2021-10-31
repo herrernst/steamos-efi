@@ -298,6 +298,8 @@ allocfail:
     return EFI_OUT_OF_RESOURCES;
 }
 
+// Returns a buffer of n+1 bytes, where n is the file size,
+// with the final (extra) byte guaranteed to be (CHAR8)0
 EFI_STATUS efi_file_to_mem (EFI_FILE_PROTOCOL *fh,
                             OUT CHAR8 **buf,
                             OUT UINTN *bytes,
