@@ -671,6 +671,17 @@ EFI_GUID device_path_partition_uuid (EFI_DEVICE_PATH *dp)
     return NULL_GUID;
 }
 
+CHAR16 *guid_str (EFI_GUID *guid)
+{
+    CHAR16 str[ sizeof(CHAR16) * GUID_STRLEN ] = L"";
+
+    // SPrint expects the _byte_ length
+    SPrint( str, sizeof(str), GUID_STRFMT, GUID_FMTARG(guid) );
+    str[ (sizeof(str) / sizeof(CHAR16)) - 1 ] = (CHAR16)0;
+
+    return strdup_w( str );
+}
+
 CHAR16 *device_path_string (EFI_DEVICE_PATH *dp)
 {
     return DevicePathToStr( dp );

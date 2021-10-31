@@ -55,6 +55,17 @@
 #ifndef NO_EFI_TYPES
 extern EFI_GUID NULL_GUID;
 
+// 32 hex digits + 4 separators + NUL
+#define GUID_STRLEN 37
+#define GUID_STRFMT L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
+#define GUID_FMTARG(g) \
+    (g)->Data1, \
+    (g)->Data2, \
+    (g)->Data3, \
+    (g)->Data4[0], (g)->Data4[1], \
+    (g)->Data4[2], (g)->Data4[3], (g)->Data4[4], \
+    (g)->Data4[5], (g)->Data4[6], (g)->Data4[7]
+
 VOID *efi_alloc (IN UINTN s);
 VOID  efi_free  (IN VOID *p);
 
@@ -98,6 +109,7 @@ EFI_DEVICE_PATH *handle_device_path (EFI_HANDLE *handle);
 EFI_GUID device_path_partition_uuid (EFI_DEVICE_PATH *dp);
 CHAR16 *device_path_string (EFI_DEVICE_PATH *dp);
 BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b);
+CHAR16 *guid_str (EFI_GUID *guid);
 #endif
 
 CHAR16 *strwiden (CHAR8 *narrow);
