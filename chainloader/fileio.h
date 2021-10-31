@@ -30,6 +30,10 @@ EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
                           UINT64 mode,
                           UINT64 attr);
 
+EFI_STATUS efi_mkdir_p (EFI_FILE_PROTOCOL *parent,
+                        OUT EFI_FILE_PROTOCOL **dir,
+                        CONST CHAR16 *name);
+
 EFI_STATUS efi_file_close (EFI_FILE_PROTOCOL *file);
 
 EFI_STATUS efi_readdir (EFI_FILE_PROTOCOL *dir,

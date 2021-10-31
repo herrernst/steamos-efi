@@ -31,16 +31,26 @@ EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
                           UINT64 mode,
                           UINT64 attr)
 {
+    // FIXME: audit users to explicitly pass EFI_FILE_MODE_READ
     if( !mode )
     {
         mode = EFI_FILE_MODE_READ;
     }
     else
     {
-        if (mode & EFI_FILE_MODE_CREATE) { mode |= EFI_FILE_MODE_WRITE; }
-        if (mode & EFI_FILE_MODE_WRITE)  { mode |= EFI_FILE_MODE_READ;  }
+        // Make sure we're using a permitted mode combination (see below):
+        if (mode & EFI_FILE_MODE_CREATE)
+            mode |= EFI_FILE_MODE_WRITE;
+
+        if (mode & EFI_FILE_MODE_WRITE)
+            mode |= EFI_FILE_MODE_READ;
     }
 
+    // These are the only mode combinations allowed by the UEFI spec:
+    // Protocols - Media Access; EFI_FILE_PROTOCOL.Open
+    // (pg 604 in the May 2017 edition, v2.7)
+    // OPenMode:   «… the only valid combinations
+    //              … are Read,Read/Write,Read/Write/Create»
     switch (mode)
     {
       case EFI_FILE_MODE_CREATE|EFI_FILE_MODE_WRITE|EFI_FILE_MODE_READ:
@@ -84,6 +94,60 @@ EFI_STATUS efi_file_exists (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
     }
 
     return res;
+}
+
+// emulate mkdir -p
+EFI_STATUS efi_mkdir_p (EFI_FILE_PROTOCOL *parent,
+                        OUT EFI_FILE_PROTOCOL **dir,
+                        CONST CHAR16 *name)
+{
+    UINTN i = 1;
+    UINTN x = 0;
+    CHAR16 *partial = NULL;
+    UINTN len = strlen_w( name );
+    EFI_STATUS res = EFI_INVALID_PARAMETER;
+    // UEFI spec only allows CREATE if you specify WRITE and READ
+    // See efi_file_open for details:
+    static const UINT64 mode = ( EFI_FILE_MODE_WRITE  |
+                                 EFI_FILE_MODE_READ   |
+                                 EFI_FILE_MODE_CREATE );
+
+    partial = ALLOC_OR_GOTO ( (len + 1) * sizeof(CHAR16), allocfail );
+
+    // Drop/ignore any trailing backslashes
+    while( len && *(name + len - 1) == L'\\' )
+        len--;
+
+    // skipping \ at start of path
+    for( i = 1; i < len; i++ )
+    {
+        EFI_FILE_PROTOCOL *tmp = NULL;
+        // every time we encounter a \ we create the next segment
+        if( *(name + i) == L'\\' )
+        {
+            x = i;
+            mem_copy( partial, name, i * sizeof(CHAR16) );
+            partial[ i + 1 ] = L'\0';
+            res =
+              efi_file_open( parent, &tmp, partial, mode, EFI_FILE_DIRECTORY );
+            ERROR_JUMP( res, mkdir_done, L"Create dir %s failed", partial );
+            efi_file_close( tmp );
+        }
+    }
+
+    if( len - x > 1 || *(name + i - 1) != L'\\' )
+    {
+        mem_copy( partial, name, len * sizeof(CHAR16) );
+        partial[ len + i ] = L'\0';
+        res = efi_file_open( parent, dir, partial, mode, EFI_FILE_DIRECTORY );
+    }
+
+mkdir_done:
+    efi_free( partial );
+    return res;
+
+allocfail:
+    return EFI_OUT_OF_RESOURCES;
 }
 
 EFI_STATUS efi_readdir (EFI_FILE_PROTOCOL *dir,
