@@ -29,6 +29,7 @@
 #include "exec.h"
 #include "variable.h"
 #include "console.h"
+#include "partset.h"
 
 // this is the console output attributes for the menu
 #define SELECTED_ATTRIBUTES (EFI_MAGENTA   | EFI_BACKGROUND_BLACK)
@@ -466,6 +467,236 @@ BOOLEAN earlier_entry_is_newer (found_cfg *a, found_cfg *b)
     return FALSE;
 }
 
+static CHAR16 * find_image_name_by_partuuid (EFI_FILE_PROTOCOL *root,
+                                             CONST CHAR16 *uuid)
+{
+    EFI_STATUS res;
+    EFI_FILE_PROTOCOL *partsets = NULL;
+    EFI_FILE_INFO *dirent = NULL;
+    UINTN de_size = 0;
+    CHAR8 *id = NULL;
+    CHAR16 *image_ident = NULL;
+
+    res = efi_file_open( root, &partsets, L"\\SteamOS\\partsets", 0, 0 );
+    ERROR_RETURN( res, NULL, L"No \\SteamOS\\partsets found" );
+
+    // narrow and downcase the efi partition uuid we want to match:
+    id = strlower( strnarrow( uuid ) );
+
+    if( !id || !*id )
+        return NULL;
+
+    while( image_ident == NULL )
+    {
+        EFI_FILE_PROTOCOL *setdata = NULL;
+        CHAR16 *name = NULL;
+        res = efi_readdir( partsets, &dirent, &de_size );
+        ERROR_CONTINUE( res, L"readdir failed" );
+
+        if( de_size == 0 ) // no more entries
+            break;
+
+        name = &dirent->FileName[0];
+
+        // These partsets won't have useful identifying information:
+        if( strcmp_w( L"all",    name ) == 0 ||
+            strcmp_w( L"self",   name ) == 0 ||
+            strcmp_w( L"other",  name ) == 0 ||
+            strcmp_w( L"shared", name ) == 0 )
+            continue;
+
+        if( efi_file_open( partsets, &setdata, name, 0, 0 ) == EFI_SUCCESS )
+        {
+            CHAR8 *buf  = NULL;
+            UINTN bytes = 0;
+            UINTN size  = 0;
+
+            if( efi_file_to_mem( setdata, &buf, &bytes, &size ) == EFI_SUCCESS )
+            {
+                CONST CHAR8 *partset_efi_uuid = NULL;
+
+                partset_efi_uuid =
+                  get_partset_value (buf, size, (CONST CHAR8 *)"efi");
+
+                if (!partset_efi_uuid)
+                    continue;
+
+                // does this partset's efi uuid  match the current efi uuid:
+                if( strcmpa( partset_efi_uuid, id ) == 0 )
+                    image_ident = strdup_w( name );
+
+                efi_free( buf );
+            }
+
+            efi_file_close( setdata );
+        }
+    }
+
+    efi_free( id );
+    efi_free( dirent );
+    efi_file_close( partsets );
+
+    return image_ident;
+}
+
+static EFI_STATUS migrate_conf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs,
+                               EFI_GUID *efi_guid,
+                               EFI_FILE_PROTOCOL *esp_root,
+                               EFI_FILE_PROTOCOL **conf_dir,
+                               CHAR16 *conf_path)
+{
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_FILE_PROTOCOL *efi_root = NULL;
+    EFI_FILE_PROTOCOL *conf_file = NULL;
+    EFI_FILE_PROTOCOL *new_conf = NULL;
+    CHAR16 *efi_label = NULL;
+    CHAR16 *os_image_name = NULL;
+    CHAR8 *buf = NULL;
+    UINTN bytes = 0;
+    UINTN alloc = 0;
+    CHAR16 new_path[MAXFSNAMLEN] = L"";
+
+    res = efi_mount( efi_fs, &efi_root );
+    ERROR_JUMP( res, cleanup, "efi partition not opened\n" );
+
+    // We must have a label and an os_image name to proceed:
+    // Absence of either indicates a malformed efi layout
+    // (or a non-SteamOS one):
+    efi_label = guid_str( efi_guid );
+    if( !efi_label || !*efi_label )
+        goto cleanup;
+
+    os_image_name = find_image_name_by_partuuid( efi_root, efi_label );
+    if( !os_image_name || !*os_image_name )
+        goto cleanup;
+
+    res = efi_file_open( efi_root, &conf_file,
+                         OLDCONFPATH, EFI_FILE_MODE_READ, 0 );
+    switch( res )
+    {
+      case EFI_SUCCESS:
+        break;
+
+      case EFI_NOT_FOUND: // This is actually Ok, no config to migrate.
+        res = EFI_SUCCESS;
+        // fallthrough, we are done either way.
+      default:
+        goto cleanup;
+    }
+
+    res = efi_file_to_mem( conf_file, &buf, &bytes, &alloc );
+    ERROR_JUMP( res, cleanup, "Could not read config file\n" );
+
+    SPrint( &new_path[0], sizeof(new_path),
+            L"%s\\%s.conf", conf_path, os_image_name );
+    new_path[ (sizeof(new_path) / sizeof(CHAR16)) - 1 ] = (CHAR16)0;
+
+    // Already some config at the target location, do not overwrite:
+    if( efi_file_exists( esp_root, &new_path[0] ) == EFI_SUCCESS )
+        goto cleanup;
+
+    if( !*conf_dir )
+    {
+        res = efi_mkdir_p( esp_root, conf_dir, conf_path );
+        ERROR_JUMP( res, cleanup, L"Unable to create confdir %s", conf_path );
+    }
+
+    res = efi_file_open( esp_root, &new_conf, &new_path[0],
+                         EFI_FILE_MODE_CREATE|EFI_FILE_MODE_WRITE, 0 );
+    ERROR_JUMP( res, cleanup, "Unable to create config at %s", &new_path[0] );
+
+    UINTN written = bytes;
+    res = efi_file_write( new_conf, buf, &written );
+    ERROR_JUMP( res, cleanup, L"Write %d bytes to %s failed (wrote %d)",
+                bytes, &new_path, written );
+
+cleanup:
+        efi_free( os_image_name );
+        efi_free( efi_label );
+        efi_free( buf );
+        efi_file_close( new_conf );
+        efi_file_close( conf_file );
+        efi_unmount( &efi_root );
+
+        return res;
+}
+
+// Copy configs from /efi/SteamOS/bootconf to /esp/SteamOS/conf/X.conf
+// where X is "A", "B", "dev" etc.
+EFI_STATUS migrate_bootconfs (EFI_HANDLE *handles, CONST UINTN n_handles)
+{
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_HANDLE dh = NULL;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* esp_fs = NULL;
+    EFI_FILE_PROTOCOL *esp_root = NULL;
+    EFI_DEVICE_PATH *self_file = NULL;
+    EFI_DEVICE_PATH *esp_dev = NULL;
+    EFI_GUID esp_guid = NULL_GUID;
+    static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
+    static EFI_GUID dp_guid = DEVICE_PATH_PROTOCOL;
+
+    CHAR16 *self_path = NULL;
+    CHAR16 *conf_path = NULL;
+    EFI_FILE_PROTOCOL *conf_dir = NULL;
+
+    self_file = get_self_file();
+
+    if( !self_file )
+        return EFI_NOT_FOUND;
+
+    self_path = device_path_string( self_file );
+    conf_path = resolve_path( NEWCONFPATH, self_path, FALSE );
+
+    dh = get_self_device_handle();
+    if( !dh )
+        res = EFI_NOT_FOUND;
+    ERROR_JUMP( res, cleanup,
+                L"No device handle for running bootloader 0x%lx", dh );
+
+    res = get_handle_protocol( &dh, &fs_guid, (VOID **)&esp_fs );
+    ERROR_JUMP( res, cleanup, L"No filesystem associated with bootloader" );
+
+    res = get_handle_protocol( &dh, &dp_guid, (VOID **)&esp_dev );
+    ERROR_JUMP( res, cleanup, L"esp device handle has no device path" );
+
+    esp_guid = device_path_partition_uuid( esp_dev );
+
+    res = efi_mount( esp_fs, &esp_root );
+    ERROR_JUMP( res, cleanup, L"Unable to mount bootloader filesystem\n" );
+
+    for( UINTN i = 0; i < n_handles; i++ )
+    {
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs = NULL;
+        EFI_DEVICE_PATH *efi_dev = NULL;
+        EFI_GUID efi_guid = NULL_GUID;
+
+        res = get_handle_protocol( &handles[ i ], &fs_guid, (VOID **)&efi_fs );
+        ERROR_CONTINUE( res, L"handle #%u: no simple file system", i );
+
+        res = get_handle_protocol( &handles[ i ], &dp_guid, (VOID **)&efi_dev );
+        ERROR_CONTINUE( res, L"handle #%u has no device path", i );
+
+        efi_guid = device_path_partition_uuid( efi_dev );
+
+        // If this is the ESP there's nothing to migrate _from_ here:
+        // also some UEFI firmware gets badly broken if we mount an FS
+        // that's already mounted, so best not to let that happen:
+        if( guid_cmp( &esp_guid, &efi_guid ) == 0 )
+            continue;
+
+        res = migrate_conf( efi_fs, &efi_guid, esp_root, &conf_dir, conf_path );
+        WARN_STATUS( res, "Config %u not migrated\n", i );
+    }
+
+cleanup:
+    efi_free( self_path );
+    efi_free( conf_path );
+    efi_file_close( conf_dir );
+    efi_unmount( &esp_root );
+
+    return res;
+}
+
 EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen)
@@ -536,7 +767,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         // use the default bootloader:
         if( !found[ j ].loader )
             if( valid_efi_binary( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
-                found[ j ].loader = StrDuplicate( STEAMOSLDR );
+                found[ j ].loader = strdup_w( STEAMOSLDR );
 
         if( !found[ j ].loader )
         {

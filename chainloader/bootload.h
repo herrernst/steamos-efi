@@ -40,6 +40,7 @@ typedef struct
 
 EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path);
 EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader);
+EFI_STATUS migrate_bootconfs (EFI_HANDLE *handles, CONST UINTN n_handles);
 EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen);

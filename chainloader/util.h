@@ -36,6 +36,8 @@
 
 #define MAXFSNAMLEN 200
 #define BOOTCONFPATH L"SteamOS\\bootconf"
+#define OLDCONFPATH  L"SteamOS\\bootconf"
+#define NEWCONFPATH  L"\\SteamOS\\conf"
 #define EFIDIR       L"\\EFI"
 #define GRUBLDR     EFIDIR L"\\steamos\\grubx64.efi"
 #define SYSTEMDLDR  EFIDIR L"\\SYSTEMD\\SYSTEMD-BOOTX64.EFI"
@@ -119,6 +121,7 @@ CHAR16 *guid_str (EFI_GUID *guid);
 
 CHAR16 *strwiden (CONST CHAR8 *narrow);
 CHAR8  *strnarrow (CONST CHAR16 *wide);
+CHAR8  *strlower (CHAR8 *str);
 
 CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen);
 

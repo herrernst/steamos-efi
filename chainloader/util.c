@@ -633,6 +633,16 @@ INTN strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len)
     return StrnCmp( a, b, len );
 }
 
+CHAR8 * strlower (CHAR8 *str)
+{
+    if( str )
+        for( CHAR8 *c = str; *c; c++ )
+            if( *c >= 'A' && *c <= 'Z' )
+                *c = *c + ('a' - 'A');
+
+    return str;
+}
+
 // memory utility functions
 VOID mem_copy (void *dest, const VOID *src, UINTN len)
 {
