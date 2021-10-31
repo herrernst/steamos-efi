@@ -161,7 +161,7 @@ EFI_HANDLE get_self_handle (VOID)
     return self_image;
 }
 
-static EFI_HANDLE get_self_loaded_image (VOID)
+EFI_HANDLE get_self_loaded_image (VOID)
 {
     EFI_STATUS res;
     EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
