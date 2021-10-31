@@ -225,7 +225,7 @@ make_absolute_device_path (EFI_HANDLE device, CHAR16 *path)
 }
 
 CHAR16 *
-strwiden (CHAR8 *narrow)
+strwiden (CONST CHAR8 *narrow)
 {
     if( !narrow )
         return NULL;
@@ -242,7 +242,7 @@ allocfail:
 }
 
 CHAR8 *
-strnarrow (CHAR16 *wide)
+strnarrow (CONST CHAR16 *wide)
 {
     if( !wide )
         return NULL;

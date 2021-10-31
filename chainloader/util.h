@@ -113,8 +113,8 @@ BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b);
 CHAR16 *guid_str (EFI_GUID *guid);
 #endif
 
-CHAR16 *strwiden (CHAR8 *narrow);
-CHAR8  *strnarrow (CHAR16 *wide);
+CHAR16 *strwiden (CONST CHAR8 *narrow);
+CHAR8  *strnarrow (CONST CHAR16 *wide);
 
 CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen);
 
