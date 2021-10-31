@@ -57,7 +57,10 @@ EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
 
 EFI_STATUS efi_file_close (IN EFI_FILE_PROTOCOL *file)
 {
-    return uefi_call_wrapper( file->Close, 1, file );
+    if( file )
+        return uefi_call_wrapper( file->Close, 1, file );
+
+    return EFI_SUCCESS;
 }
 
 EFI_STATUS efi_file_exists (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path)
