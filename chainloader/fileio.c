@@ -123,7 +123,7 @@ EFI_STATUS efi_file_write (EFI_FILE_PROTOCOL *fh,
                            IN CHAR8 *buf,
                            IN OUT UINTN *bytes)
 {
-    return uefi_call_wrapper( fh->Write, 3, fh->Write, fh, bytes, buf );
+    return uefi_call_wrapper( fh->Write, 3, fh, bytes, buf );
 }
 
 EFI_STATUS efi_mount (EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
