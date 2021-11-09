@@ -701,16 +701,50 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
                                   CONST UINTN n_handles,
                                   OUT bootloader *chosen)
 {
-    EFI_STATUS res;
-    EFI_FILE_PROTOCOL *root_dir = NULL;
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_FILE_PROTOCOL *efi_root = NULL;
     static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
     static EFI_GUID dp_guid = DEVICE_PATH_PROTOCOL;
-    cfg_entry *conf = NULL;
     UINT64 flags = 0;
     UINTN j = 0;
     found_cfg found[MAX_BOOTCONFS + 1] = { { NULL } };
     EFI_GUID *found_signatures[MAX_BOOTCONFS + 1] = { NULL };
     EFI_DEVICE_PATH *restricted = NULL;
+
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* esp_fs = NULL;
+    EFI_FILE_PROTOCOL *esp_root = NULL;
+    EFI_DEVICE_PATH *self_file = NULL;
+    EFI_DEVICE_PATH *esp_dev = NULL;
+    EFI_GUID esp_guid = NULL_GUID;
+    CHAR16 *self_path = NULL;
+    CHAR16 *conf_path = NULL;
+    EFI_HANDLE dh = NULL;
+
+    self_file = get_self_file();
+
+    if( !self_file )
+        return EFI_NOT_FOUND;
+
+    self_path = device_path_string( self_file );
+    conf_path = resolve_path( NEWCONFPATH, self_path, FALSE );
+    efi_free( self_path );
+
+    dh = get_self_device_handle();
+    if( !dh )
+        res = EFI_NOT_FOUND;
+    ERROR_JUMP( res, cleanup,
+                L"No device handle for running bootloader 0x%lx\n", dh );
+
+    res = get_handle_protocol( &dh, &fs_guid, (VOID **)&esp_fs );
+    ERROR_JUMP( res, cleanup, L"No filesystem associated with bootloader\n" );
+
+    res = get_handle_protocol( &dh, &dp_guid, (VOID **)&esp_dev );
+    ERROR_JUMP( res, cleanup, L"esp device handle has no device path" );
+
+    esp_guid = device_path_partition_uuid( esp_dev );
+
+    res = efi_mount( esp_fs, &esp_root );
+    ERROR_JUMP( res, cleanup, L"Unable to mount ESP filesystem\n" );
 
     if( chosen->criteria.is_restricted )
         restricted = chosen->criteria.device_path;
@@ -722,42 +756,72 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
     for( UINTN i = 0; i < n_handles && j < MAX_BOOTCONFS; i++ )
     {
-        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *fs = NULL;
+        EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs = NULL;
+        EFI_GUID efi_guid = NULL_GUID;
+        CHAR16 *efi_label = NULL;
+        CHAR16 *os_image_name = NULL;
+        CHAR16 cfg_path[MAXFSNAMLEN] = L"";
+        cfg_entry *conf = NULL;
 
-        efi_unmount( &root_dir );
+        efi_unmount( &efi_root );
 
-        res = get_handle_protocol( &handles[ i ], &fs_guid, (VOID **)&fs );
+        res = get_handle_protocol( &handles[ i ], &fs_guid, (VOID **)&efi_fs );
         ERROR_CONTINUE( res, L"handle #%u: no simple file system protocol", i );
 
-        res = efi_mount( fs, &root_dir );
+        res = efi_mount( efi_fs, &efi_root );
         ERROR_CONTINUE( res, L"partition #%u not opened", i );
 
         res = get_handle_protocol( &handles[ i ], &dp_guid,
                                    (VOID **)&found[ i ].device_path );
         ERROR_CONTINUE( res, L"partition #%u has no device path (what?)", i );
 
+        efi_guid = device_path_partition_uuid( found[ i ].device_path );
+
+        // Don't look at the ESP since we know it can't be a pseudo-EFI
+        if( guid_cmp( &esp_guid, &efi_guid ) == 0 )
+            continue;
+
         if( restricted )
             if( !on_same_device( restricted, found[ i ].device_path ) )
                 continue;
 
-        res = efi_file_exists( root_dir, BOOTCONFPATH );
+        efi_label = guid_str( &efi_guid );
+
+        if( efi_label && *efi_label )
+        {
+            os_image_name = find_image_name_by_partuuid( efi_root, efi_label );
+            efi_free( efi_label );
+        }
+
+        if( !os_image_name )
+            continue;
+
+        // If we got this far then the partsets file gave us an OS image name
+        // so this is may be a bootable pseudo-EFI whose config is at:
+        SPrint( &cfg_path[0], sizeof(cfg_path),
+                L"%s\\%s.conf", conf_path, os_image_name );
+        cfg_path[(sizeof(cfg_path)/sizeof(CHAR16)) - 1] = L'\0';
+        efi_free( os_image_name );
+        os_image_name = NULL;
+
+        // prefer the new config location on /esp
+        if( efi_file_exists( esp_root, &cfg_path[0] ) == EFI_SUCCESS )
+            res = parse_config( esp_root, &cfg_path[0], &conf );
+        else if( efi_file_exists( efi_root, OLDCONFPATH ) == EFI_SUCCESS )
+            res = parse_config( efi_root, OLDCONFPATH, &conf );
+        else
+            res = EFI_NOT_FOUND;
+
         if( res != EFI_SUCCESS )
             continue;
 
-        if( parse_config( root_dir, &conf ) != EFI_SUCCESS )
-            continue;
-
-        // TODO? allow the 'loader' config entry to specify an alternative
-        // bootloader. This code was causing EFI runtime service errors
-        // that made the kernel explode on boot, so it's been backed out for
-        // now. May drop this feature entirely from the spec.
+        // If the config specied an alternate loader path, expand it here:
         CHAR8 *alt_cfg = get_conf_str( conf, "loader" );
         if( alt_cfg && *alt_cfg )
         {
-            CHAR16 *alt_ldr =
-              resolve_path( alt_cfg, BOOTCONFPATH, 1 );
+            CHAR16 *alt_ldr = resolve_path( alt_cfg, OLDCONFPATH, 1 );
 
-            if( valid_efi_binary( root_dir, alt_ldr ) == EFI_SUCCESS )
+            if( valid_efi_binary( efi_root, alt_ldr ) == EFI_SUCCESS )
                 found[ j ].loader = alt_ldr;
             else
                 efi_free( alt_ldr );
@@ -766,7 +830,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         // use the default bootloader:
         if( !found[ j ].loader )
-            if( valid_efi_binary( root_dir, STEAMOSLDR ) == EFI_SUCCESS )
+            if( valid_efi_binary( efi_root, STEAMOSLDR ) == EFI_SUCCESS )
                 found[ j ].loader = strdup_w( STEAMOSLDR );
 
         if( !found[ j ].loader )
@@ -775,19 +839,18 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             continue;
         }
 
-        EFI_DEVICE_PATH *fdp = handle_device_path( found[ j ].partition );
         found[ j ].disabled  = get_conf_uint( conf, "image-invalid" ) > 0;
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
-        found[ j ].label     = volume_label( root_dir );
-        found[ j ].uuid      = device_path_partition_uuid( fdp );
+        found[ j ].label     = volume_label( efi_root );
+        found[ j ].uuid      = efi_guid;
         found_signatures[ j ] = &found[ j ].uuid;
         j++;
     }
 
     found[ j ].cfg = NULL;
-    efi_unmount( &root_dir );
+    efi_unmount( &efi_root );
 
     // yes I know, bubble sort is terribly gauche, but we really don't care:
     // usually there will be only two entries (and at most 16, which would be
@@ -838,7 +901,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         }
 
         // if boot-other is set but other is disabled, skip it
-        if( boot_other && get_conf_uint( found[ i ].cfg, "boot-other-disabled" ) )
+        if( boot_other &&
+            get_conf_uint( found[ i ].cfg, "boot-other-disabled" ) )
         {
             v_msg( L"entry #%u has boot-other-disabled set, skip it...\n", i);
             continue;
@@ -848,14 +912,16 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         break;
     }
 
+    BOOLEAN menu = FALSE;
+    BOOLEAN oneshot = is_loader_config_timeout_oneshot_set();
+
+    // we do this after the normal selection process above so that if
+    // oneshot fails we have a fallback boot option selected anyway:
     EFI_GUID entry = get_loader_entry_oneshot ();
     if( guid_cmp( &entry, &NULL_GUID ) != 0 )
         for( UINTN i = 0; i < j - 1; i++ )
             if( guid_cmp( &entry, &found[ i ].uuid ) == 0 )
                 selected = i;
-
-    BOOLEAN menu = FALSE;
-    BOOLEAN oneshot = is_loader_config_timeout_oneshot_set();
 
     // if a oneshot boot was requested from the last OS run or
     // we somehow failed to pick a valid image, display a menu:
@@ -894,7 +960,8 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( oneshot )
             timeout = get_loader_config_timeout_oneshot();
 
-        selected = text_menu_choose_steamos_loader( found, j, selected, timeout );
+        selected =
+          text_menu_choose_steamos_loader( found, j, selected, timeout );
 
         if( nvram_debug )
             set_loader_time_menu_usec();
@@ -949,11 +1016,15 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         // the command line update argumant steamos-update=1 above.
         set_chainloader_entry_flags( flags );
 
-
-        return EFI_SUCCESS;
+        res = EFI_SUCCESS;
     }
 
-    return EFI_NOT_FOUND;
+cleanup:
+    efi_free( conf_path );
+    efi_unmount( &esp_root );
+    sleep( 3 );
+
+    return res;
 }
 
 EFI_STATUS exec_bootloader (bootloader *boot)

@@ -35,10 +35,11 @@
 #endif
 
 #define MAXFSNAMLEN 200
-#define BOOTCONFPATH L"SteamOS\\bootconf"
+
 #define OLDCONFPATH  L"SteamOS\\bootconf"
 #define NEWCONFPATH  L"\\SteamOS\\conf"
 #define EFIDIR       L"\\EFI"
+
 #define GRUBLDR     EFIDIR L"\\steamos\\grubx64.efi"
 #define SYSTEMDLDR  EFIDIR L"\\SYSTEMD\\SYSTEMD-BOOTX64.EFI"
 #define DEFAULTLDR  EFIDIR L"\\Boot\\bootx64.efi"

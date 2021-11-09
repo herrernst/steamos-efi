@@ -45,7 +45,9 @@ typedef struct
 
 
 #ifndef NO_EFI_TYPES
-EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config);
+EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir,
+                         CHAR16 *path,
+                         cfg_entry **config);
 
 VOID dump_config (cfg_entry *config);
 #else

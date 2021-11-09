@@ -193,7 +193,9 @@ VOID dump_config (cfg_entry *config)
 #endif
 
 #ifndef NO_EFI_TYPES
-EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config)
+EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir,
+                         CHAR16 *path,
+                         cfg_entry **config)
 {
     EFI_STATUS res = EFI_SUCCESS;
     EFI_FILE_PROTOCOL *cffile = NULL;
@@ -205,8 +207,8 @@ EFI_STATUS parse_config (EFI_FILE_PROTOCOL *root_dir, cfg_entry **config)
     if( !config )
         goto allocfail;
 
-    res = efi_file_open( root_dir, &cffile, BOOTCONFPATH, 0, 0 );
-    ERROR_JUMP( res, cleanup, L"parse_bootconfig: " BOOTCONFPATH );
+    res = efi_file_open( root_dir, &cffile, path, 0, 0 );
+    ERROR_JUMP( res, cleanup, L"parse_bootconfig: %s", path );
 
     res = efi_file_to_mem( cffile, &cfdata, &cfsize, &cfalloc );
     ERROR_JUMP( res, cleanup, L"parse_bootconfig: load to mem failed" );
