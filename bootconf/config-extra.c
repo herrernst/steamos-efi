@@ -247,7 +247,7 @@ size_t write_config (DIR *dir, const char *ident, const cfg_entry *cfg)
         dfd = dirfd( dir );
         snprintf( &path[ 0 ], sizeof(path), "%s.tmp", ident );
         path[ sizeof(path) - 1 ] = '\0';
-        fd = openat( dfd, path, O_RDWR|O_CREAT );
+        fd = openat( dfd, path, O_RDWR|O_CREAT, 0660 );
 
         if( fd < 0 )
             goto fail;

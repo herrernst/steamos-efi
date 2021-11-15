@@ -1052,11 +1052,20 @@ static int parse_config_fd (int cffile, cfg_entry **config)
         goto cleanup;
 
     cfsize = buf.st_size;
-    cfdata = mmap( NULL, cfsize, PROT_READ|PROT_WRITE, MAP_PRIVATE, cffile, 0 );
-    if( !cfdata )
-        goto allocfail;
+    if( buf.st_size )
+    {
+        cfdata =
+          mmap( NULL, cfsize, PROT_READ|PROT_WRITE, MAP_PRIVATE, cffile, 0 );
+        if( !cfdata )
+            goto allocfail;
 
-    res = set_config_from_data( *config, cfdata, cfsize );
+        res = set_config_from_data( *config, cfdata, cfsize );
+    }
+    else
+    {
+        unsigned char dummy[] = "title: -\n";
+        res = set_config_from_data( *config, &dummy[ 0 ], sizeof(dummy) );
+    }
 
 cleanup:
     if( cfdata )
