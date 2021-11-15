@@ -1094,8 +1094,8 @@ static void free_image_configs (image_cfg *cfg_array, size_t limit)
                &conf->ident[ 0 ],
                conf->disabled ? '-' : '+',
                conf->loaded   ? 'Y' : 'n' );
-          if( !conf->loaded )
-              continue;
+        if( !conf->loaded )
+            continue;
 
         TRACE( 3, "close %d\n", conf->fd );
         close( conf->fd );
