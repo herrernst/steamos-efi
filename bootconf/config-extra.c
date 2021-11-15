@@ -36,6 +36,32 @@ void dump_config (cfg_entry *c)
         }
 }
 
+static void set_internal_string_representation (cfg_entry *cfg)
+{
+    size_t space = cfg->value.string.bytes ? cfg->value.string.size : 0;
+    size_t needed = 0;
+
+    switch( cfg->type )
+    {
+      case cfg_uint:
+      case cfg_stamp:
+      case cfg_bool:
+        needed = snprintf( (char *)cfg->value.string.bytes, space,
+                           "%lu", cfg->value.number.u );
+        if( needed >= space )
+        {
+            cfg->value.string.bytes =
+              realloc( cfg->value.string.bytes, needed + 1 );
+            snprintf( (char *)cfg->value.string.bytes, needed + 1,
+                      "%lu", cfg->value.number.u );
+        }
+        break;
+
+      default:
+        break;
+    }
+}
+
 uint64_t set_conf_uint (const cfg_entry *cfg, const char *name, uint64_t val)
 {
     cfg_entry *c = (cfg_entry *)get_conf_item (cfg, (unsigned char *)name);
@@ -48,10 +74,12 @@ uint64_t set_conf_uint (const cfg_entry *cfg, const char *name, uint64_t val)
       case cfg_uint:
       case cfg_stamp:
         c->value.number.u = val;
+        set_internal_string_representation( c );
         break;
 
       case cfg_bool:
         c->value.number.u = val ? 1 : 0;
+        set_internal_string_representation( c );
         break;
 
       default:
@@ -63,6 +91,7 @@ uint64_t set_conf_uint (const cfg_entry *cfg, const char *name, uint64_t val)
 
 uint64_t set_conf_string (const cfg_entry *cfg, const char *name, const char *val)
 {
+    char *nl = NULL;
     cfg_entry *c = (cfg_entry *)get_conf_item (cfg, (unsigned char *)name);
 
     if( !c )
@@ -85,6 +114,9 @@ uint64_t set_conf_string (const cfg_entry *cfg, const char *name, const char *va
 
         memset ( c->value.string.bytes, 0, c->value.string.size + 1 );
         strncpy( (char *)c->value.string.bytes, val, l + 1 );
+        // no newlines allowed in the canonical representation:
+        while( (nl = strchr( (char *)c->value.string.bytes, '\n' )) )
+            *nl = ' ';
         break;
 
       default:
@@ -112,11 +144,16 @@ uint64_t structtm_to_stamp (const struct tm *when)
              (when->tm_year + 1900) * 10000000000 );
 }
 
+uint64_t time_to_stamp (time_t when)
+{
+    const struct tm *then = gmtime( &when );
+
+    return structtm_to_stamp( then );
+}
+
 uint64_t set_conf_stamp_time(const cfg_entry *cfg, const char *name, time_t when)
 {
-    const struct tm *now = gmtime( &when );
-
-    uint64_t stamp = structtm_to_stamp( now );
+    uint64_t stamp = time_to_stamp( when );
 
     return set_conf_stamp( cfg, name, stamp );
 }
@@ -126,7 +163,7 @@ uint64_t del_conf_item (const cfg_entry *cfg, const char *name)
     cfg_entry *c = (cfg_entry *)get_conf_item (cfg, (unsigned char *)name);
 
     if( !c )
-        return 1;
+        return 0;
 
     free( c->value.string.bytes );
     c->value.string.bytes = NULL;
@@ -190,21 +227,27 @@ write_item (char **buf, size_t *size, size_t offset, const cfg_entry *cfg)
     return w;
 }
 
-size_t write_config (int fd, const cfg_entry *cfg)
+size_t write_config (DIR *dir, const char *ident, const cfg_entry *cfg)
 {
-    int flags = 0;
     size_t written = 0;
     char *buf = NULL;
     size_t bufsiz = 0;
+    int dfd = dirfd( dir );
+    int fd = -1;
+    char path[NAME_MAX] = "";
+    char save_at[NAME_MAX] = "";
+    char *new_conf = NULL;
+    int e = 0;
 
     if( !cfg )
         return 0;
 
-    if( (flags = fcntl( fd, F_GETFL )) == -1 )
-        return 0;
+    snprintf( &path[ 0 ], sizeof(path), "%s.tmp", ident );
+    path[ sizeof(path) - 1 ] = '\0';
+    fd = openat( dfd, path, O_RDWR|O_CREAT );
 
-    if( !(flags & (O_WRONLY|O_RDWR)) )
-        return 0;
+    if( fd < 0 )
+        goto fail;
 
     for( uint i = 0; cfg[ i ].type != cfg_end; i++ )
     {
@@ -219,20 +262,30 @@ size_t write_config (int fd, const cfg_entry *cfg)
         written += w;
     }
 
-    for( size_t out = written; out > 0; )
-    {
-        ssize_t o = write( fd, buf + (written - out), out );
+    ftruncate( fd, written );
+    new_conf = mmap( NULL, written, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
 
-        if( o < 0 )
+    if( new_conf )
+    {
+        snprintf( &save_at[ 0 ], sizeof(save_at), "%s.conf", ident );
+        path[ sizeof(save_at) - 1 ] = '\0';
+        memcpy( new_conf, buf, written );
+
+        if( msync( new_conf, written, MS_SYNC|MS_INVALIDATE ) != 0 )
             goto fail;
 
-        out -= o;
+        munmap( new_conf, written );
+        close( fd );
+
+        if( renameat( dfd, &path[ 0 ], dfd, &save_at[ 0 ] ) != 0 )
+            goto fail;
     }
 
     free( buf );
     return written;
 
 fail:
+    e = errno;
     free( buf );
-    return -1;
+    return -e;
 }
