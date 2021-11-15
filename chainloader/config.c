@@ -112,7 +112,9 @@ static UINTN set_config_item_from_line (cfg_entry *item, CHAR8 *line)
     return 1;
 
 allocfail:
+#ifndef NO_EFI_TYPES
     Print( L"Red alert! alloc of %u bytes failed\n", vsize + 1 );
+#endif
     return 0;
 }
 
@@ -262,9 +264,11 @@ cfg_entry *new_config (VOID)
 {
     cfg_entry *config = efi_alloc( sizeof(bootspec) );
 
+#ifndef NO_EFI_TYPES
     WARN_STATUS( (config != NULL) ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES,
                  L"Failed to allocate %d bytes for bootspec",
                  sizeof(bootspec) );
+#endif
 
     if( config )
         mem_copy( config, &bootspec[ 0 ], sizeof(bootspec) );
