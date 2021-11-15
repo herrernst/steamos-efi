@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+#define MAX_BOOTCONFS 16
+
 typedef enum
 {
     cfg_string,

@@ -22,8 +22,6 @@
 
 #include "config.h"
 
-#define MAX_BOOTCONFS 16
-
 typedef struct
 {
     EFI_HANDLE partition;
