@@ -62,11 +62,13 @@ typedef struct
 } cmd_handler;
 
 static uint verbose = 0;
-static DIR  *confdir;
+static DIR  *confdir = NULL;
+static DIR  *efidir = NULL;
 static int selected_image = -1;
 static const char *progname = NULL;
 static char target_ident[NAME_MAX] = "";
-static const char *confdir_path = NULL;
+static char *confdir_path = NULL;
+static char *efidir_path = NULL;
 static image_cfg found[MAX_BOOTCONFS] = { 0 };
 
 unsigned long get_conf_uint_highest (image_cfg *conf, char *k, size_t lim)
@@ -112,6 +114,12 @@ int set_confdir (int n,
                  opt image_cfg *cfg,
                  opt size_t l);
 
+int set_efidir  (int n,
+                 int argc,
+                 char **argv,
+                 opt image_cfg *cfg,
+                 opt size_t l);
+
 int set_verbose (opt int n,
                  opt int argc,
                  opt char **argv,
@@ -124,6 +132,7 @@ static arg_handler arg_handlers[] =
     { "--help"         , 0, show_help   , ARG_EARLY },
     { "--image"        , 1, choose_image, ARG_EARLY },
     { "--conf-dir"     , 1, set_confdir , ARG_EARLY },
+    { "--efi-dir"      , 1, set_efidir  , ARG_EARLY },
     { "-v"             , 0, set_verbose , ARG_EARLY },
     { "--verbose"      , 0, set_verbose , ARG_EARLY },
     { "--set"          , 2, set_entry   , ARG_STD   },
@@ -232,6 +241,7 @@ static void usage (const char *msg, ...)
   Arguments not related to commands:                                         \n\
     -v, --verbose : can be passed multiple times for increasing log levels   \n\
     --conf-dir    : specify a non-default conf dir (/esp/SteamOS/conf)       \n\
+    --efi-dir     : specify a non-default EFI mount point (/efi)             \n\
     --image       : specify which config to operate on/read from             \n\
                     default: currently booted image                          \n\
     -h, --help    : print this message                                       \n\
@@ -321,6 +331,39 @@ int set_confdir (int n,
             usage( "Error: path is not a directory: '%s'", confdir_path );
           default:
             usage( "Error: opening failed: '%s': %d", confdir_path, errno );
+        }
+    }
+
+    return 1;
+}
+
+int set_efidir (int n,
+                int argc,
+                char **argv,
+                opt image_cfg *cfg,
+                opt size_t l)
+{
+    if( n + 1 >= argc )
+        usage( "Error: %s requires an argument", argv[ n ] );
+
+    efidir_path = strdup( argv[ n + 1 ] );
+    TRACE( 2, "efidir '%s'", efidir_path );
+
+    efidir = opendir( efidir_path );
+    TRACE( 2, "efidir opened '%p'", efidir );
+
+    if( efidir == NULL )
+    {
+        switch (errno)
+        {
+          case EACCES:
+            usage( "Error: could not open efi dir: '%s'", efidir_path );
+          case ENOENT:
+            usage( "Error: efi dir not found: '%s'", efidir_path );
+          case ENOTDIR:
+            usage( "Error: path is not a directory: '%s'", efidir_path );
+          default:
+            usage( "Error: opening failed: '%s': %d", efidir_path, errno );
         }
     }
 
@@ -550,7 +593,7 @@ static unsigned long timestamp_to_datestamp (unsigned long hhmm,
     return structtm_to_stamp( now );
 }
 
-static void *mmap_path (const char *path, size_t *mapsize)
+static void *mmap_path_at (DIR *efidir, const char *path, size_t *mapsize)
 {
     int fd = -1;
     struct stat buf = {};
@@ -560,9 +603,20 @@ static void *mmap_path (const char *path, size_t *mapsize)
 
     *mapsize = 0;
 
-    fd = open( path, O_RDONLY );
-    if( fd < 0 )
-        goto cleanup;
+    if( efidir )
+    {
+        int dfd = dirfd( efidir );
+
+        fd = openat( dfd, path, O_RDONLY );
+        if( fd < 0 )
+            goto cleanup;
+    }
+    else
+    {
+        fd = open( path, O_RDONLY );
+        if( fd < 0 )
+            goto cleanup;
+    }
 
     rc = fstat( fd, &buf );
     if( rc )
@@ -588,14 +642,14 @@ static char *self_ident (image_cfg *cfg_array, size_t limit)
 {
     size_t i = 0;
     image_cfg *conf = NULL;
-    const char *self_partset = "/efi/SteamOS/partsets/self";
+    const char *self_partset = "SteamOS/partsets/self";
     unsigned char *self_data = NULL;
     size_t self_size = 0;
     const unsigned char *self_efi_uuid = NULL;
     char *this_image_ident = NULL;
     const unsigned char *ekey = (unsigned char *)"efi";
 
-    self_data = mmap_path( self_partset, &self_size );
+    self_data = mmap_path_at( efidir, self_partset, &self_size );
     if( !self_data )
         goto cleanup;
 
@@ -615,10 +669,10 @@ static char *self_ident (image_cfg *cfg_array, size_t limit)
             continue;
 
         snprintf( &path[0], PATH_MAX,
-                  "/efi/SteamOS/partsets/%s", &conf->ident[0] );
+                  "SteamOS/partsets/%s", &conf->ident[0] );
         path[PATH_MAX - 1] = (char)0;
 
-        x_data = mmap_path( &path[0], &x_size );
+        x_data = mmap_path_at( efidir, &path[0], &x_size );
 
         if( x_data )
         {
@@ -636,6 +690,9 @@ static char *self_ident (image_cfg *cfg_array, size_t limit)
 cleanup:
     if( self_data )
         munmap( self_data, self_size );
+    else
+        error( ENOENT, "partset '%s' not found in efi dir '%s'",
+               self_partset, efidir_path ?: "" );
 
     return this_image_ident;
 }
@@ -1288,8 +1345,18 @@ void exit_handler (void)
         confdir = NULL;
     }
 
+    if( efidir )
+    {
+        closedir( efidir );
+        efidir = NULL;
+    }
+
     free( confdir_path );
     confdir_path = NULL;
+
+    free( efidir_path );
+    efidir_path = NULL;
+
     free_image_configs( &found[0], MAX_BOOTCONFS );
 }
 
@@ -1314,6 +1381,13 @@ int main (int argc, char **argv)
         TRACE( 2, "opening default confdir\n" );
         confdir_path = strdup( "/esp/SteamOS/conf" );
         confdir = opendir( confdir_path );
+    }
+
+    if( !efidir )
+    {
+        TRACE( 2, "opening default efidir\n" );
+        efidir_path = strdup( "/efi" );
+        efidir = opendir( efidir_path );
     }
 
     // load all available config files:
