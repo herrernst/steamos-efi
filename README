@@ -29,7 +29,12 @@ This file will focus more on the actual implementation details.
        this is not present, but it should never write to NVRAM without it
   * All UEFI bootable filesystems (basically VFAT) are checked
     * If FLAGFILE_RESTRICT is in effect those on other media (discs) are ignored
-    * Any files at /SteamOS/bootconf on candidate fses are loaded and parsed
+    * If FLAGFILE_RESTRICT is NOT in effect, bootconf files in the old location
+      (/SteamOS/bootconf on an EFI partition) are migrated to the new location,
+      (SteamOS/conf/X.conf) on the ESP partition.
+      * X is the image label (A, B, dev)
+      * X is found by comparing partuuids from /SteamOS/partsets/*
+      * NOTE: this only happens if there is no file already at the new location
       * See README.bootconf for specification
     * The bootconf files are sorted by boot-requested-at value, oldest to newest
       * Any bootconfs that have image-invalid set are considered older than
@@ -49,7 +54,7 @@ This file will focus more on the actual implementation details.
     * ENTRY_FLAG_UPDATE is ORed into chainloader entry flags UEFI variable
   * These two mechanisms are redundant, either will trigger an update
     * The chosen bootloader is executed. By default:
-      /EFI/SteamOS/grubx64.efi on the same fs as this /SteamOS/bootconf
+      /EFI/SteamOS/grubx64.efi on the chosen EFI fs
 
 ### Stage 2: The bootloader ###
 
@@ -62,9 +67,8 @@ This is a mostly vanilla boot sequence with the following additions:
    * If any of the following are true:
      * steamos-update=1 is present on the command line
      * the flags contain ENTRY_FLAG_UPDATE
-     * the config contains an update boot window and we're in that time range
-       * the update flag is set
    * If boot-attempts exceeds a built in value, the image-invalid flag is set
+     * This does not disable booting, it lowers this image's priority
    * The bootconf file is saved - this can set the following items on disc:
      * image-invalid may go from 0 to 1
      * boot-attempts can increase by 1

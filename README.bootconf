@@ -3,6 +3,11 @@ The bootconf file may contain the following values:
 Note: UEFI does not provide easy access to a `time_t` value - we will
 use a datestamp of the form YYYYmmDDHHMMSS (always UTC).
 
+In the event that the bootconf tool generates a stamp that is
+lower/earlier than the most recent stamp value it can see (eg
+because the device has lost CMOS power and jumped back to the
+epoch), it will increment the highest existing value instead.
+
     boot-requested-at: <0|DATESTAMP_T>
     boot-other: <0|1>
     boot-attempts: <0|POSITIVE_INTEGER>
@@ -13,7 +18,7 @@ use a datestamp of the form YYYYmmDDHHMMSS (always UTC).
     update-window-start: <0|DATESTAMP_T>
     update-window-end: <0|DATESTAMP_T>
     loader: <|PATH>
-    partitions: <DEVICE_LIST>
+    partitions: <DEVICE_LIST> [DEPRECATED]
 
 The meanings of these entries are as follows:
 
