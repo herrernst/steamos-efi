@@ -118,6 +118,8 @@ EFI_GUID device_path_partition_uuid (EFI_DEVICE_PATH *dp);
 CHAR16 *device_path_string (EFI_DEVICE_PATH *dp);
 BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b);
 CHAR16 *guid_str (EFI_GUID *guid);
+
+VOID sleep (UINTN seconds);
 #endif
 
 CHAR16 *strwiden (CONST CHAR8 *narrow);
@@ -125,8 +127,6 @@ CHAR8  *strnarrow (CONST CHAR16 *wide);
 CHAR8  *strlower (CHAR8 *str);
 
 CHAR16 *resolve_path (CONST VOID *path, CONST CHAR16* relative_to, UINTN widen);
-
-VOID sleep (UINTN seconds);
 
 UINT64 local_datestamp (VOID);
 UINT64 utc_datestamp (VOID);
