@@ -32,6 +32,7 @@
     fmt L": error-code %d\n", ##__VA_ARGS__, s
 #endif
 
+#ifndef NO_EFI_TYPES
 #define ERROR_X(s, x, fmt, ...) \
     if( s != EFI_SUCCESS )                             \
     {                                                  \
@@ -39,6 +40,9 @@
             Print( ERR_FMT( fmt, s, ##__VA_ARGS__ ) ); \
         x;                                             \
     }
+#else
+#define ERROR_X(s, x, fmt, ...) ({ if( s != 0 ) x; })
+#endif
 
 #define ERROR_RETURN(s, r, fmt, ...)             \
     ERROR_X( s, return r, fmt, ##__VA_ARGS__ )
