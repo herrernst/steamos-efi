@@ -942,6 +942,20 @@ static cmd_handler *preprocess_cmd (int argc,
         }
     }
 
+    // default command is "config" to match the behaviour of the previous
+    // version(s) of steamos-bootconf:
+    for( handler = &cmd_handlers[ 0 ]; handler->cmd; handler++ )
+    {
+        if( strcmp( handler->cmd, "config" ) )
+            continue;
+
+        if( handler->preprocess )
+            handler->status =
+              handler->preprocess( cfg_array, limit,
+                                   argc, argv, handler->params );
+        return handler;
+    }
+
     usage( "Unknown command or command not found" );
 }
 
