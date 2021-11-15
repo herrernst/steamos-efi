@@ -918,9 +918,6 @@ static cmd_handler *preprocess_cmd (int argc,
         TRACE( 3, "command? '%s'\n", command );
         for( handler = &cmd_handlers[ 0 ]; handler->cmd; handler++ )
         {
-            if( *command == '\0' )
-                continue;
-
             if( strcmp( handler->cmd, command ) )
                 continue;
 
