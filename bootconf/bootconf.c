@@ -67,6 +67,7 @@ static int selected_image = -1;
 static const char *progname = NULL;
 static char target_ident[NAME_MAX] = "";
 static const char *confdir_path = NULL;
+static image_cfg found[MAX_BOOTCONFS] = { 0 };
 
 unsigned long get_conf_uint_highest (image_cfg *conf, char *k, size_t lim)
 {
@@ -302,7 +303,7 @@ int set_confdir (int n,
     if( n + 1 >= argc )
         usage( "Error: %s requires an argument", argv[ n ] );
 
-    confdir_path = argv[ n + 1 ];
+    confdir_path = strdup( argv[ n + 1 ] );
     TRACE( 2, "confdir '%s'", confdir_path );
 
     confdir = opendir( confdir_path );
@@ -1279,13 +1280,26 @@ void print_skeleton ()
 }
 
 // ============================================================================
+void exit_handler (void)
+{
+    if( confdir )
+    {
+        closedir( confdir );
+        confdir = NULL;
+    }
+
+    free( confdir_path );
+    confdir_path = NULL;
+    free_image_configs( &found[0], MAX_BOOTCONFS );
+}
 
 int main (int argc, char **argv)
 {
-    image_cfg found[MAX_BOOTCONFS + 1] = { 0 };
-    const size_t limit = sizeof(found) / sizeof(image_cfg) - 1;
+    const size_t limit = sizeof(found) / sizeof(image_cfg);
     size_t loaded = 0;
     cmd_handler *cmd = NULL;
+
+    atexit( exit_handler );
 
     progname = argv[ 0 ];
 
@@ -1332,9 +1346,6 @@ int main (int argc, char **argv)
         TRACE( 2, "postprocessing command %s\n", cmd->cmd );
         postprocess_cmd( cmd, &found[0], loaded );
     }
-
-    TRACE( 2, "freeing configurations [%lu]\n", loaded );
-    free_image_configs( &found[0], loaded );
 
     return 0;
 }
