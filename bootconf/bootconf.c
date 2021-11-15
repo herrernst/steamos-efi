@@ -1252,12 +1252,23 @@ static int select_image_config (image_cfg *conf, size_t loaded)
 
 // ============================================================================
 
+void print_skeleton ()
+{
+    cfg_entry *blank = new_config();
+
+    write_config( NULL, NULL, blank );
+
+    free( blank );
+}
+
+// ============================================================================
+
 int main (int argc, char **argv)
 {
     image_cfg found[MAX_BOOTCONFS + 1] = { 0 };
     const size_t limit = sizeof(found) / sizeof(image_cfg) - 1;
     size_t loaded = 0;
-    cmd_handler *cmd;
+    cmd_handler *cmd = NULL;
 
     progname = argv[ 0 ];
 
@@ -1286,13 +1297,13 @@ int main (int argc, char **argv)
         if( cmd )
             TRACE( 2, "command found: %s %p\n", cmd->cmd, cmd );
     }
-    else
-        usage( NULL );
 
-    // if the command doesn't have a postprocess function the implication is
-    // that it has already done what it's going to do and there's no need to
-    // process any remaining args:
-    if( cmd->postprocess )
+    if( !cmd )
+    {
+        // this was the old no-args-at-all behaviour of steamos-bootconf
+        print_skeleton();
+    }
+    else if( cmd->postprocess ) // no postprocess => don't parse remaining args
     {
         for( int c = 1 + cmd->params; c < argc; c++ )
             if( *argv[ c ] != '\0' )

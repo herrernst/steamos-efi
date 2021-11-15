@@ -232,7 +232,7 @@ size_t write_config (DIR *dir, const char *ident, const cfg_entry *cfg)
     size_t written = 0;
     char *buf = NULL;
     size_t bufsiz = 0;
-    int dfd = dirfd( dir );
+    int dfd = -1;
     int fd = -1;
     char path[NAME_MAX] = "";
     char save_at[NAME_MAX] = "";
@@ -242,12 +242,16 @@ size_t write_config (DIR *dir, const char *ident, const cfg_entry *cfg)
     if( !cfg )
         return 0;
 
-    snprintf( &path[ 0 ], sizeof(path), "%s.tmp", ident );
-    path[ sizeof(path) - 1 ] = '\0';
-    fd = openat( dfd, path, O_RDWR|O_CREAT );
+    if( dir && ident && (strlen( ident ) > 0) )
+    {
+        dfd = dirfd( dir );
+        snprintf( &path[ 0 ], sizeof(path), "%s.tmp", ident );
+        path[ sizeof(path) - 1 ] = '\0';
+        fd = openat( dfd, path, O_RDWR|O_CREAT );
 
-    if( fd < 0 )
-        goto fail;
+        if( fd < 0 )
+            goto fail;
+    }
 
     for( uint i = 0; cfg[ i ].type != cfg_end; i++ )
     {
@@ -262,23 +266,31 @@ size_t write_config (DIR *dir, const char *ident, const cfg_entry *cfg)
         written += w;
     }
 
-    ftruncate( fd, written );
-    new_conf = mmap( NULL, written, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
-
-    if( new_conf )
+    if( fd >= 0 )
     {
-        snprintf( &save_at[ 0 ], sizeof(save_at), "%s.conf", ident );
-        path[ sizeof(save_at) - 1 ] = '\0';
-        memcpy( new_conf, buf, written );
+        ftruncate( fd, written );
+        new_conf =
+          mmap( NULL, written, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
 
-        if( msync( new_conf, written, MS_SYNC|MS_INVALIDATE ) != 0 )
-            goto fail;
+        if( new_conf )
+        {
+            snprintf( &save_at[ 0 ], sizeof(save_at), "%s.conf", ident );
+            path[ sizeof(save_at) - 1 ] = '\0';
+            memcpy( new_conf, buf, written );
 
-        munmap( new_conf, written );
-        close( fd );
+            if( msync( new_conf, written, MS_SYNC|MS_INVALIDATE ) != 0 )
+                goto fail;
 
-        if( renameat( dfd, &path[ 0 ], dfd, &save_at[ 0 ] ) != 0 )
-            goto fail;
+            munmap( new_conf, written );
+            close( fd );
+
+            if( renameat( dfd, &path[ 0 ], dfd, &save_at[ 0 ] ) != 0 )
+                goto fail;
+        }
+    }
+    else
+    {
+        fputs( buf, stdout );
     }
 
     free( buf );
