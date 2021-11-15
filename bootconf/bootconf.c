@@ -244,6 +244,14 @@ static void usage (const char *msg, ...)
 \n\
   If --set or --del cause the config to be altered the file will be updated  \n\
   atomically (by writing a tmpfile and renaming it).                         \n\
+\n\
+  Backwards compatibility:                                                   \n\
+\n\
+  If no command is found but there are non-command args then a default       \n\
+  command of 'config' is assumed.                                            \n\
+\n\
+  If no command line args are present at all, a skeleton config with no      \n\
+  values set is printed to stdout.                                           \n\
 "
            );
 
