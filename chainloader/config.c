@@ -47,6 +47,7 @@ static cfg_entry bootspec[] =
     { .type = cfg_stamp , .name = "update-window-end"   },
     { .type = cfg_path  , .name = "loader"              },
     { .type = cfg_string, .name = "partitions"          },
+    { .type = cfg_string, .name = "title"               },
     { .type = cfg_string, .name = "comment"             },
     { .type = cfg_end } };
 
