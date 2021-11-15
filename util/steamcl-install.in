@@ -32,6 +32,8 @@ export LC_ALL=C;
 prefix=@prefix@;
 datadir=@datarootdir@/@PACKAGE@;
 libexecdir=@pkglibexecdir@;
+exec_prefix=@exec_prefix@;
+bindir=@bindir@;
 
 ESP_UUID=c12a7328-f81f-11d2-ba4b-00a0c93ec93b;
 esp_uuid=;  # uuid (partition type)
@@ -358,6 +360,7 @@ update_esp ()
     local esp=$1; shift;
     local bin=$1; shift;
     local ver=$1; shift;
+    local cfg=$1; shift;
     local bootdir=/efi/"$dst";
     local bootnum=;
     local entry=;
@@ -384,6 +387,7 @@ update_esp ()
     mkdir -p ${esp}${bootdir};
     cp -av ${bin} ${esp}${bootdir}/steamcl.efi;
     cp -av ${ver} ${esp}${bootdir}/steamcl.version;
+    cp -av ${cfg} $(esp)${bootdir}/steamos-bootconf;
 
     if [ $force_extra_removable = 1 ];
     then
@@ -659,6 +663,7 @@ then
     then
         if update_esp $distrib $esp_mount \
                       $libexecdir/steamcl.efi $datadir/steamcl.version \
+                      $bindir/steamos-bootconf \
                       $boot_entries;
         then
             install_ok=1;
