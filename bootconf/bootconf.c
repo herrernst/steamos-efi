@@ -153,6 +153,8 @@ int next_ident  (image_cfg *cfg_array, size_t limit,
                  opt int argc, opt char **argv, opt uint params);
 int set_target  (image_cfg *cfg_array, size_t limit,
                  opt int argc, opt char **argv, opt uint params);
+int new_target  (image_cfg *cfg_array, size_t limit,
+                 opt int argc, opt char **argv, opt uint params);
 int set_mode    (image_cfg *cfg_array, size_t limit,
                  int argc, char **argv, uint params);
 
@@ -175,6 +177,7 @@ static cmd_handler cmd_handlers[] =
     { "list-images"   , 0, list_images, NULL, CMD_NOT_CALLED },
     { "set-mode"      , 1, set_mode   , save_updated_confs, CMD_NOT_CALLED },
     { "config"        , 0, set_target , save_updated_confs, CMD_NOT_CALLED },
+    { "create"        , 0, new_target , save_updated_confs, CMD_NOT_CALLED },
     { NULL }
 };
 
@@ -381,7 +384,7 @@ int set_verbose (opt int n,
     return 0;
 }
 
-int set_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
+int set_entry (int n, int argc, char **argv, image_cfg *cfg, opt size_t lim)
 {
     image_cfg *tgt = NULL;
 
@@ -391,7 +394,9 @@ int set_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
     const char *name  = argv[ n + 1 ];
     const char *value = argv[ n + 2 ];
 
-    if( selected_image >= 0 && selected_image < (int)lim )
+     if( selected_image >= 0 &&
+         selected_image < MAX_BOOTCONFS &&
+         cfg[ selected_image ].loaded )
         tgt = &cfg[ selected_image ];
     else
         error( EINVAL, "No configuration selected, cannot get/set values" );
@@ -448,7 +453,7 @@ int set_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
     return 1;
 }
 
-int get_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
+int get_entry (int n, int argc, char **argv, image_cfg *cfg, opt size_t lim)
 {
     char buf[1024] = "";
     ssize_t out = 0;
@@ -457,7 +462,9 @@ int get_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
     if( n + 1 >= argc )
         usage( "Error: %s requires 1 argument", argv[ n ] );
 
-    if( selected_image >= 0 && selected_image < (int)lim )
+     if( selected_image >= 0 &&
+         selected_image < MAX_BOOTCONFS &&
+         cfg[ selected_image ].loaded )
         tgt = &cfg[ selected_image ];
     else
         error( EINVAL, "No configuration selected, cannot get/set values" );
@@ -487,7 +494,7 @@ int get_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
     return 1;
 }
 
-int del_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
+int del_entry (int n, int argc, char **argv, image_cfg *cfg, opt size_t lim)
 {
 
     image_cfg *tgt = NULL;
@@ -495,7 +502,9 @@ int del_entry (int n, int argc, char **argv, image_cfg *cfg, size_t lim)
     if( n + 1 >= argc )
         usage( "Error: %s requires 1 argument", argv[ n ] );
 
-    if( selected_image >= 0 && selected_image < (int)lim )
+     if( selected_image >= 0 &&
+         selected_image < MAX_BOOTCONFS &&
+         cfg[ selected_image ].loaded )
         tgt = &cfg[ selected_image ];
     else
         error( EINVAL, "No configuration selected, cannot get/set values" );
@@ -906,6 +915,63 @@ int set_target (image_cfg *cfg_array, size_t limit,
     return CMD_PREPROCESSED;
 }
 
+int new_target (image_cfg *cfg_array, size_t limit,
+                opt int argc, opt char **argv, opt uint params)
+{
+    const char *id = NULL;
+    int new_target = -1;
+
+    if( target_ident[ 0 ] )
+        id = &target_ident[ 0 ];
+    else if( selected_image >= 0 && &cfg_array[ selected_image ].loaded )
+        id = &cfg_array[ selected_image ].ident[ 0 ];
+
+    if( !id || !*id )
+        error( EINVAL, "No image specified\n" );
+
+    for( size_t i = 0; i < limit; i++ )
+    {
+        if( !cfg_array[ i ].loaded )
+            continue;
+
+        if( strcmp( &cfg_array[ i ].ident[ 0 ], id ) )
+            continue;
+
+        new_target = i;
+        break;
+    }
+
+    if( new_target >= 0 )
+        error( EEXIST, "Config #%d for %s exists\n", selected_image, id );
+
+    for( size_t i = 0; i < MAX_BOOTCONFS; i++ )
+    {
+        image_cfg *cfg = NULL;
+
+        if( cfg_array[ i ].loaded )
+            continue;
+
+        cfg = &cfg_array[ i ];
+
+        strncpy( &cfg->ident[ 0 ], id, sizeof( cfg->ident ) );
+        cfg->ident[ sizeof(cfg->ident) - 1 ] = '\0';
+        cfg->fd = -1;
+        cfg->loaded = 1;
+        cfg->altered = 1;
+        cfg->disabled = 0;
+        cfg->cfg = new_config();
+
+        selected_image = i;
+        break;
+    }
+
+    if( selected_image < 0 )
+        error( ENOSPC, "Cannot add new config: Limit reached\n" );
+
+    return CMD_PREPROCESSED;
+}
+
+
 int show_ident (image_cfg *cfg_array, size_t limit,
                 opt int argc, opt char **argv, opt uint params)
 {
@@ -941,12 +1007,12 @@ int next_ident (image_cfg *cfg_array, size_t limit,
 }
 
 // ============================================================================
-int save_updated_confs (image_cfg *cfg_array, size_t limit)
+int save_updated_confs (image_cfg *cfg_array, opt size_t limit)
 {
     size_t i = 0;
     image_cfg *conf = NULL;
 
-    for( ; i < limit; i++ )
+    for( ; i < MAX_BOOTCONFS; i++ )
     {
         int e = 0;
 
@@ -1154,12 +1220,15 @@ static void free_image_configs (image_cfg *cfg_array, size_t limit)
         if( !conf->loaded )
             continue;
 
-        TRACE( 3, "close %d\n", conf->fd );
-        close( conf->fd );
+        if( conf->fd >= 0 )
+        {
+            TRACE( 3, "close %d\n", conf->fd );
+            close( conf->fd );
+            conf->fd = -1;
+        }
+
         TRACE( 3, "freeing %p\n", conf->cfg );
         free_config( &conf->cfg );
-        conf->cfg = NULL;
-        conf->fd = -1;
         conf->cfg = NULL;
         conf->ident[0] = '\0';
         conf->loaded = 0;
