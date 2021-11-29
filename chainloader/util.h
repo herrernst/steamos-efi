@@ -26,6 +26,8 @@
 #include "bootconf/efi.h"
 #endif
 
+#define ARRAY_SIZE(a) (sizeof((a)) / sizeof((a)[0]))
+
 #ifndef EFI_FILE_RESERVED
 #ifdef  EFI_FILE_RESERVIED
 #define EFI_FILE_RESERVED EFI_FILE_RESERVIED
