@@ -613,6 +613,11 @@ UINTN strlen_w (const CHAR16 *str)
     return StrLen( str );
 }
 
+CHAR16 * strdup_w (const CHAR16 *str)
+{
+    return StrDuplicate( str );
+}
+
 UINTN strlen_a (const CHAR8 *str)
 {
     return strlena( str );
