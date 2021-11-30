@@ -239,7 +239,25 @@ static void usage (const char *msg, ...)
     this-image                                                               \n\
     list-images                                                              \n\
     set-mode <update|update-other|shutdown|reboot|reboot-other|booted>       \n\
-    config [--set KEY VAL] [--del KEY] [--get KEY]\n\
+    config [--set KEY VAL] [--del KEY] [--get KEY]                           \n\
+    create --image X [--set KEY VAL] ...                                     \n\
+\n\
+    selected-image prints the name of the image that the chainloader will    \n\
+    choose during the next boot on stdout.                                   \n\
+\n\
+    this-image prints the name of the currently booted image on stdout.      \n\
+\n\
+    list-images printes the available image configs on stdout.               \n\
+\n\
+    create will initialise the specified config if it does not already exist.\n\
+\n\
+    set-mode combines the various config --set calls necessary to set up     \n\
+    the specified reboot mode. You could achieve everything it does by       \n\
+    issuing individual --set commands if you wanted to.                      \n\
+\n\
+    config modifies the selected (or currently booted) configuration as      \n\
+    specified by the --set and --del arguments and/or prints the values      \n\
+    requested by --get.                                                      \n\
 \n\
   Arguments not related to commands:                                         \n\
     -v, --verbose : can be passed multiple times for increasing log levels   \n\
