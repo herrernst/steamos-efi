@@ -843,7 +843,11 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
-        found[ j ].label     = volume_label( efi_root );
+        found[ j ].label     = strwiden( get_conf_str( conf, "title" ) );
+
+        if( !found[ j ].label || !found[ j ].label[ 0 ] )
+            found[ j ].label = volume_label( efi_root );
+
         found[ j ].uuid      = efi_guid;
         found_signatures[ j ] = &found[ j ].uuid;
         j++;
