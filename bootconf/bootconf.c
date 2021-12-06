@@ -1362,6 +1362,9 @@ static int select_image_config (image_cfg *conf, size_t loaded)
     int selected = -1;
     bool update  = false;
 
+    if( loaded == 0 )
+        return -1;
+
     for( int i = (int) loaded - 1; i >= 0; i-- )
     {
         selected = i;
