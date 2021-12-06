@@ -338,7 +338,7 @@ int set_confdir (int n,
     TRACE( 2, "confdir '%s'", confdir_path );
 
     confdir = opendir( confdir_path );
-    TRACE( 2, "confdir opened '%p'", confdir );
+    TRACE( 2, "confdir opened '%p'\n", confdir );
 
     if( confdir == NULL )
     {
