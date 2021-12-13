@@ -263,8 +263,8 @@ AS_CASE([$target_cpu],[x86_64],
         [AC_CACHE_CHECK([whether -mcmodel=large works],[steamos_efi_cv_cc_mcmodel],
                         [TARGET_CFLAGS="$TARGET_CFLAGS -mcmodel=large"]
                         [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-                                           [grub_cv_cc_mcmodel=yes],
-                                           [grub_cv_cc_mcmodel=no])])]
+                                           [steamos_efi_cv_cc_mcmodel=yes],
+                                           [steamos_efi_cv_cc_mcmodel=no])])]
         [AS_CASE([$steamos_efi_cv_cc_mcmodel],
                  [yes], [TARGET_CFLAGS="$TARGET_CFLAGS -mcmodel=large"])]
         )
