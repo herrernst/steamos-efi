@@ -91,7 +91,7 @@ steamcl_elf_SOURCES  = chainloader/chainloader.c \
                        chainloader/variable.c \
                        chainloader/variable.h
 
-steamcl_elf_CFLAGS   = $(CFLAGS) $(EFI_CFLAGS) -DRELEASE_VERSION="\"$(RELEASE_VERSION)\""
+steamcl_elf_CFLAGS   = $(EFI_CFLAGS) -DRELEASE_VERSION="\"$(RELEASE_VERSION)\""
 steamcl_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}
 steamcl_elf_LDFLAGS  = $(LDFLAGS) $(EFI_LDFLAGS)
 steamcl_elf_LDADD    = $(EFI_EXTRALIBS)

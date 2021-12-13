@@ -261,7 +261,6 @@ LDFLAGS="$TARGET_LDFLAGS"
 
 AS_CASE([$target_cpu],[x86_64],
         [AC_CACHE_CHECK([whether -mcmodel=large works],[steamos_efi_cv_cc_mcmodel],
-                        [TARGET_CFLAGS="$TARGET_CFLAGS -mcmodel=large"]
                         [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                                            [steamos_efi_cv_cc_mcmodel=yes],
                                            [steamos_efi_cv_cc_mcmodel=no])])]
@@ -271,7 +270,6 @@ AS_CASE([$target_cpu],[x86_64],
 
 AS_CASE(["$target_cpu"-"$platform"],[x86_64-efi],
         [AC_CACHE_CHECK([whether -mno-red-zone works],[steamos_efi_cv_cc_no_red_zone],
-                       [TARGET_CFLAGS="$TARGET_CFLAGS -mno-red-zone"]
                        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
                                           [steamos_efi_cv_cc_no_red_zone=yes],
                                           [steamos_efi_cv_cc_no_red_zone=no])])]
@@ -338,7 +336,6 @@ AS_IF([test x"$cv_link_disable_pie" = xyes],
 TARGET_LDFLAGS="$TARGET_LDFLAGS -znocombreloc -zdefs"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-stack-protector"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-strict-aliasing"
-TARGET_CFLAGS="$TARGET_CFLAGS -fno-stack-protector"
 TARGET_CFLAGS="$TARGET_CFLAGS -fshort-wchar"
 TARGET_CPPFLAGS="$TARGET_CPPFLAGS -nostdinc -isystem"
 TARGET_CPPFLAGS="$TARGET_CPPFLAGS $($TARGET_CC -print-file-name=include)"
