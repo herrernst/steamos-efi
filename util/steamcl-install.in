@@ -382,7 +382,7 @@ update_esp ()
     mkdir -p ${esp}${bootdir};
     cp -av ${bin} ${esp}${bootdir}/steamcl.efi;
     cp -av ${ver} ${esp}${bootdir}/steamcl-version;
-    cp -av ${cfg} $(esp)${bootdir}/steamos-bootconf;
+    cp -av ${cfg} ${esp}${bootdir}/steamos-bootconf;
 
     if [ $force_extra_removable = 1 ];
     then
