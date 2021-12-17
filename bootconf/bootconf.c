@@ -918,6 +918,11 @@ int set_target (image_cfg *cfg_array, size_t limit,
     if( !id || !*id )
         error( EINVAL, "No image specified and current image not identifiable\n" );
 
+    // Make sure we only pick existing targets.
+    // (it's possible for a nonexistent target tro be selected here because
+    // new_target needs to be able to create them)
+    selected_image = -1;
+
     for( size_t i = 0; i < limit; i++ )
     {
         if( !cfg_array[ i ].loaded )
@@ -929,6 +934,9 @@ int set_target (image_cfg *cfg_array, size_t limit,
         selected_image = i;
         break;
     }
+
+    if( selected_image < 0 )
+        error( ENOENT, "Image config for %s does not exist\n", id );
 
     return CMD_PREPROCESSED;
 }
