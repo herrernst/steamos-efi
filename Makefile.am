@@ -42,7 +42,7 @@ bin_PROGRAMS        = steamos-bootconf
 pkglibexec_PROGRAMS = steamcl.efi
 noinst_PROGRAMS     = steamcl.elf
 if ENABLE_BASH_COMPLETION
-bashcompletiondir   = @bashcompletiondir@
+bashcompletiondir   = $(BASH_COMPLETION_DIR)
 dist_bashcompletion_DATA = bash-completion/steamcl-install \
                            bash-completion/steamos-bootconf
 endif

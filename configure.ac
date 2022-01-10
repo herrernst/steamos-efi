@@ -338,7 +338,7 @@ AC_ARG_WITH([bash-completion-dir],
 
 AS_IF([test x"$with_bash_completion_dir" = xyes],
       [PKG_CHECK_MODULES([BASH_COMPLETION], [bash-completion >= 2.0],
-			 [BASH_COMPLETION_DIR="`pkg-config --variable=completionsdir bash-completion`"],
+			 [BASH_COMPLETION_DIR="`$PKG_CONFIG --define-variable=datadir=\$datadir --variable=completionsdir bash-completion`"],
                          [BASH_COMPLETION_DIR="$datadir/bash-completion/completions"])],
       [BASH_COMPLETION_DIR="$with_bash_completion_dir"])
 
