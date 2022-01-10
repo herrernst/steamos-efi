@@ -153,7 +153,7 @@ AC_SUBST(platform)
 AC_PROG_INSTALL
 AC_PROG_CC
 
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 
 # Identify characteristics of the host architecture.
