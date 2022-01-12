@@ -187,6 +187,7 @@ static BOOLEAN update_scheduled_now (const cfg_entry *conf)
        dst.device_path = src.device_path; \
        dst.label       = src.label;       \
        dst.uuid        = src.uuid;        \
+       dst.disabled    = src.disabled;    \
        dst.at          = src.at;          })
 
 static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
@@ -856,14 +857,24 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     found[ j ].cfg = NULL;
     efi_unmount( &efi_root );
 
-    // yes I know, bubble sort is terribly gauche, but we really don't care:
-    // usually there will be only two entries (and at most 16, which would be
-    // a fairly psychosis-inducing setup):
-    UINTN sort = j > 1 ? 1 : 0;
-    while( sort )
-        for( UINTN i = sort = 0; i < j - 1; i++ )
-            if( earlier_entry_is_newer( &found[ i ], &found[ i + 1 ] ) )
-                sort += swap_cfgs( &found[ 0 ], i, i + 1 );
+    {
+        // yes I know, bubble sort is terribly gauche, but we really don't care:
+        // usually there will be only two entries (and at most 16, which would be
+        // a fairly psychosis-inducing setup):
+        // make sure we exit even if the compare/swap primitives fail somehow// 
+        UINTN maxpass = 1024;
+        UINTN sort = j > 1 ? 1 : 0;
+        while( sort && maxpass )
+        {
+            maxpass--;
+            for( UINTN i = sort = 0; i < j - 1; i++ )
+            {
+                if( earlier_entry_is_newer( &found[ i ], &found[ i + 1 ] ) )
+                    sort += swap_cfgs( &found[ 0 ], i, i + 1 );
+            }
+        }
+    }
+
     // we now have a sorted (oldest to newest) list of configs
     // and their respective partition handles.
     // NOTE: some of these images may be flagged as invalid.
