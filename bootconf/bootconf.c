@@ -264,7 +264,8 @@ static void usage (const char *msg, ...)
     selected-image                                                           \n\
     this-image                                                               \n\
     list-images                                                              \n\
-    set-mode <update|update-other|shutdown|reboot|reboot-other|booted>       \n\
+    set-mode <update|update-other|shutdown|reboot|reboot-other|              \n\
+              booted|first-boot>                                             \n\
     config [--set KEY VAL] [--del KEY] [--get KEY]                           \n\
     create --image X [--set KEY VAL] ...                                     \n\
 \n\
@@ -956,6 +957,22 @@ int set_mode (image_cfg *cfg_array, size_t limit,
 
         set_timestamped_note( cfg, "bootconf mode: reboot (other)" );
 
+        chosen->altered = true;
+        return 1;
+    }
+
+    if( strcmp( action, "first-boot" ) == 0 )
+    {
+        // clear all the interesting flags and values on this image
+        // and set it to the highest priority (as if it were being booted
+        // for the first time):
+        set_conf_uint( cfg, "image-invalid", 0 );
+        set_conf_uint( cfg, "boot-other"   , 0 );
+        set_conf_uint( cfg, "boot-attempts", 0 );
+        set_conf_uint( cfg, "boot-count"   , 0 );
+        set_conf_uint( cfg, "update"       , 0 );
+        set_conf_uint( cfg, "boot-requested-at", stamp );
+        set_timestamped_note( cfg, "bootconf mode: first-boot" );
         chosen->altered = true;
         return 1;
     }
