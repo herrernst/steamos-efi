@@ -1062,6 +1062,9 @@ EFI_STATUS exec_bootloader (bootloader *boot)
     res = set_image_cmdline( &efi_app, boot->args, &child );
     ERROR_JUMP( res, unload, L"command line not set" );
 
+    v_msg( L"Storing chained loader uuid in EFI var\n" );
+    set_chainedloader_device_part_uuid( efi_app );
+
     res = exec_image( efi_app, &esize, &edata );
     WARN_STATUS( res, L"start image returned with exit code: %u; data @ 0x%x",
                  esize, (UINT64) edata );

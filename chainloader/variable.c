@@ -587,6 +587,51 @@ exit:
     return res;
 }
 
+EFI_STATUS set_chainedloader_device_part_uuid (EFI_HANDLE image_handle)
+{
+    EFI_GUID guid = LOADER_VARIABLE_GUID;
+    EFI_LOADED_IMAGE *loaded_image;
+    EFI_DEVICE_PATH *device_path;
+    EFI_STATUS res = EFI_SUCCESS;
+    EFI_GUID signature;
+    CHAR16 *str = NULL;
+
+    if( !image_handle )
+        return EFI_INVALID_PARAMETER;
+
+    res = open_protocol( image_handle, &LoadedImageProtocol,
+                        (VOID **)&loaded_image, image_handle, NULL,
+                        EFI_OPEN_PROTOCOL_GET_PROTOCOL );
+    WARN_STATUS( res, L"Failed to open_protocol()" );
+
+    device_path = handle_device_path( loaded_image->DeviceHandle );
+    WARN_STATUS( res, L"Failed to handle_device_path()" );
+
+    signature = device_path_partition_uuid( device_path );
+    WARN_STATUS( ( guid_cmp( &signature, &NULL_GUID ) == 0 ),
+                 L"Failed to device_path_partition_uuid()" );
+
+    str = PoolPrint( L"%g", &signature );
+    WARN_STATUS( ( str == NULL ), L"Failed to PoolPrint()" );
+
+    if( !str )
+    {
+        res = EFI_OUT_OF_RESOURCES;
+        goto exit;
+    }
+
+    v_msg( L"ChainedLoaderDevicePartUUID: %s\n", str );
+    res = set_volatile_efivar( L"ChainedLoaderDevicePartUUID", &guid,
+                               VARIABLE_STRING( str ) );
+    WARN_STATUS( res, L"Failed to store chainedloader part-UUID" );
+
+    efi_free( str );
+
+exit:
+    close_protocol( image_handle, &LoadedImageProtocol, image_handle, NULL );
+    return res;
+}
+
 EFI_STATUS set_chainloader_entry_flags (UINT64 flags)
 {
     EFI_GUID guid = CHAINLOADER_VARIABLE_GUID;
