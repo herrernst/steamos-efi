@@ -349,13 +349,70 @@ choose_free_boot_id ()
     free_boot_id=$(printf "%04X" $id);
 }
 
+file_is_steamcl ()
+{
+    local bin=${1:-/dev/null};
+    local mime=;
+    local symbol=;
+    local is_steamcl=1;
+
+    if [ -f "$bin" ];
+    then
+        mime=$(file -b --mime-type "$bin");
+        if [ "${mime:-none/none}" = application/x-dosexec ];
+        then
+            while read symbol;
+            do
+                symbol=${symbol##* };
+                case $symbol in
+                    *steamos*)
+                        is_steamcl=0;
+                        break;
+                        ;;
+                esac
+            done < <(objdump -t "$bin");
+        fi
+    fi
+
+    return $is_steamcl;
+}
+
+# If the fallback bootloader location is an EFI executable and
+# _also_ a copy of the steamos chainloader we should keep it
+# synced up with the distro-specific location:
+update_fallback_bootloader ()
+{
+    local dst=$1; # distro name, eg steamos, arch, debian, ubuntu
+    local esp=$2; # mount point of the esp
+    local bootldr=$esp/efi/boot/bootx64.efi;
+    local steamcl=$esp/efi/$dst/steamcl.efi;
+    local bootldr_sum=;
+    local steamcl_sum=;
+
+    calculate_checksum $steamcl;
+    steamcl_sum=$checksum;
+    calculate_checksum $bootldr;
+    bootldr_sum=$checksum;
+
+    # already the same loader at the fallback location => noop
+    if [ "${steamcl_sum:-x}" = "${bootldr_sum:-y}" ];
+    then
+        return 0;
+    fi
+
+    if file_is_steamcl $bootldr;
+    then
+        cp -av ${steamcl} ${bootldr};
+    fi
+}
+
 update_esp ()
 {
-    local dst=$1; shift;
-    local esp=$1; shift;
-    local bin=$1; shift;
-    local ver=$1; shift;
-    local cfg=$1; shift;
+    local dst=$1; shift; # distro name, eg steamos, arch, debian, ubuntu
+    local esp=$1; shift; # mount point of the esp
+    local bin=$1; shift; # path to bootloader binary in OS
+    local ver=$1; shift; # path to (steamcl-version) manifest file in OS
+    local cfg=$1; shift; # path to statically linked bootconf tool in OS
     local bootdir=/efi/"$dst";
     local bootnum=;
     local entry=;
@@ -669,6 +726,8 @@ then
         echo " " expected: $pkg_checksum;
     fi;
 fi;
+
+update_fallback_bootloader $distrib $esp_mount;
 
 if [ -n "$flags" ];
 then
