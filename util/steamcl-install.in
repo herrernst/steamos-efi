@@ -384,15 +384,12 @@ update_esp ()
     cp -av ${ver} ${esp}${bootdir}/steamcl-version;
     cp -av ${cfg} ${esp}${bootdir}/steamos-bootconf;
 
-    if [ $force_extra_removable = 1 ];
-    then
-        bootdir=/efi/boot/;
-
-        echo "Installing bootloader to the removable media path @ $bootdir/bootx64.efi";
-        mkdir -p ${esp}${bootdir};
-        cp -av ${bin} ${esp}${bootdir}/bootx64.efi;
-        # not installing the .version file
-    fi;
+    # install the chainloader in the EFI fallback (RC) position in case we boot without an explicit efiboot entry
+    # FUTURE: We should skip this step if $espbootloader exists but doesn't look like it's one of ours
+    espbootdir=${esp}efi/boot
+    echo "Installing bootloader to ${espbootdir}/bootx64.efi";
+    mkdir -p ${espbootdir};
+    cp -av ${bin} ${espbootdir}/bootx64.efi ||:
 
     return 0;
 }
