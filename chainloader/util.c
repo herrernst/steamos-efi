@@ -706,9 +706,10 @@ CHAR16 *device_path_string (EFI_DEVICE_PATH *dp)
 // and returns TRUE if they are the same.
 //
 // It does NOT consider the filesystem-path part of the EFI_DEVICE_PATHS.
+// It does NOT consider the partition part of EFI_DEVICE_PATHS.
 //
 // Its main use is to determine if two files reside on the same
-// filesystem instance (ie same hardware, same partition).
+// physical storage device (ie same disk or disk equivalent).
 BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b)
 {
     if( !a || !b )
