@@ -386,7 +386,7 @@ update_esp ()
 
     # install the chainloader in the EFI fallback (RC) position in case we boot without an explicit efiboot entry
     # FUTURE: We should skip this step if $espbootloader exists but doesn't look like it's one of ours
-    espbootdir=${esp}efi/boot
+    espbootdir=${esp}/efi/boot
     echo "Installing bootloader to ${espbootdir}/bootx64.efi";
     mkdir -p ${espbootdir};
     cp -av ${bin} ${espbootdir}/bootx64.efi ||:
