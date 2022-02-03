@@ -122,11 +122,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     }
 
     // Move the old pseudo-efi bootconf files to the new /esp location
-    // (unless we're in restricted (aka USB-live-image) mode).
-    if( !steamos.criteria.is_restricted )
-    {
-        migrate_bootconfs( filesystems, count );
-    }
+    migrate_bootconfs( filesystems, count, steamos.criteria.device_path );
 
     res = choose_steamos_loader( filesystems, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );

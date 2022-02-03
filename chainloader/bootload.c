@@ -620,7 +620,9 @@ cleanup:
 
 // Copy configs from /efi/SteamOS/bootconf to /esp/SteamOS/conf/X.conf
 // where X is "A", "B", "dev" etc.
-EFI_STATUS migrate_bootconfs (EFI_HANDLE *handles, CONST UINTN n_handles)
+EFI_STATUS migrate_bootconfs (EFI_HANDLE *handles,
+                              CONST UINTN n_handles,
+                              EFI_DEVICE_PATH *self_dev_path)
 {
     EFI_STATUS res = EFI_SUCCESS;
     EFI_HANDLE dh = NULL;
@@ -674,6 +676,20 @@ EFI_STATUS migrate_bootconfs (EFI_HANDLE *handles, CONST UINTN n_handles)
         ERROR_CONTINUE( res, L"handle #%u has no device path", i );
 
         efi_guid = device_path_partition_uuid( efi_dev );
+
+        if( self_dev_path && !on_same_device( self_dev_path, efi_dev ) )
+        {
+            if( verbose )
+            {
+                CHAR16 *partuuid = guid_str( &efi_guid );
+
+                v_msg( L"Partition %s on other disk, skip migration\n",
+                       partuuid );
+                efi_free( partuuid );
+            }
+
+            continue;
+        }
 
         // If this is the ESP there's nothing to migrate _from_ here:
         // also some UEFI firmware gets badly broken if we mount an FS
