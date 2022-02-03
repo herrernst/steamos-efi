@@ -272,14 +272,10 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
         if( efi_file_exists( root_dir, vdbg_path ) != EFI_SUCCESS )
             set_nvram_debug( 0 );
 
-    if( flag_path )
-    {
-        if( efi_file_exists( root_dir, flag_path ) == EFI_SUCCESS )
-        {
-            loader->criteria.is_restricted = 1;
-            loader->criteria.device_path = get_self_device_path();
-        }
-    }
+    if( flag_path && efi_file_exists( root_dir, flag_path ) == EFI_SUCCESS )
+        loader->criteria.is_restricted = 1;
+
+    loader->criteria.device_path = get_self_device_path();
 
     res = EFI_SUCCESS;
 
