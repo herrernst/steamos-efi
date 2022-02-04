@@ -588,9 +588,24 @@ static EFI_STATUS migrate_conf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs,
             L"%s\\%s.conf", conf_path, os_image_name );
     new_path[ (sizeof(new_path) / sizeof(CHAR16)) - 1 ] = (CHAR16)0;
 
-    // Already some config at the target location, do not overwrite:
-    if( efi_file_exists( esp_root, &new_path[0] ) == EFI_SUCCESS )
-        goto cleanup;
+    // If already some NEWER config at the target location, do not overwrite:
+    if( efi_file_open( esp_root, &new_conf, &new_path[0],
+                       EFI_FILE_MODE_READ, 0) == EFI_SUCCESS )
+    {
+        INTN age_cmp = 0;
+
+        res = efi_file_xtime_cmp( new_conf, conf_file, &age_cmp );
+        WARN_STATUS( res, L"Unable to compare ages of old and new configs\n" );
+
+        efi_file_close( new_conf );
+        new_conf = NULL;
+
+        if( age_cmp >= 0 )
+        {
+            v_msg( L"Target config is newer than old, do not migrate\n" );
+            goto cleanup;
+        }
+    }
 
     if( !*conf_dir )
     {
