@@ -22,6 +22,11 @@
 
 #include <efi.h>
 
+// We used to use SIZE_OF_EFI_FILE_INFO + MAXFSNAMLEN for this,
+// but it turns out that was a cargo culted value that could in
+// theory be breached. 512 covers us for tha max allowed by vfat.
+#define EFI_FILE_INFO_SAFE_SIZE (SIZE_OF_EFI_FILE_INFO + 512)
+
 EFI_STATUS efi_file_exists (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path);
 
 EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,

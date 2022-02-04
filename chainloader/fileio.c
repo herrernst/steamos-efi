@@ -24,6 +24,7 @@
 
 #include "err.h"
 #include "util.h"
+#include "fileio.h"
 
 EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
                           OUT EFI_FILE_PROTOCOL **opened,
@@ -154,7 +155,7 @@ EFI_STATUS efi_readdir (EFI_FILE_PROTOCOL *dir,
                         IN OUT EFI_FILE_INFO **dirent,
                         IN OUT UINTN *dirent_size)
 {
-    CONST UINTN bufsize = SIZE_OF_EFI_FILE_INFO + MAXFSNAMLEN;
+    CONST UINTN bufsize = EFI_FILE_INFO_SAFE_SIZE;
     UINTN allocated;
     EFI_STATUS res;
 
@@ -271,7 +272,7 @@ EFI_STATUS efi_file_stat (EFI_FILE_PROTOCOL *fh,
                           IN OUT EFI_FILE_INFO **info,
                           IN OUT UINTN *bufsize)
 {
-    CONST UINTN size = SIZE_OF_EFI_FILE_INFO + MAXFSNAMLEN;
+    CONST UINTN size = EFI_FILE_INFO_SAFE_SIZE;
     UINTN allocated;
     EFI_STATUS res = EFI_SUCCESS;
     EFI_GUID info_guid = EFI_FILE_INFO_ID;
