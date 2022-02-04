@@ -85,7 +85,6 @@ EFI_STATUS reboot_into_firmware (VOID)
 }
 
 EFI_STATUS
-EFIAPI
 efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 {
     EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;

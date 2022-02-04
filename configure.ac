@@ -250,6 +250,11 @@ AS_CASE([$platform-$target_cpu],
         [*-i386|*-x86_64],
         [TARGET_CFLAGS="$TARGET_CFLAGS -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-3dnow"])
 
+# This is needed for MS_ABI on x86-64:
+AS_CASE([$platform-$target_cpu],
+        [*-x86_64],
+        [TARGET_CFLAGS="$TARGET_CFLAGS -maccumulate-outgoing-args"])
+
 dnl May need to forcibly disable floating point here, see grub's configure.ac
 dnl grub also disables a lot of fetures for space or not-crashing optimisations:
 dnl include them here if needed.
@@ -286,6 +291,7 @@ AS_CASE([$with_efilib],
         [EFI_LDFLAGS="-T ${EFI_LDSCRIPT} -shared -Bsymbolic -nostdlib"]
         [EFI_LDFLAGS="${EFI_LDFLAGS} -L${EFI_LIB} ${EFI_CRTOBJS}"]
         [EFI_CFLAGS="-fpic -I $EFI_INC -I${EFI_INC}/${target_cpu}"]
+        [EFI_CFLAGS="${EFI_CFLAGS} -DGNU_EFI_USE_MS_ABI"]
         [EFI_CFLAGS="$EFI_CFLAGS -I ${EFI_INC}/protocol"]
         [EFI_SECT="text sdata data dynamic dynsym rel rela rel.\* rel\* rela\*"],
         [tiano], [AC_MSG_ERROR(["tiano core efi is not supported yet"])],
@@ -316,6 +322,7 @@ dnl way which is tremendously annoying to manage manually.
 TARGET_LDFLAGS="$TARGET_LDFLAGS -znocombreloc -zdefs"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-stack-protector"
 TARGET_CFLAGS="$TARGET_CFLAGS -fno-strict-aliasing"
+TARGET_CFLAGS="$TARGET_CFLAGS -ffreestanding"
 TARGET_CFLAGS="$TARGET_CFLAGS -fshort-wchar"
 TARGET_CPPFLAGS="$TARGET_CPPFLAGS -nostdinc -isystem"
 TARGET_CPPFLAGS="$TARGET_CPPFLAGS $($TARGET_CC -print-file-name=include)"

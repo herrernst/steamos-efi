@@ -64,7 +64,7 @@ EFI_STATUS efi_file_open (EFI_FILE_PROTOCOL *dir,
         return EFI_INVALID_PARAMETER;
     }
 
-    return uefi_call_wrapper( dir->Open, 5, dir, opened, path, mode, attr );
+    return uefi_call_wrapper( dir->Open, 5, dir, opened, (CHAR16 *)path, mode, attr );
 }
 
 EFI_STATUS efi_file_close (IN EFI_FILE_PROTOCOL *file)
