@@ -21,6 +21,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efiprot.h>
+#include <sys/param.h>
 
 #include "err.h"
 #include "util.h"
@@ -297,6 +298,64 @@ EFI_STATUS efi_file_stat (EFI_FILE_PROTOCOL *fh,
 
 allocfail:
     return EFI_OUT_OF_RESOURCES;
+}
+
+// compare the newest of { ctime, mtime } for two files
+// return -1 if file a is older,
+// 0 if the same age,
+// and 1 if file a is newer:
+EFI_STATUS efi_file_xtime_cmp (EFI_FILE_PROTOCOL *a,
+                               EFI_FILE_PROTOCOL *b,
+                               INTN *result)
+{
+    EFI_STATUS res;
+    UINTN bufsize = 0;
+    EFI_FILE_INFO *info = NULL;
+    UINT64 stamp_a = 0;
+    UINT64 stamp_b = 0;
+    UINT64 ctime = 0;
+    UINT64 mtime = 0;
+
+    if( !result )
+        return EFI_INVALID_PARAMETER;
+
+    *result = 0;
+
+    if( !a && !b )
+        return EFI_SUCCESS;
+
+    if( !a || !b )
+        return EFI_NOT_FOUND;
+
+    info = ALLOC_OR_GOTO( EFI_FILE_INFO_SAFE_SIZE, allocfail );
+    bufsize = EFI_FILE_INFO_SAFE_SIZE;
+
+    res = efi_file_stat( a, &info, &bufsize );
+    ERROR_JUMP( res, cleanup, L"stat of file A failed\n" );
+
+    ctime = efi_time_to_timestamp( &info->CreateTime );
+    mtime = efi_time_to_timestamp( &info->ModificationTime );
+    stamp_a = MAX( ctime, mtime );
+
+    res = efi_file_stat( b, &info, &bufsize );
+    ERROR_JUMP( res, cleanup, L"stat of file B failed\n" );
+
+    ctime = efi_time_to_timestamp( &info->CreateTime );
+    mtime = efi_time_to_timestamp( &info->ModificationTime );
+    stamp_b = MAX( ctime, mtime );
+
+    if( stamp_a < stamp_b )
+        *result = -1;
+    else if( stamp_a > stamp_b )
+        *result = 1;
+
+cleanup:
+    efi_free( info );
+    return res;
+
+allocfail:
+    return EFI_OUT_OF_RESOURCES;
+
 }
 
 // Returns a buffer of n+1 bytes, where n is the file size,

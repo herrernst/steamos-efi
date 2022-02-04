@@ -67,6 +67,10 @@ EFI_STATUS efi_file_stat (EFI_FILE_PROTOCOL *fh,
                           IN OUT EFI_FILE_INFO **info,
                           IN OUT UINTN *bufsize);
 
+EFI_STATUS efi_file_xtime_cmp (EFI_FILE_PROTOCOL *a,
+                               EFI_FILE_PROTOCOL *b,
+                               INTN *result);
+
 EFI_STATUS efi_file_to_mem (EFI_FILE_PROTOCOL *fh,
                             OUT CHAR8 **buf,
                             OUT UINTN *bytes,
