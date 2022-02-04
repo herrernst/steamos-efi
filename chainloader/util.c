@@ -483,6 +483,10 @@ static VOID efi_time_to_utc (EFI_TIME *time)
     else if( time->TimeZone < 0 )
         for( ; time->TimeZone; time->TimeZone++ )
             decr_minute( time );
+
+    time->TimeZone = 0x0000;
+}
+
 }
 
 UINT64 local_datestamp (VOID)
