@@ -487,6 +487,20 @@ static VOID efi_time_to_utc (EFI_TIME *time)
     time->TimeZone = 0x0000;
 }
 
+UINT64 efi_time_to_timestamp (EFI_TIME *time)
+{
+    if( !time )
+        return 0;
+
+    efi_time_to_utc( time );
+
+    return ( time->Second                 +
+             (time->Minute * 100)         +
+             (time->Hour   * 10000)       +
+             (time->Day    * 1000000)     +
+             (time->Month  * 100000000)   +
+             (time->Year   * 10000000000) );
+
 }
 
 UINT64 local_datestamp (VOID)
