@@ -30,6 +30,7 @@
 #include "variable.h"
 #include "console.h"
 #include "partset.h"
+#include "console-ex.h"
 
 // this is the console output attributes for the menu
 #define SELECTED_ATTRIBUTES (EFI_MAGENTA   | EFI_BACKGROUND_BLACK)
@@ -40,6 +41,21 @@
 
 // this is x86_64 specific
 #define EFI_STUB_ARCH 0x8664
+
+static BOOLEAN display_menu = FALSE;
+
+EFI_STATUS EFIAPI
+request_menu (IN EFI_KEY_DATA *k opt)
+{
+    display_menu = TRUE;
+
+    return EFI_SUCCESS;
+}
+
+BOOLEAN boot_menu_requested (VOID)
+{
+    return display_menu;
+}
 
 // this will always return a zeroed-out buffer
 static EFI_STATUS allocate (VOID **p, UINTN s)
@@ -946,7 +962,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         break;
     }
 
-    BOOLEAN menu = FALSE;
     BOOLEAN oneshot = is_loader_config_timeout_oneshot_set();
 
     // we do this after the normal selection process above so that if
@@ -961,18 +976,11 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     // we somehow failed to pick a valid image, display a menu:
     if( oneshot || (selected < 0) )
     {
-        menu = TRUE;
-    }
-    else
-    {
-        EFI_INPUT_KEY key;
-        res = con_read_key( &key );
-        if( ! EFI_ERROR( res ) && ( key.ScanCode == SCAN_F3 ) )
-            menu = TRUE;
+        display_menu = TRUE;
     }
 
     // Let the user pick via menu:
-    if( menu )
+    if( display_menu )
     {
         BOOLEAN unique = TRUE;
         for( UINTN i = 0; i < j; i++ )

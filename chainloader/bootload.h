@@ -21,6 +21,7 @@
 #pragma once
 
 #include "config.h"
+#include "console-ex.h"
 
 typedef struct
 {
@@ -35,6 +36,9 @@ typedef struct
         EFI_DEVICE_PATH *device_path;
     } criteria;
 } bootloader;
+
+EFI_STATUS EFIAPI request_menu (IN EFI_KEY_DATA *k opt);
+BOOLEAN boot_menu_requested (VOID);
 
 EFI_STATUS valid_efi_binary (EFI_FILE_PROTOCOL *dir, CONST CHAR16 *path);
 EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader);

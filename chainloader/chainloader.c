@@ -24,6 +24,7 @@
 
 #include "chainloader.h"
 #include "variable.h"
+#include "console-ex.h"
 
 static EFI_STATUS reset_system (IN EFI_RESET_TYPE type,
                                 IN EFI_STATUS     status,
@@ -96,6 +97,9 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     initialise( image_handle, sys_table );
     set_steamos_loader_criteria( &steamos );
 
+    bind_key( SCAN_NULL, CHAR_TAB, request_menu );
+    bind_key( SCAN_F3,  CHAR_NULL, request_menu );
+
     if( nvram_debug )
     {
         set_loader_time_init_usec();
@@ -128,6 +132,12 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
     if( nvram_debug )
         set_loader_time_exec_usec();
+
+    // if the hotkey was triggered during choose_steamos_loader and
+    // was unable to interrupt it we need to re-run the selection
+    // process so the menu request can be handled:
+    if( boot_menu_requested() )
+        res = choose_steamos_loader( filesystems, count, &steamos );
 
     res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );
