@@ -45,7 +45,8 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader);
 EFI_STATUS migrate_bootconfs (EFI_HANDLE *handles,
                               CONST UINTN n_handles,
                               EFI_DEVICE_PATH *self_dev_path);
-EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
-                                  CONST UINTN n_handles,
-                                  OUT bootloader *chosen);
+EFI_STATUS find_loaders (EFI_HANDLE *handles,
+                         CONST UINTN n_handles,
+                         IN OUT bootloader *chosen);
+EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen);
 EFI_STATUS exec_bootloader (bootloader *boot);

@@ -167,6 +167,10 @@ typedef struct
     BOOLEAN disabled;
 } found_cfg;
 
+static found_cfg found[MAX_BOOTCONFS + 1];
+static UINTN found_cfg_count;
+static EFI_GUID *found_signatures[MAX_BOOTCONFS + 1];
+
 static BOOLEAN update_scheduled_now (const cfg_entry *conf)
 {
     if( get_conf_uint( conf, "update" ) )
@@ -338,18 +342,16 @@ static VOID render_menu_option(IN CHAR16 *label, BOOLEAN on)
     con_output_text( on ? L" <" : L"  " );
 }
 
-INTN text_menu_choose_steamos_loader (found_cfg *entries,
-                                      INTN entry_count,
-                                      INTN entry_default,
-                                      UINTN timeout)
+INTN text_menu_choose_steamos_loader (INTN entry_default, UINTN timeout)
 {
     UINTN columns, column_offsets[MAX_BOOTCONFS];
     UINTN rows, row_offset;
     INTN i, selected;
     EFI_STATUS res;
     const INTN console_max_mode = con_get_max_output_mode();
+    INTN entry_count = found_cfg_count;
 
-    if( !entries || entry_count <= 0 )
+    if( entry_count <= 0 )
         return -1;
 
     res = console_mode();
@@ -384,7 +386,7 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
     row_offset = (rows - entry_count) / 2;
     for( i = 0; i < entry_count; i++ )
     {
-        INTN offset = ((columns - strlen_w( entries[ i ].label )) / 2) - 2;
+        INTN offset = ((columns - strlen_w( found[ i ].label )) / 2) - 2;
         if( offset < 0 )
             offset = 0;
 
@@ -392,7 +394,7 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
 
         con_set_cursor_position( column_offsets[ i ], row_offset + i );
 
-        render_menu_option( entries[ i ].label, i == selected );
+        render_menu_option( found[ i ].label, i == selected );
     }
 
     con_set_output_attribute( DEFAULT_ATTRIBUTES );
@@ -453,15 +455,16 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
 
         con_set_cursor_position( column_offsets[ old_selected ],
                                  row_offset + old_selected );
-        render_menu_option(entries[ old_selected ].label, FALSE );
+        render_menu_option( found[ old_selected ].label, FALSE );
 
         con_set_cursor_position( column_offsets[ selected ],
                                  row_offset + selected );
-        render_menu_option( entries[ selected ].label, TRUE );
+        render_menu_option( found[ selected ].label, TRUE );
     }
 
 exit:
     con_clear_screen();
+    display_menu = FALSE;
 
     return selected;
 }
@@ -745,18 +748,16 @@ cleanup:
     return res;
 }
 
-EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
-                                  CONST UINTN n_handles,
-                                  OUT bootloader *chosen)
+EFI_STATUS find_loaders (EFI_HANDLE *handles,
+                         CONST UINTN n_handles,
+                         IN OUT bootloader *chosen)
 {
     EFI_STATUS res = EFI_SUCCESS;
     EFI_FILE_PROTOCOL *efi_root = NULL;
     static EFI_GUID fs_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
     static EFI_GUID dp_guid = DEVICE_PATH_PROTOCOL;
-    UINT64 flags = 0;
     UINTN j = 0;
-    found_cfg found[MAX_BOOTCONFS + 1] = { { NULL } };
-    EFI_GUID *found_signatures[MAX_BOOTCONFS + 1] = { NULL };
+
     EFI_DEVICE_PATH *restricted = NULL;
 
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* esp_fs = NULL;
@@ -767,6 +768,9 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     CHAR16 *self_path = NULL;
     CHAR16 *conf_path = NULL;
     EFI_HANDLE dh = NULL;
+
+    if( found_cfg_count > 0 )
+        return EFI_SUCCESS;
 
     self_file = get_self_file();
 
@@ -902,6 +906,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     }
 
     found[ j ].cfg = NULL;
+    found_cfg_count = j;
     efi_unmount( &efi_root );
 
     {
@@ -929,9 +934,23 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     if( nvram_debug )
         set_loader_entries( &found_signatures[ 0 ] );
 
+cleanup:
+    efi_free( conf_path );
+    efi_unmount( &esp_root );
+
+    if( found_cfg_count > 0 )
+        return EFI_SUCCESS;
+
+    return EFI_NOT_FOUND;
+}
+
+EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
+{
+    UINT64 flags = 0;
     INTN selected = -1;
     BOOLEAN update = FALSE;
     BOOLEAN boot_other = FALSE;
+    EFI_STATUS res = EFI_SUCCESS;
 
     // pick the newest entry to start with.
     // if boot-other is set, we need to bounce along to the next entry:
@@ -939,7 +958,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     // images considered older than unflagged ones - so if there is a valid
     // image available, we'll pick it, and failing that resort to an invalid
     // flagged one:
-    for( INTN i = (INTN) j - 1; i >= 0; i-- )
+    for( INTN i = (INTN) found_cfg_count - 1; i >= 0; i-- )
     {
         selected = i;
 
@@ -972,7 +991,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     // oneshot fails we have a fallback boot option selected anyway:
     EFI_GUID entry = get_loader_entry_oneshot ();
     if( guid_cmp( &entry, &NULL_GUID ) != 0 )
-        for( UINTN i = 0; i < j - 1; i++ )
+        for( UINTN i = 0; i < found_cfg_count - 1; i++ )
             if( guid_cmp( &entry, &found[ i ].uuid ) == 0 )
                 selected = i;
 
@@ -987,13 +1006,13 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
     if( display_menu )
     {
         BOOLEAN unique = TRUE;
-        for( UINTN i = 0; i < j; i++ )
-            for( UINTN k = i + 1; k < j; k++ )
+        for( UINTN i = 0; i < found_cfg_count; i++ )
+            for( UINTN k = i + 1; k < found_cfg_count; k++ )
                 if( strcmp_w( found[ i ].label, found[ k ].label ) == 0 )
                     unique = FALSE;
         if( !unique )
         {
-            for( UINTN i = 0; i < j; i++ )
+            for( UINTN i = 0; i < found_cfg_count; i++ )
             {
                 CHAR16 *old = found[ i ].label;
                 found[ i ].label = PoolPrint( L"%s-%g", found[ i ].label,
@@ -1007,7 +1026,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
             timeout = get_loader_config_timeout_oneshot();
 
         selected =
-          text_menu_choose_steamos_loader( found, j, selected, timeout );
+          text_menu_choose_steamos_loader( selected, timeout );
 
         if( nvram_debug )
             set_loader_time_menu_usec();
@@ -1042,7 +1061,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         }
 
         // free the unused configs:
-        for( INTN i = 0; i < (INTN) j; i++ )
+        for( INTN i = 0; i < (INTN) found_cfg_count; i++ )
         {
             efi_free( found[ i ].loader );
             if( found[ i ].label )
@@ -1053,7 +1072,7 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
         if( nvram_debug )
         {
             set_chainloader_boot_attempts ();
-            set_loader_entry_default( found_signatures[ j - 1 ] );
+            set_loader_entry_default( found_signatures[ found_cfg_count - 1 ] );
             set_loader_entry_selected( found_signatures[ selected ] );
         }
 
@@ -1064,11 +1083,6 @@ EFI_STATUS choose_steamos_loader (EFI_HANDLE *handles,
 
         res = EFI_SUCCESS;
     }
-
-cleanup:
-    efi_free( conf_path );
-    efi_unmount( &esp_root );
-    sleep( 3 );
 
     return res;
 }

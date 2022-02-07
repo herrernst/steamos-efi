@@ -127,17 +127,34 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     // Move the old pseudo-efi bootconf files to the new /esp location
     migrate_bootconfs( filesystems, count, steamos.criteria.device_path );
 
-    res = choose_steamos_loader( filesystems, count, &steamos );
+    // find_loaders is the slowest step, and is not very interruptible
+    // so the hotkey registered at the start may not trigger a callback
+    // till after it has returned.
+    res = find_loaders( filesystems, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
+
+    // the menu will be invoked here if it's been requested,
+    // either by keypress or by nvram variables set before reboot:
+    res = choose_steamos_loader( &steamos );
+
+    if( verbose )
+    {
+        EFI_GUID part_uuid = device_path_partition_uuid( steamos.device_path );
+        CHAR16 *puuid  = guid_str( &part_uuid );
+        CHAR16 *device = device_path_string( steamos.device_path );
+
+        v_msg( L"Booting: %s\n  %s\n  %s\n",
+               device, puuid, steamos.loader_path );
+        v_msg( L"with args: %s\n", steamos.args );
+        v_msg( L"Pause: 10s\n" );
+
+        efi_free( puuid );
+        efi_free( device );
+        sleep( 10 );
+    }
 
     if( nvram_debug )
         set_loader_time_exec_usec();
-
-    // if the hotkey was triggered during choose_steamos_loader and
-    // was unable to interrupt it we need to re-run the selection
-    // process so the menu request can be handled:
-    if( boot_menu_requested() )
-        res = choose_steamos_loader( filesystems, count, &steamos );
 
     res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );
@@ -152,7 +169,7 @@ cleanup:
         Print( L"Failed to reboot into firmware: %r\n", res );
     }
 
-    Print( L"Rebooting into 5s...\n" );
+    Print( L"Boot failed, waiting 5s...\n" );
     sleep( 5 );
 
     return res;
