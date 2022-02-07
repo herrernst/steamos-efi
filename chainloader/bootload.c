@@ -330,6 +330,14 @@ EFI_STATUS console_mode ()
     return EFI_SUCCESS;
 }
 
+static VOID render_menu_option(IN CHAR16 *label, BOOLEAN on)
+{
+    con_set_output_attribute( on ? SELECTED_ATTRIBUTES : DEFAULT_ATTRIBUTES );
+    con_output_text( on ? L"> " : L"  " );
+    con_output_text( label );
+    con_output_text( on ? L" <" : L"  " );
+}
+
 INTN text_menu_choose_steamos_loader (found_cfg *entries,
                                       INTN entry_count,
                                       INTN entry_default,
@@ -376,17 +384,15 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
     row_offset = (rows - entry_count) / 2;
     for( i = 0; i < entry_count; i++ )
     {
-        INTN offset = (columns - strlen_w( entries[ i ].label )) / 2;
+        INTN offset = ((columns - strlen_w( entries[ i ].label )) / 2) - 2;
         if( offset < 0 )
             offset = 0;
 
         column_offsets[ i ] = offset;
 
         con_set_cursor_position( column_offsets[ i ], row_offset + i );
-        con_set_output_attribute( i == selected ?
-                                  SELECTED_ATTRIBUTES :
-                                  DEFAULT_ATTRIBUTES );
-        con_output_text( entries[ i ].label );
+
+        render_menu_option( entries[ i ].label, i == selected );
     }
 
     con_set_output_attribute( DEFAULT_ATTRIBUTES );
@@ -400,7 +406,7 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
         res = WaitForSingleEvent( event, EFI_TIMER_PERIOD_MICROSECONDS( timeout ) );
         if( res == EFI_TIMEOUT )
             goto exit;
-        ERROR_JUMP( res, exit, L"Could not WaitForSingleWithTimeout: %r\n", res );
+        ERROR_JUMP( res, exit, L"Wait for event failed: %r\n", res );
     }
 
     for( ;; )
@@ -447,13 +453,11 @@ INTN text_menu_choose_steamos_loader (found_cfg *entries,
 
         con_set_cursor_position( column_offsets[ old_selected ],
                                  row_offset + old_selected );
-        con_set_output_attribute( DEFAULT_ATTRIBUTES );
-        con_output_text( entries[ old_selected ].label );
+        render_menu_option(entries[ old_selected ].label, FALSE );
 
         con_set_cursor_position( column_offsets[ selected ],
                                  row_offset + selected );
-        con_set_output_attribute( SELECTED_ATTRIBUTES );
-        con_output_text( entries[ selected ].label );
+        render_menu_option( entries[ selected ].label, TRUE );
     }
 
 exit:
