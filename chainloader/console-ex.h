@@ -63,7 +63,7 @@ typedef EFI_STATUS
 typedef EFI_STATUS
 (EFIAPI *EFI_INPUT_SET_STATE)
     (IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *this,
-     IN EFI_KEY_TOGGLE_STATE);
+     IN EFI_KEY_TOGGLE_STATE *state);
 
 typedef EFI_STATUS (EFIAPI *EFI_KEY_HANDLER) (IN EFI_KEY_DATA *key);
 
@@ -92,3 +92,4 @@ typedef struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL
 // ============================================================================
 EFI_HANDLE *bind_key (UINT16 scan, CHAR16 chr, IN EFI_KEY_HANDLER handler);
 EFI_STATUS unbind_key (EFI_HANDLE *binding);
+EFI_STATUS reset_console (VOID);

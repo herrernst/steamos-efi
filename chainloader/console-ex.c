@@ -32,13 +32,27 @@ static BOOLEAN
 init_console_ex (void)
 {
     EFI_STATUS res;
-    EFI_GUID input_guid = EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID;
+    static EFI_GUID input_guid = EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID;
 
     if( !console )
     {
+        EFI_KEY_TOGGLE_STATE state = EFI_KEY_STATE_EXPOSED;
+
         res = get_handle_protocol( &ST->ConsoleInHandle, &input_guid,
                                    (VOID **)&console );
         ERROR_RETURN( res, FALSE, L"console-ex init failed" );
+
+        // clear out any buffered keys etc
+        reset_console();
+
+        // In theory this allows things like incomplete keypresses
+        // (possibly key-press but no key-release yet? - docs unclear)
+        // to be detected but not all UEFI firmware supports this
+        // (The deck, at least as of VANGOGH 101, does not):
+        res = uefi_call_wrapper( console->set_state, 2, console, &state );
+
+        if( EFI_ERROR(res) && verbose )
+            v_msg( L"console-ex set_state error: %d (likely harmless)\n", res );
     }
 
     if( console )
@@ -47,12 +61,21 @@ init_console_ex (void)
     return FALSE;
 }
 
+EFI_STATUS reset_console (VOID)
+{
+    if( !init_console_ex() )
+        return EFI_NOT_READY;
+
+    return uefi_call_wrapper( console->reset, 2, console, FALSE );
+}
+
 EFI_HANDLE *
 bind_key (UINT16 scan, CHAR16 chr, IN EFI_KEY_HANDLER handler)
 {
     EFI_STATUS res;
     EFI_HANDLE *binding;
-    EFI_KEY_DATA key = { { SCAN_NULL, CHAR_NULL }, { 0, 0 } };
+    EFI_KEY_DATA key = { { SCAN_NULL, CHAR_NULL },
+                         { 0, 0 } };
 
     key.key.ScanCode = scan;
     key.key.UnicodeChar = chr;
