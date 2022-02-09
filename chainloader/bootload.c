@@ -164,6 +164,7 @@ typedef struct
     CHAR16 *label;
     EFI_GUID uuid;
     UINT64 at;
+    UINT64 boot_time;
     BOOLEAN disabled;
 } found_cfg;
 
@@ -208,6 +209,7 @@ static BOOLEAN update_scheduled_now (const cfg_entry *conf)
        dst.label       = src.label;       \
        dst.uuid        = src.uuid;        \
        dst.disabled    = src.disabled;    \
+       dst.boot_time   = src.boot_time;   \
        dst.at          = src.at;          })
 
 static UINTN swap_cfgs (found_cfg *f, UINTN a, UINTN b)
@@ -895,6 +897,7 @@ EFI_STATUS find_loaders (EFI_HANDLE *handles,
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
         found[ j ].at        = get_conf_uint( conf, "boot-requested-at" );
+        found[ j ].boot_time = get_conf_uint( conf, "boot-time" );
         found[ j ].label     = strwiden( get_conf_str( conf, "title" ) );
 
         if( !found[ j ].label || !found[ j ].label[ 0 ] )
