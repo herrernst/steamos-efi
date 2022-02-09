@@ -24,7 +24,9 @@
 
 #include "chainloader.h"
 #include "variable.h"
+#include "exec.h"
 #include "console-ex.h"
+#include "console.h"
 
 static EFI_STATUS reset_system (IN EFI_RESET_TYPE type,
                                 IN EFI_STATUS     status,
@@ -93,12 +95,29 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     UINTN count = 0;
     EFI_STATUS res = EFI_SUCCESS;
     bootloader steamos = {0};
+    EFI_HANDLE *bound_key = NULL;
+    EFI_LOADED_IMAGE *steamcl = NULL;
+    CHAR16 *cmdline = NULL;
 
     initialise( image_handle, sys_table );
     set_steamos_loader_criteria( &steamos );
 
-    bind_key( SCAN_NULL, CHAR_TAB, request_menu );
-    bind_key( SCAN_F3,  CHAR_NULL, request_menu );
+    steamcl = get_self_loaded_image();
+
+    if( steamcl )
+    {
+        get_image_cmdline( steamcl, &cmdline );
+
+        if( cmdline && strstr_w( cmdline, L"display-menu" ) )
+            request_boot_menu();
+    }
+
+    // no need to watch for keys if the command line already asked for a menu
+    if( !boot_menu_requested() )
+    {
+        reset_console();
+        bound_key = bind_key( SCAN_NULL, CHAR_TAB, request_menu );
+    }
 
     if( nvram_debug )
     {
@@ -134,8 +153,12 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
 
     // the menu will be invoked here if it's been requested,
-    // either by keypress or by nvram variables set before reboot:
+    // either by keypress or by nvram variables set before reboot
+    // or by L"display-menu" on the UEFI command line:
     res = choose_steamos_loader( &steamos );
+
+    if( bound_key )
+        unbind_key( bound_key );
 
     if( verbose )
     {
@@ -156,6 +179,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     if( nvram_debug )
         set_loader_time_exec_usec();
 
+    efi_free( cmdline );
     res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );
 

@@ -52,6 +52,11 @@ request_menu (IN EFI_KEY_DATA *k opt)
     return EFI_SUCCESS;
 }
 
+VOID request_boot_menu (VOID)
+{
+    display_menu = TRUE;
+}
+
 BOOLEAN boot_menu_requested (VOID)
 {
     return display_menu;
@@ -1145,6 +1150,8 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
             for( UINTN k = i + 1; k < found_cfg_count; k++ )
                 if( strcmp_w( found[ i ].label, found[ k ].label ) == 0 )
                     unique = FALSE;
+
+        // if the labels aren't unique, add a differentiator to them:
         if( !unique )
         {
             for( UINTN i = 0; i < found_cfg_count; i++ )
@@ -1155,10 +1162,12 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
                 efi_free( old );
             }
         }
-
+#if 0
         UINTN timeout = get_loader_config_timeout();
+
         if( oneshot )
             timeout = get_loader_config_timeout_oneshot();
+#endif
 
         boot_type = BOOT_NONE;
         selected =
@@ -1214,6 +1223,14 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
             // Do not remove it unless you also change stage II
             appendstr_w( &args[ 0 ], sizeof( args ),  L" steamos-update=1" );
             flags |= ENTRY_FLAG_UPDATE;
+        }
+
+        // not strictly nvram but let's make sure the stage 2 loader is
+        // handling command line args correctly by passing some canaries:
+        if( nvram_debug )
+        {
+            appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-dummy" );
+            appendstr_w( &args[ 0 ], sizeof( args ), L" dummy " );
         }
 
         chosen->args = strdup_w( &args[ 0 ] );
