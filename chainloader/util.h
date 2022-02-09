@@ -110,7 +110,9 @@ UINTN strlen_a (const CHAR8 *str);
 INTN  strcmp_w  (const CHAR16 *a, const CHAR16 *b);
 INTN  strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len);
 
+CHAR16 *strstr_w (const CHAR16 *haystack, const CHAR16 *needle);
 CHAR16 *strdup_w (const CHAR16 *s);
+INTN    appendstr_w (CHAR16 *dest, UINTN size, CHAR16 *add);
 
 VOID mem_copy (void *dest, const VOID *src, UINTN len);
 INTN guid_cmp (const VOID *a, const VOID *b);

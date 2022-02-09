@@ -641,6 +641,24 @@ UINTN strlen_a (const CHAR8 *str)
     return strlena( str );
 }
 
+CHAR16 *strstr_w (const CHAR16 *haystack, const CHAR16 *needle)
+{
+    if( !haystack || !needle )
+        return NULL;
+
+    UINTN h_len = strlen_w( haystack );
+    UINTN n_len = strlen_w( needle );
+
+    if( n_len > h_len )
+        return NULL;
+
+    for( UINTN offs = 0; offs <= h_len - n_len; offs++ )
+        if( strncmp_w( haystack + offs, needle, n_len ) == 0 )
+            return (CHAR16 *)haystack + offs;
+
+    return NULL;
+}
+
 INTN strcmp_w (const CHAR16 *a, const CHAR16 *b)
 {
     return StrCmp( a, b );
@@ -649,6 +667,32 @@ INTN strcmp_w (const CHAR16 *a, const CHAR16 *b)
 INTN strncmp_w (const CHAR16 *a, const CHAR16 *b, UINTN len)
 {
     return StrnCmp( a, b, len );
+}
+
+// NOTE: size is the _byte_ size of the target buffer,
+// not the short-wchar length.
+INTN appendstr_w (CHAR16 *dest, UINTN size, CHAR16 *add)
+{
+    UINTN offs = 0;
+    UINTN max  = 0;
+    CHAR16 *start = NULL;
+    UINTN i;
+
+    if( !dest )
+        return -1;
+
+    offs  = strlen_w( dest );
+    start = dest + offs;
+    max   = (size / sizeof(CHAR16)) - offs;
+
+    for( i = 0; i < max; i++ )
+    {
+        *(start + i) = *(add + i);
+        if( *(add + i) == L'\0' )
+            break;
+    }
+
+    return i;
 }
 
 CHAR8 * strlower (CHAR8 *str)
