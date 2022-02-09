@@ -26,3 +26,5 @@ EFI_STATUS exec_image (EFI_HANDLE image, UINTN *code, CHAR16 **data);
 
 EFI_STATUS set_image_cmdline (EFI_HANDLE *image, CONST CHAR16 *cmdline,
                               EFI_LOADED_IMAGE **child);
+
+EFI_STATUS get_image_cmdline (EFI_LOADED_IMAGE *image, OUT CHAR16 **args);

@@ -39,6 +39,30 @@ EFI_STATUS exec_image (EFI_HANDLE image, UINTN *code, CHAR16 **data)
     return uefi_call_wrapper( BS->StartImage, 3, image, code, data );
 }
 
+// There are no guarantees about the load options being LNUL terminated,
+// so we alloc enough space for the load options plus 1 CHAR16 and make
+// sure there's a L'\0' at the and.
+EFI_STATUS get_image_cmdline (EFI_LOADED_IMAGE *image, OUT CHAR16 **args)
+{
+    if( !args )
+        return EFI_INVALID_PARAMETER;
+
+    *args = NULL;
+
+    if( !image )
+        return EFI_NOT_FOUND;
+
+    *args = efi_alloc( (image->LoadOptionsSize + 1) * sizeof(CHAR16) );
+
+    if( image->LoadOptionsSize )
+        mem_copy( *args, image->LoadOptions,
+                  image->LoadOptionsSize * sizeof(CHAR16) );
+
+    *args[ image->LoadOptionsSize ] = L'\0';
+
+    return EFI_SUCCESS;
+}
+
 EFI_STATUS set_image_cmdline (EFI_HANDLE *image, CONST CHAR16 *cmdline,
                               EFI_LOADED_IMAGE **child)
 {
