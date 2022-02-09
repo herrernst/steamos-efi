@@ -310,7 +310,7 @@ cleanup:
     return res;
 }
 
-EFI_STATUS console_mode ()
+EFI_STATUS console_mode (VOID)
 {
     EFI_CONSOLE_CONTROL_SCREEN_MODE mode;
     EFI_CONSOLE_CONTROL_PROTOCOL *ccp;
