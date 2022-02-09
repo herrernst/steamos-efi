@@ -75,6 +75,8 @@ EFI_STATUS set_image_cmdline (EFI_HANDLE *image, CONST CHAR16 *cmdline,
     if( cmdline )
     {
         (*child)->LoadOptions = (CHAR16 *)cmdline;
+        // The spec is unclear as to whether this is the char count
+        // or the byte count. grub expects the char count.
         (*child)->LoadOptionsSize = strlen_w( cmdline );
     }
     else
