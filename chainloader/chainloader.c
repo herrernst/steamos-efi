@@ -168,12 +168,11 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
         v_msg( L"Booting: %s\n  %s\n  %s\n",
                device, puuid, steamos.loader_path );
-        v_msg( L"with args: %s\n", steamos.args );
-        v_msg( L"Pause: 10s\n" );
+        v_msg( L"args in : %s\n", cmdline ?: L"NONE" );
+        v_msg( L"args out: %s\n", steamos.args );
 
         efi_free( puuid );
         efi_free( device );
-        sleep( 10 );
     }
 
     if( nvram_debug )
