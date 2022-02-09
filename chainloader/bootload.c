@@ -172,6 +172,30 @@ static found_cfg found[MAX_BOOTCONFS + 1];
 static UINTN found_cfg_count;
 static EFI_GUID *found_signatures[MAX_BOOTCONFS + 1];
 
+typedef enum
+{
+    BOOT_NONE,
+    BOOT_NORMAL,
+    BOOT_VERBOSE,
+    BOOT_MENU
+} opt_type;
+
+typedef struct
+{
+    CHAR16   label[80];
+    UINTN    config;
+    opt_type type;
+} menu_option;
+
+struct
+{
+    UINTN col_offset;
+    UINTN row_offset;
+    UINTN menu_width;
+    UINTN entries;
+    menu_option option[MAX_BOOTCONFS * 3];
+} boot_menu;
+
 static BOOLEAN update_scheduled_now (const cfg_entry *conf)
 {
     if( get_conf_uint( conf, "update" ) )
@@ -336,29 +360,124 @@ EFI_STATUS console_mode (VOID)
     return EFI_SUCCESS;
 }
 
-static VOID render_menu_option(IN CHAR16 *label, BOOLEAN on)
+static VOID render_menu_option(IN UINTN nth, BOOLEAN on)
 {
     con_set_output_attribute( on ? SELECTED_ATTRIBUTES : DEFAULT_ATTRIBUTES );
+    con_set_cursor_position( boot_menu.col_offset, boot_menu.row_offset + nth );
     con_output_text( on ? L"> " : L"  " );
-    con_output_text( label );
+    con_output_text( &boot_menu.option[ nth ].label[ 0 ] );
+    con_set_cursor_position( boot_menu.col_offset + boot_menu.menu_width + 2,
+                             boot_menu.row_offset + nth );
     con_output_text( on ? L" <" : L"  " );
 }
 
-INTN text_menu_choose_steamos_loader (INTN entry_default, UINTN timeout)
+// split YYYYMMDDHHmmSS style int into list: YYYY, MM, DD, HH, mm
+#define SPLIT_TIME(x) \
+    (UINT64)((x % 1000000000000000) - (x % 10000000000)) / 10000000000, \
+    (UINT64)((x % 10000000000)      - (x % 100000000))   / 100000000,   \
+    (UINT64)((x % 100000000)        - (x % 1000000))     / 1000000,     \
+    (UINT64)((x % 1000000)          - (x % 10000))       / 10000,       \
+    (UINT64)((x % 10000)            - (x % 100))         / 100
+
+static INTN fill_menu_spec (VOID)
 {
-    UINTN columns, column_offsets[MAX_BOOTCONFS];
-    UINTN rows, row_offset;
+    INTN entries = 0;
+
+    if( boot_menu.entries )
+        return boot_menu.entries;
+
+    CONST UINT64 llen = sizeof( boot_menu.option[ 0 ].label );
+
+    for( INTN i = 0; i < (INTN)found_cfg_count; i++ )
+    {
+        UINTN olen = 0;
+        CHAR16 *label;
+        INTN o = i * 3;
+        CHAR16 ui_label[4];
+
+        // ==================================================================
+        // UEFI printf doesn't do left align/right pad:
+        for( UINTN i = 0; i < ARRAY_SIZE(ui_label); i++ )
+            ui_label[ i ] = L' ';
+
+        mem_copy( &ui_label[ 0 ], found[ i ].label,
+                  strlen_w( found[ i ].label ) * sizeof( *found[ i ].label ) );
+
+        ui_label[ ARRAY_SIZE(ui_label) - 1 ] = L'\0';
+
+        // ==================================================================
+        // basic boot entry
+        label = &boot_menu.option[ o ].label[ 0 ];
+        boot_menu.option[ o ].type = BOOT_NORMAL;
+        boot_menu.option[ o ].config = i;
+
+        if( found[ i ].boot_time )
+            SPrint( label, llen,
+                    L"%s Last Boot: %04lu-%02lu-%02lu %02lu:%02lu",
+                    ui_label, SPLIT_TIME( found[ i ].boot_time ) );
+        else
+            SPrint( label, llen, L"%s Last Boot: -", ui_label );
+
+        label[ llen - 1 ] = L'\0';
+
+        olen = strlen_w( label );
+        if( olen > boot_menu.menu_width )
+            boot_menu.menu_width = olen;
+
+        // ==================================================================
+        // verbose boot entry
+
+        o++;
+
+        label = &boot_menu.option[ o ].label[ 0 ];
+        boot_menu.option[ o ].type = BOOT_VERBOSE;
+        boot_menu.option[ o ].config = i;
+        SPrint( label, llen, L"%s Verbose Boot", ui_label );
+        label[ llen - 1 ] = L'\0';
+
+        olen = strlen_w( label );
+        if( olen > boot_menu.menu_width )
+            boot_menu.menu_width = olen;
+
+        // ==================================================================
+        // boot to stage 2 loader menu
+
+        o++;
+
+        label = &boot_menu.option[ o ].label[ 0 ];
+        boot_menu.option[ o ].type = BOOT_MENU;
+        boot_menu.option[ o ].config = i;
+        SPrint( label, llen, L"%s OS Boot Menu", ui_label );
+        label[ llen - 1 ] = L'\0';
+
+        olen = strlen_w( label );
+        if( olen > boot_menu.menu_width )
+            boot_menu.menu_width = olen;
+
+        entries += 3;
+    }
+
+    boot_menu.entries = entries;
+
+    return entries;
+}
+
+INTN text_menu_choose_steamos_loader (INTN entry_default,
+                                      OUT opt_type *type,
+                                      UINTN timeout)
+{
+    UINTN cols;
+    UINTN rows;
     INTN i, selected;
     EFI_STATUS res;
-    const INTN console_max_mode = con_get_max_output_mode();
-    INTN entry_count = found_cfg_count;
+    const INTN opt console_max_mode = con_get_max_output_mode();
 
-    if( entry_count <= 0 )
+    if( fill_menu_spec() <= 0 )
         return -1;
 
     res = console_mode();
     if( EFI_ERROR( res ) && res != EFI_NOT_FOUND )
-        return res;
+       return res;
 
     if( console_max_mode > 0 )
     {
@@ -372,32 +491,45 @@ INTN text_menu_choose_steamos_loader (INTN entry_default, UINTN timeout)
         }
     }
 
-    res = con_output_mode_info( con_get_output_mode(), &columns, &rows);
+    res = con_output_mode_info( con_get_output_mode(), &cols, &rows);
+
+    // fall back to punchard size if we don't know how big the console is:
     if( EFI_ERROR( res ) )
     {
-        columns = 80;
+        cols = 80;
         rows = 25;
     }
 
-    selected = entry_default;
-    if( selected < 0 || selected >= entry_count )
+    selected = entry_default * 3;
+    if( selected < 0 || selected >= (INTN)boot_menu.entries )
         selected = 0;
 
     con_clear_screen();
     con_enable_cursor( FALSE );
-    row_offset = (rows - entry_count) / 2;
-    for( i = 0; i < entry_count; i++ )
+
+    // centre the menu vertically
+    boot_menu.row_offset = (rows - boot_menu.entries) / 2;
+
+    // ==================================================================
+    // … and horizontally:
+    INTN offset = cols / 2;
+    for( i = 0; i < (INTN)boot_menu.entries; i++ )
     {
-        INTN offset = ((columns - strlen_w( found[ i ].label )) / 2) - 2;
-        if( offset < 0 )
-            offset = 0;
+        INTN label_len = strlen_w( boot_menu.option[ i ].label );
+        INTN o = ((cols - label_len) / 2) - 2;
 
-        column_offsets[ i ] = offset;
+        if( o < 0 )
+            o = 0;
 
-        con_set_cursor_position( column_offsets[ i ], row_offset + i );
-
-        render_menu_option( found[ i ].label, i == selected );
+        if( o < offset )
+            offset = o;
     }
+
+    boot_menu.col_offset = offset;
+    // ==================================================================
+
+    for( i = 0; i < (INTN)boot_menu.entries; i++ )
+        render_menu_option( i, i == selected );
 
     con_set_output_attribute( DEFAULT_ATTRIBUTES );
     con_reset( FALSE );
@@ -446,7 +578,7 @@ INTN text_menu_choose_steamos_loader (INTN entry_default, UINTN timeout)
         }
         else if( key.ScanCode == SCAN_DOWN )
         {
-            if( selected < entry_count - 1 )
+            if( selected < (INTN)boot_menu.entries - 1 )
                 selected++;
             else
                 selected = 0;
@@ -455,20 +587,18 @@ INTN text_menu_choose_steamos_loader (INTN entry_default, UINTN timeout)
         if( selected == -1 || selected == old_selected )
             continue;
 
-        con_set_cursor_position( column_offsets[ old_selected ],
-                                 row_offset + old_selected );
-        render_menu_option( found[ old_selected ].label, FALSE );
-
-        con_set_cursor_position( column_offsets[ selected ],
-                                 row_offset + selected );
-        render_menu_option( found[ selected ].label, TRUE );
+        render_menu_option( old_selected, FALSE );
+        render_menu_option( selected, TRUE );
     }
 
 exit:
     con_clear_screen();
     display_menu = FALSE;
 
-    return selected;
+    if( type )
+        *type = boot_menu.option[ selected ].type;
+
+    return boot_menu.option[ selected ].config;
 }
 
 // disabled entries are considered older than enabled ones
@@ -1005,6 +1135,8 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
         display_menu = TRUE;
     }
 
+    opt_type boot_type = BOOT_NORMAL;
+
     // Let the user pick via menu:
     if( display_menu )
     {
@@ -1028,12 +1160,15 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
         if( oneshot )
             timeout = get_loader_config_timeout_oneshot();
 
+        boot_type = BOOT_NONE;
         selected =
-          text_menu_choose_steamos_loader( selected, timeout );
+          text_menu_choose_steamos_loader( selected, &boot_type, 0 );
 
         if( nvram_debug )
             set_loader_time_menu_usec();
     }
+
+    CHAR16 args[ 1024 ] = L"";
 
     if( selected > -1 )
     {
@@ -1055,13 +1190,33 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
         if( boot_other )
             flags |= ENTRY_FLAG_BOOT_OTHER;
 
+        switch( boot_type )
+        {
+          case BOOT_NONE:
+            v_msg( L"ALERT: boot menu type was NONE - should never happen\n" );
+
+          case BOOT_NORMAL:
+            break;
+
+          case BOOT_VERBOSE:
+            set_verbosity( 1 );
+            appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-verbose" );
+            break;
+
+          case BOOT_MENU:
+            appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-bootmenu" );
+            break;
+        }
+
         if( update )
         {
             // Our stage II bootloader looks for this command line string
             // Do not remove it unless you also change stage II
-            chosen->args = L" steamos-update=1 ";
+            appendstr_w( &args[ 0 ], sizeof( args ),  L" steamos-update=1" );
             flags |= ENTRY_FLAG_UPDATE;
         }
+
+        chosen->args = strdup_w( &args[ 0 ] );
 
         // free the unused configs:
         for( INTN i = 0; i < (INTN) found_cfg_count; i++ )
@@ -1115,6 +1270,8 @@ EFI_STATUS exec_bootloader (bootloader *boot)
     // module/dkms/initrd problem, but if we ever fix that, we'll
     // need to do what refind.main.c@394 does.
 
+    // WARNING: Do NOT free boot->args. UEFI _must not_ reuse
+    // this memory before the next program in the chain gets to it:
     res = set_image_cmdline( &efi_app, boot->args, &child );
     ERROR_JUMP( res, unload, L"command line not set" );
 
