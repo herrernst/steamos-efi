@@ -62,6 +62,7 @@ typedef struct
 } cmd_handler;
 
 static uint verbose = 0;
+static uint create_missing = 1;
 static DIR  *confdir = NULL;
 static DIR  *efidir = NULL;
 static int selected_image = -1;
@@ -152,6 +153,12 @@ int set_verbose (opt int n,
                  opt image_cfg *cfg,
                  opt size_t l);
 
+int no_create (opt int n,
+               opt int argc,
+               opt char **argv,
+               opt image_cfg *cfg,
+               opt size_t l);
+
 static arg_handler arg_handlers[] =
 {
     { "-h"             , 0, show_help   , ARG_EARLY },
@@ -161,6 +168,7 @@ static arg_handler arg_handlers[] =
     { "--efi-dir"      , 1, set_efidir  , ARG_EARLY },
     { "-v"             , 0, set_verbose , ARG_EARLY },
     { "--verbose"      , 0, set_verbose , ARG_EARLY },
+    { "--no-create"    , 0, no_create   , ARG_EARLY },
     { "--set"          , 2, set_entry   , ARG_STD   },
     { "--get"          , 1, get_entry   , ARG_STD   },
     { "--del"          , 1, del_entry   , ARG_STD   },
@@ -265,8 +273,7 @@ static void usage (const char *msg, ...)
     this-image                                                               \n\
     list-images                                                              \n\
     set-mode <update|update-other|shutdown|reboot|reboot-other|              \n\
-              booted|first-boot>                                             \n\
-    config [--set KEY VAL] [--del KEY] [--get KEY]                           \n\
+              booted|first-boot>                                             \n\    config [--no-create] [--set KEY VAL] [--del KEY] [--get KEY]             \n\
     create --image X [--set KEY VAL] ...                                     \n\
 \n\
     selected-image prints the name of the image that the chainloader will    \n\
@@ -425,6 +432,17 @@ int set_verbose (opt int n,
                  opt size_t l)
 {
     verbose++;
+
+    return 0;
+}
+
+int no_create (opt int n,
+               opt int argc,
+               opt char **argv,
+               opt image_cfg *cfg,
+               opt size_t l)
+{
+    create_missing = 0;
 
     return 0;
 }
@@ -1023,7 +1041,12 @@ int set_target (image_cfg *cfg_array, size_t limit,
     }
 
     if( selected_image < 0 )
-        error( ENOENT, "Image config for %s does not exist\n", id );
+    {
+        if( create_missing == 0 )
+            error( ENOENT, "Image config for %s does not exist\n", id );
+
+        new_target( cfg_array, limit, argc, argv, params );
+    }
 
     return CMD_PREPROCESSED;
 }
