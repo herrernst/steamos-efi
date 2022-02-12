@@ -273,7 +273,8 @@ static void usage (const char *msg, ...)
     this-image                                                               \n\
     list-images                                                              \n\
     set-mode <update|update-other|shutdown|reboot|reboot-other|              \n\
-              booted|first-boot>                                             \n\    config [--no-create] [--set KEY VAL] [--del KEY] [--get KEY]             \n\
+              booted|first-boot>                                             \n\
+    config [--no-create] [--set KEY VAL] [--del KEY] [--get KEY]             \n\
     create --image X [--set KEY VAL] ...                                     \n\
 \n\
     selected-image prints the name of the image that the chainloader will    \n\
