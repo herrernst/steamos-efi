@@ -64,10 +64,10 @@ EFIAPI
 clicked (IN EFI_KEY_DATA *key)
 {
     v_msg( L"Clicked: %u.%u :: %u.%u\n",
-           key->key.ScanCode,
-           key->key.UnicodeChar,
-           key->state.shift,
-           key->state.toggle);
+           key->Key.ScanCode,
+           key->Key.UnicodeChar,
+           key->KeyState.KeyShiftState,
+           key->KeyState.KeyToggleState);
 
     return EFI_SUCCESS;
 }

@@ -22,6 +22,9 @@
 // ============================================================================
 // SIMPLE_TEXT_INPUT_EX_PROTOCOL
 
+#ifndef EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID
+#warning "Using roll-your-own EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID defs"
+
 #define EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID \
     { 0xdd9e7534, 0x7762, 0x4698, \
       { 0x8c, 0x14, 0xf5, 0x85, 0x17, 0xa6, 0x25, 0xaa } }
@@ -38,16 +41,16 @@ typedef UINT8 EFI_KEY_TOGGLE_STATE;
 
 #define EFI_SHIFT_STATE_VALID 0x80000000
 
-typedef struct
+typedef struct EFI_KEY_STATE
 {
-    UINT32 shift;
-    EFI_KEY_TOGGLE_STATE toggle;
+    UINT32 KeyShiftState;
+    EFI_KEY_TOGGLE_STATE KeyToggleState;
 } EFI_KEY_STATE;
 
 typedef struct
 {
-    EFI_INPUT_KEY key;
-    EFI_KEY_STATE state;
+    EFI_INPUT_KEY Key;
+    EFI_KEY_STATE KeyState;
 } EFI_KEY_DATA;
 
 typedef EFI_STATUS
@@ -61,35 +64,36 @@ typedef EFI_STATUS
      OUT EFI_KEY_DATA *key);
 
 typedef EFI_STATUS
-(EFIAPI *EFI_INPUT_SET_STATE)
+(EFIAPI *EFI_SET_STATE)
     (IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *this,
      IN EFI_KEY_TOGGLE_STATE *state);
 
-typedef EFI_STATUS (EFIAPI *EFI_KEY_HANDLER) (IN EFI_KEY_DATA *key);
+typedef EFI_STATUS (EFIAPI *EFI_KEY_NOTIFY_FUNCTION) (IN EFI_KEY_DATA *key);
 
 typedef EFI_STATUS
-(EFIAPI *EFI_INPUT_UNREGISTER_KEY)
+(EFIAPI *EFI_UNREGISTER_KEYSTROKE_NOTIFY)
     (IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *this,
      IN VOID *registered);
 
 typedef EFI_STATUS
-(EFIAPI *EFI_INPUT_REGISTER_KEY)
+(EFIAPI *EFI_REGISTER_KEYSTROKE_NOTIFY)
     (IN struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *this,
      IN EFI_KEY_DATA *key,
-     IN EFI_KEY_HANDLER handler,
+     IN EFI_KEY_NOTIFY_FUNCTION handler,
      OUT VOID **registered);
 
 typedef struct _EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL
 {
-    EFI_INPUT_RESET_EX       reset;
-    EFI_INPUT_READ_KEY_EX    read_key;
-    EFI_EVENT                wait_for_key;
-    EFI_INPUT_SET_STATE      set_state;
-    EFI_INPUT_REGISTER_KEY   register_key;
-    EFI_INPUT_UNREGISTER_KEY unregister_key;
+    EFI_INPUT_RESET_EX       Reset;
+    EFI_INPUT_READ_KEY_EX    ReadKeyStrokeEx;
+    EFI_EVENT                WaitForKeyEx;
+    EFI_SET_STATE            SetState;
+    EFI_REGISTER_KEYSTROKE_NOTIFY   RegisterKeyNotify;
+    EFI_UNREGISTER_KEYSTROKE_NOTIFY UnregisterKeyNotify;
 } EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
+#endif
 
 // ============================================================================
-EFI_HANDLE *bind_key (UINT16 scan, CHAR16 chr, IN EFI_KEY_HANDLER handler);
+EFI_HANDLE *bind_key (UINT16 scan, CHAR16 chr, IN EFI_KEY_NOTIFY_FUNCTION handler);
 EFI_STATUS unbind_key (EFI_HANDLE *binding);
 EFI_STATUS reset_console (VOID);

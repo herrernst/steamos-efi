@@ -49,7 +49,7 @@ init_console_ex (void)
         // (possibly key-press but no key-release yet? - docs unclear)
         // to be detected but not all UEFI firmware supports this
         // (The deck, at least as of VANGOGH 101, does not):
-        res = uefi_call_wrapper( console->set_state, 2, console, &state );
+        res = uefi_call_wrapper( console->SetState, 2, console, &state );
 
         if( EFI_ERROR(res) && verbose )
             v_msg( L"console-ex set_state error: %d (likely harmless)\n", res );
@@ -66,24 +66,24 @@ EFI_STATUS reset_console (VOID)
     if( !init_console_ex() )
         return EFI_NOT_READY;
 
-    return uefi_call_wrapper( console->reset, 2, console, FALSE );
+    return uefi_call_wrapper( console->Reset, 2, console, FALSE );
 }
 
 EFI_HANDLE *
-bind_key (UINT16 scan, CHAR16 chr, IN EFI_KEY_HANDLER handler)
+bind_key (UINT16 scan, CHAR16 chr, IN EFI_KEY_NOTIFY_FUNCTION handler)
 {
     EFI_STATUS res;
     EFI_HANDLE *binding;
     EFI_KEY_DATA key = { { SCAN_NULL, CHAR_NULL },
                          { 0, 0 } };
 
-    key.key.ScanCode = scan;
-    key.key.UnicodeChar = chr;
+    key.Key.ScanCode = scan;
+    key.Key.UnicodeChar = chr;
 
     if( !init_console_ex() )
         return NULL;
 
-    res = uefi_call_wrapper( console->register_key, 4, console,
+    res = uefi_call_wrapper( console->RegisterKeyNotify, 4, console,
                              &key, handler, (VOID **)&binding );
 
     ERROR_RETURN( res, NULL,
@@ -98,5 +98,6 @@ unbind_key (EFI_HANDLE *binding)
     if( !console )
         return EFI_NOT_READY;
 
-    return uefi_call_wrapper( console->unregister_key, 2, console, binding );
+    return uefi_call_wrapper( console->UnregisterKeyNotify, 2,
+                              console, binding );
 }
