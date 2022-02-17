@@ -152,6 +152,10 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     res = find_loaders( filesystems, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
 
+    // Was the ⋯ button pressed on boot (ie before the chainloader started)?
+    if( get_hw_config_button_state() != 0 )
+        request_boot_menu();
+
     // the menu will be invoked here if it's been requested,
     // either by keypress or by nvram variables set before reboot
     // or by L"display-menu" on the UEFI command line:
