@@ -27,6 +27,10 @@
     { 0x8BE4DF61, 0x93CA, 0x11d2,                               \
       { 0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B, 0x8C } }
 
+#define DECK_FIRMWARE_GUID                                      \
+    { 0xf0393d2c, 0x78a4, 0x4bb9,                               \
+      { 0xaf, 0x08, 0x29, 0x32, 0xca, 0x0d, 0xc1, 0x1e } }
+
 void *get_efivar (CHAR16 *name, EFI_GUID *ns, UINTN *size);
 EFI_STATUS del_efivar (CHAR16 *name, EFI_GUID *ns);
 EFI_STATUS set_volatile_efivar   (CHAR16 *name, EFI_GUID *ns, UINTN len, void *d);
@@ -53,4 +57,5 @@ INTN get_loader_config_timeout ();
 BOOLEAN is_loader_config_timeout_oneshot_set ();
 INTN get_loader_config_timeout_oneshot ();
 UINTN get_chainloader_boot_attempts ();
+UINTN get_hw_config_button_state (void);
 EFI_STATUS set_chainloader_boot_attempts ();

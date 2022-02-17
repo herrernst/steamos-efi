@@ -663,6 +663,34 @@ UINTN get_chainloader_boot_attempts ()
     return res;
 }
 
+typedef struct { CHAR8 header[2]; CHAR8 state[1]; } hw_button_state;
+
+UINTN get_hw_config_button_state (void)
+{
+    EFI_GUID guid = DECK_FIRMWARE_GUID;
+    UINTN res = 0;
+    UINTN size;
+    VOID *val;
+
+    // contents are: 0xde 0xc1 0xXX
+    // ie 2 bytes of ident header as a sanity check, and 1 byte of state
+    // state is 0x00 is the key(s) of interest were not pressed:
+    val = get_efivar( L"JupiterFunctionConfigVariable", &guid, &size );
+
+    if( val )
+    {
+        hw_button_state *conf = val;
+
+        if( conf->header[0] == 0xde &&
+            conf->header[1] == 0xc1 )
+            res = (UINTN)conf->state[0];
+        efi_free( val );
+    }
+
+    return res;
+
+}
+
 EFI_STATUS set_chainloader_boot_attempts ()
 {
     EFI_GUID guid = CHAINLOADER_VARIABLE_GUID;
