@@ -192,13 +192,19 @@ typedef struct
     opt_type type;
 } menu_option;
 
+#ifdef SHOW_STAGE2_BOOTLOADER_MENU_OPTION
+#define BOOT_VARIANTS 3
+#else
+#define BOOT_VARIANTS 2
+#endif
+
 struct
 {
     UINTN col_offset;
     UINTN row_offset;
     UINTN menu_width;
     UINTN entries;
-    menu_option option[MAX_BOOTCONFS * 3];
+    menu_option option[MAX_BOOTCONFS * BOOT_VARIANTS];
 } boot_menu;
 
 static BOOLEAN update_scheduled_now (const cfg_entry *conf)
@@ -397,7 +403,7 @@ static INTN fill_menu_spec (VOID)
     {
         UINTN olen = 0;
         CHAR16 *label;
-        INTN o = i * 3;
+        INTN o = i * BOOT_VARIANTS;
         CHAR16 ui_label[4];
 
         // ==================================================================
@@ -444,6 +450,7 @@ static INTN fill_menu_spec (VOID)
         if( olen > boot_menu.menu_width )
             boot_menu.menu_width = olen;
 
+#ifdef SHOW_STAGE2_BOOTLOADER_MENU_OPTION
         // ==================================================================
         // boot to stage 2 loader menu
 
@@ -458,8 +465,9 @@ static INTN fill_menu_spec (VOID)
         olen = strlen_w( label );
         if( olen > boot_menu.menu_width )
             boot_menu.menu_width = olen;
+#endif
 
-        entries += 3;
+        entries += BOOT_VARIANTS;
     }
 
     boot_menu.entries = entries;
@@ -505,7 +513,7 @@ INTN text_menu_choose_steamos_loader (INTN entry_default,
         rows = 25;
     }
 
-    selected = entry_default * 3;
+    selected = entry_default * BOOT_VARIANTS;
     if( selected < 0 || selected >= (INTN)boot_menu.entries )
         selected = 0;
 
