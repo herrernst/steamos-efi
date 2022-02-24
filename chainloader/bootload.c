@@ -475,7 +475,7 @@ static INTN fill_menu_spec (VOID)
     return entries;
 }
 
-INTN text_menu_choose_steamos_loader (INTN entry_default,
+static INTN text_menu_choose_steamos_loader (INTN entry_default,
                                       OUT opt_type *type,
                                       UINTN timeout)
 {
@@ -1178,8 +1178,7 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
 #endif
 
         boot_type = BOOT_NONE;
-        selected =
-          text_menu_choose_steamos_loader( selected, &boot_type, 0 );
+        selected = text_menu_choose_steamos_loader( selected, &boot_type, 0 );
 
         if( nvram_debug )
             set_loader_time_menu_usec();
