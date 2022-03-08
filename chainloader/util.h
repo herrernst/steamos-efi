@@ -123,8 +123,6 @@ CHAR16 *device_path_string (EFI_DEVICE_PATH *dp);
 BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b);
 CHAR16 *guid_str (EFI_GUID *guid);
 
-VOID sleep (UINTN seconds);
-
 UINT64 efi_time_to_timestamp (EFI_TIME *time);
 #endif
 

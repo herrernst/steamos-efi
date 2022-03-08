@@ -197,7 +197,7 @@ cleanup:
     }
 
     Print( L"Boot failed, waiting 5s...\n" );
-    sleep( 5 );
+    uefi_call_wrapper( BS->Stall, 1, 5 * 1000000 );
 
     return res;
 }

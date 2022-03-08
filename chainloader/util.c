@@ -96,16 +96,6 @@ CONST CHAR16 *efi_memtypestr (EFI_MEMORY_TYPE m)
     }
 }
 
-VOID sleep (UINTN seconds)
-{
-    // sleep for at most 1 minute
-    if( seconds && (seconds < 60) )
-    {
-        UINTN musec = 1000000 * seconds;
-        uefi_call_wrapper( BS->Stall, 1, musec );
-    }
-}
-
 EFI_STATUS get_handle_protocol (EFI_HANDLE *handle,
                                 EFI_GUID *id,
                                 OUT VOID **protocol)
