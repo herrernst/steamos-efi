@@ -182,6 +182,7 @@ typedef enum
     BOOT_NONE,
     BOOT_NORMAL,
     BOOT_VERBOSE,
+    BOOT_RESET,
     BOOT_MENU
 } opt_type;
 
@@ -193,9 +194,9 @@ typedef struct
 } menu_option;
 
 #ifdef SHOW_STAGE2_BOOTLOADER_MENU_OPTION
-#define BOOT_VARIANTS 3
+#define BOOT_VARIANTS 4
 #else
-#define BOOT_VARIANTS 2
+#define BOOT_VARIANTS 3
 #endif
 
 struct
@@ -466,6 +467,21 @@ static INTN fill_menu_spec (VOID)
         if( olen > boot_menu.menu_width )
             boot_menu.menu_width = olen;
 #endif
+
+        // ==================================================================
+        // verbose boot entry
+
+        o++;
+
+        label = &boot_menu.option[ o ].label[ 0 ];
+        boot_menu.option[ o ].type = BOOT_RESET;
+        boot_menu.option[ o ].config = i;
+        SPrint( label, llen, L"%s Reset Deck (ERASE ALL USER DATA)", ui_label );
+        label[ llen - 1 ] = L'\0';
+
+        olen = strlen_w( label );
+        if( olen > boot_menu.menu_width )
+            boot_menu.menu_width = olen;
 
         entries += BOOT_VARIANTS;
     }
@@ -1217,6 +1233,13 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
           case BOOT_VERBOSE:
             set_verbosity( 1 );
             appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-verbose" );
+            break;
+
+          case BOOT_RESET:
+            // This one is steamos.xxx as it can be passed on verbatim to
+            // the kernel and doesn't need stage 2 to do anything else for us:
+            appendstr_w( &args[ 0 ], sizeof( args),
+                         L" steamos.factory-reset=1" );
             break;
 
           case BOOT_MENU:
