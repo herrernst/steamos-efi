@@ -179,11 +179,11 @@ static EFI_GUID *found_signatures[MAX_BOOTCONFS + 1];
 
 typedef enum
 {
-    BOOT_NONE,
-    BOOT_NORMAL,
-    BOOT_VERBOSE,
-    BOOT_RESET,
-    BOOT_MENU
+    BOOT_NONE    = 0x00,
+    BOOT_NORMAL  = 0x01,
+    BOOT_VERBOSE = 0x02, // implemented by: grub steamenv module
+    BOOT_RESET   = 0x04, // implemented by: steamos-customizations/dracut
+    BOOT_MENU    = 0x08, // NOT implemented: grub config? grub steamenv mod?
 } opt_type;
 
 typedef struct
@@ -193,19 +193,13 @@ typedef struct
     opt_type type;
 } menu_option;
 
-#ifdef SHOW_STAGE2_BOOTLOADER_MENU_OPTION
-#define BOOT_VARIANTS 4
-#else
-#define BOOT_VARIANTS 3
-#endif
-
 struct
 {
     UINTN col_offset;
     UINTN row_offset;
     UINTN menu_width;
     UINTN entries;
-    menu_option option[MAX_BOOTCONFS * BOOT_VARIANTS];
+    menu_option option[MAX_BOOTCONFS + 2]; // 1 per bootconf + reset + guard
 } boot_menu;
 
 static BOOLEAN update_scheduled_now (const cfg_entry *conf)
@@ -391,7 +385,7 @@ static VOID render_menu_option(IN UINTN nth, BOOLEAN on)
     (UINT64)((x % 1000000)          - (x % 10000))       / 10000,       \
     (UINT64)((x % 10000)            - (x % 100))         / 100
 
-static INTN fill_menu_spec (VOID)
+static INTN fill_menu_spec (INTN selected)
 {
     INTN entries = 0;
 
@@ -404,31 +398,45 @@ static INTN fill_menu_spec (VOID)
     {
         UINTN olen = 0;
         CHAR16 *label;
-        INTN o = i * BOOT_VARIANTS;
-        CHAR16 ui_label[4];
+        CHAR16 ui_label[16];
+        BOOLEAN current = (selected == i);
+        // The menu is displayed in reverse order to the least->most wanted
+        // order of the found configs.
+        UINTN o = (found_cfg_count - 1) - i;
+        UINTN label_size;
 
         // ==================================================================
         // UEFI printf doesn't do left align/right pad:
-        for( UINTN i = 0; i < ARRAY_SIZE(ui_label); i++ )
-            ui_label[ i ] = L' ';
+        for( UINTN j = 0; j < ARRAY_SIZE(ui_label); j++ )
+            ui_label[ j ] = L' ';
 
-        mem_copy( &ui_label[ 0 ], found[ i ].label,
-                  strlen_w( found[ i ].label ) * sizeof( *found[ i ].label ) );
+        label_size = strlen_w( found[ i ].label );
+
+        if( label_size > ARRAY_SIZE(ui_label) )
+            label_size = ARRAY_SIZE(ui_label);
+
+        label_size *= sizeof( *found[ i ].label );
+
+        mem_copy( &ui_label[ 0 ], found[ i ].label, label_size );
 
         ui_label[ ARRAY_SIZE(ui_label) - 1 ] = L'\0';
 
         // ==================================================================
         // basic boot entry
         label = &boot_menu.option[ o ].label[ 0 ];
-        boot_menu.option[ o ].type = BOOT_NORMAL;
+        boot_menu.option[ o ].type = BOOT_NORMAL|BOOT_VERBOSE;
         boot_menu.option[ o ].config = i;
 
         if( found[ i ].boot_time )
             SPrint( label, llen,
-                    L"%s Last Boot: %04lu-%02lu-%02lu %02lu:%02lu",
+                    L"%s %s (@ %04lu-%02lu-%02lu %02lu:%02lu)",
+                    current ? L"Current " : L"Previous",
                     ui_label, SPLIT_TIME( found[ i ].boot_time ) );
         else
-            SPrint( label, llen, L"%s Last Boot: -", ui_label );
+            SPrint( label, llen,
+                    L"%s %s (@ -unknown-boot-time-)",
+                    current ? L"Current " : L"Previous",
+                    ui_label );
 
         label[ llen - 1 ] = L'\0';
 
@@ -436,54 +444,25 @@ static INTN fill_menu_spec (VOID)
         if( olen > boot_menu.menu_width )
             boot_menu.menu_width = olen;
 
-        // ==================================================================
-        // verbose boot entry
+        entries++;
+    }
 
-        o++;
+    if( entries > 0 )
+    {
+        UINTN olen = 0;
+        CHAR16 *label;
 
-        label = &boot_menu.option[ o ].label[ 0 ];
-        boot_menu.option[ o ].type = BOOT_VERBOSE;
-        boot_menu.option[ o ].config = i;
-        SPrint( label, llen, L"%s Verbose Boot", ui_label );
+        label = &boot_menu.option[ entries ].label[ 0 ];
+        boot_menu.option[ entries ].type = BOOT_VERBOSE|BOOT_RESET;
+        boot_menu.option[ entries ].config = selected;
+        SPrint( label, llen, L"Factory Reset - CLEAR ALL PERSONAL DATA" );
         label[ llen - 1 ] = L'\0';
 
         olen = strlen_w( label );
         if( olen > boot_menu.menu_width )
             boot_menu.menu_width = olen;
 
-#ifdef SHOW_STAGE2_BOOTLOADER_MENU_OPTION
-        // ==================================================================
-        // boot to stage 2 loader menu
-
-        o++;
-
-        label = &boot_menu.option[ o ].label[ 0 ];
-        boot_menu.option[ o ].type = BOOT_MENU;
-        boot_menu.option[ o ].config = i;
-        SPrint( label, llen, L"%s OS Boot Menu", ui_label );
-        label[ llen - 1 ] = L'\0';
-
-        olen = strlen_w( label );
-        if( olen > boot_menu.menu_width )
-            boot_menu.menu_width = olen;
-#endif
-
-        // ==================================================================
-        // verbose boot entry
-
-        o++;
-
-        label = &boot_menu.option[ o ].label[ 0 ];
-        boot_menu.option[ o ].type = BOOT_RESET;
-        boot_menu.option[ o ].config = i;
-        SPrint( label, llen, L"%s Reset Deck (ERASE ALL USER DATA)", ui_label );
-        label[ llen - 1 ] = L'\0';
-
-        olen = strlen_w( label );
-        if( olen > boot_menu.menu_width )
-            boot_menu.menu_width = olen;
-
-        entries += BOOT_VARIANTS;
+        entries++;
     }
 
     boot_menu.entries = entries;
@@ -501,7 +480,10 @@ static INTN text_menu_choose_steamos_loader (INTN entry_default,
     EFI_STATUS res;
     const INTN opt console_max_mode = con_get_max_output_mode();
 
-    if( fill_menu_spec() <= 0 )
+    if( entry_default < 0 )
+        entry_default = 0;
+
+    if( fill_menu_spec( entry_default ) <= 0 )
         return -1;
 
     res = console_mode();
@@ -529,9 +511,13 @@ static INTN text_menu_choose_steamos_loader (INTN entry_default,
         rows = 25;
     }
 
-    selected = entry_default * BOOT_VARIANTS;
+    // The menu is displayed in reverse order to the least->most wanted order
+    // of the found configs.
+    selected = entry_default;
     if( selected < 0 || selected >= (INTN)boot_menu.entries )
         selected = 0;
+    else
+        selected = (found_cfg_count - 1) - selected;
 
     con_clear_screen();
     con_enable_cursor( FALSE );
@@ -1230,21 +1216,25 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
           case BOOT_NORMAL:
             break;
 
-          case BOOT_VERBOSE:
-            set_verbosity( 1 );
-            appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-verbose" );
-            break;
+          default:
+            if( boot_type & BOOT_VERBOSE )
+            {
+                set_verbosity( 1 );
+                appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-verbose" );
+            }
 
-          case BOOT_RESET:
-            // This one is steamos.xxx as it can be passed on verbatim to
-            // the kernel and doesn't need stage 2 to do anything else for us:
-            appendstr_w( &args[ 0 ], sizeof( args),
-                         L" steamos.factory-reset=1" );
-            break;
+            if( boot_type & BOOT_RESET )
+            {
+                // This one is steamos.xxx as it can be passed on verbatim to
+                // the kernel and doesn't need stage 2 to do anything else:
+                appendstr_w( &args[ 0 ], sizeof( args ),
+                             L" steamos.factory-reset=1" );
+            }
 
-          case BOOT_MENU:
-            appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-bootmenu" );
-            break;
+            if( boot_type & BOOT_MENU )
+            {
+                appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-bootmenu" );
+            }
         }
 
         if( update )
