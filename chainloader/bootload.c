@@ -32,10 +32,6 @@
 #include "partset.h"
 #include "console-ex.h"
 
-// this is the console output attributes for the menu
-#define SELECTED_ATTRIBUTES (EFI_MAGENTA   | EFI_BACKGROUND_BLACK)
-#define DEFAULT_ATTRIBUTES  (EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK)
-
 // this converts micro-seconds to event timeout in 10ns
 #define EFI_TIMER_PERIOD_MICROSECONDS(s) (s * 10)
 
@@ -188,19 +184,9 @@ typedef enum
 
 typedef struct
 {
-    CHAR16   label[80];
     UINTN    config;
     opt_type type;
-} menu_option;
-
-struct
-{
-    UINTN col_offset;
-    UINTN row_offset;
-    UINTN menu_width;
-    UINTN entries;
-    menu_option option[MAX_BOOTCONFS + 2]; // 1 per bootconf + reset + guard
-} boot_menu;
+} boot_menu_option_data;
 
 static BOOLEAN update_scheduled_now (const cfg_entry *conf)
 {
@@ -340,43 +326,6 @@ cleanup:
     return res;
 }
 
-EFI_STATUS console_mode (VOID)
-{
-    EFI_CONSOLE_CONTROL_SCREEN_MODE mode;
-    EFI_CONSOLE_CONTROL_PROTOCOL *ccp;
-    EFI_STATUS res;
-    BOOLEAN locked;
-    BOOLEAN uga;
-    EFI_GUID ccp_guid = EFI_CONSOLE_CONTROL_PROTOCOL_GUID;
-
-    res = get_protocol( &ccp_guid, NULL, (VOID **)&ccp );
-    if( res == EFI_NOT_FOUND )
-        return res;
-    ERROR_RETURN( res, res, "Could not get_protocol: %r\n", res );
-
-    res = conctl_get_mode( ccp, &mode, &uga, &locked );
-    ERROR_RETURN( res, res, "Could not conctl_get_mode: %r\n", res );
-
-    if( mode == CONCTL_SCREEN_TEXT )
-        return EFI_SUCCESS;
-
-    res = conctl_set_mode( ccp, CONCTL_SCREEN_TEXT );
-    ERROR_RETURN( res, res, "Could not conctl_set_mode: %r\n", res );
-
-    return EFI_SUCCESS;
-}
-
-static VOID render_menu_option(IN UINTN nth, BOOLEAN on)
-{
-    con_set_output_attribute( on ? SELECTED_ATTRIBUTES : DEFAULT_ATTRIBUTES );
-    con_set_cursor_position( boot_menu.col_offset, boot_menu.row_offset + nth );
-    con_output_text( on ? L"> " : L"  " );
-    con_output_text( &boot_menu.option[ nth ].label[ 0 ] );
-    con_set_cursor_position( boot_menu.col_offset + boot_menu.menu_width + 2,
-                             boot_menu.row_offset + nth );
-    con_output_text( on ? L" <" : L"  " );
-}
-
 // split YYYYMMDDHHmmSS style int into list: YYYY, MM, DD, HH, mm
 #define SPLIT_TIME(x) \
     (UINT64)((x % 1000000000000000) - (x % 10000000000)) / 10000000000, \
@@ -385,18 +334,21 @@ static VOID render_menu_option(IN UINTN nth, BOOLEAN on)
     (UINT64)((x % 1000000)          - (x % 10000))       / 10000,       \
     (UINT64)((x % 10000)            - (x % 100))         / 100
 
-static INTN fill_menu_spec (INTN selected)
+static VOID destroy_boot_menu (con_menu *menu)
+{
+    con_menu_free( menu );
+}
+
+static con_menu *create_boot_menu (INTN selected)
 {
     INTN entries = 0;
 
-    if( boot_menu.entries )
-        return boot_menu.entries;
+    con_menu *boot_menu = con_menu_alloc( found_cfg_count + 1, L"SteamOS" );
 
-    CONST UINT64 llen = sizeof( boot_menu.option[ 0 ].label );
+    const UINT64 llen = sizeof( boot_menu->option[ 0 ].label );
 
     for( INTN i = 0; i < (INTN)found_cfg_count; i++ )
     {
-        UINTN olen = 0;
         CHAR16 *label;
         CHAR16 ui_label[16];
         BOOLEAN current = (selected == i);
@@ -404,6 +356,8 @@ static INTN fill_menu_spec (INTN selected)
         // order of the found configs.
         UINTN o = (found_cfg_count - 1) - i;
         UINTN label_size;
+        boot_menu_option_data *odata =
+          efi_alloc( sizeof(boot_menu_option_data) );
 
         // ==================================================================
         // UEFI printf doesn't do left align/right pad:
@@ -423,9 +377,10 @@ static INTN fill_menu_spec (INTN selected)
 
         // ==================================================================
         // basic boot entry
-        label = &boot_menu.option[ o ].label[ 0 ];
-        boot_menu.option[ o ].type = BOOT_NORMAL|BOOT_VERBOSE;
-        boot_menu.option[ o ].config = i;
+        label = &(boot_menu->option[ o ].label[ 0 ]);
+        boot_menu->option[ o ].data = odata;
+        odata->type = BOOT_NORMAL|BOOT_VERBOSE;
+        odata->config = i;
 
         if( found[ i ].boot_time )
             SPrint( label, llen,
@@ -440,180 +395,82 @@ static INTN fill_menu_spec (INTN selected)
 
         label[ llen - 1 ] = L'\0';
 
-        olen = strlen_w( label );
-        if( olen > boot_menu.menu_width )
-            boot_menu.menu_width = olen;
-
         entries++;
     }
 
     if( entries > 0 )
     {
-        UINTN olen = 0;
         CHAR16 *label;
+        boot_menu_option_data *odata =
+          efi_alloc( sizeof(boot_menu_option_data) );
 
-        label = &boot_menu.option[ entries ].label[ 0 ];
-        boot_menu.option[ entries ].type = BOOT_VERBOSE|BOOT_RESET;
-        boot_menu.option[ entries ].config = selected;
+        label = &(boot_menu->option[ entries ].label[ 0 ]);
+        boot_menu->option[ entries ].data = odata;
+        odata->type = BOOT_VERBOSE|BOOT_RESET;
+        odata->config = selected;
         SPrint( label, llen, L"Factory Reset - CLEAR ALL PERSONAL DATA" );
         label[ llen - 1 ] = L'\0';
-
-        olen = strlen_w( label );
-        if( olen > boot_menu.menu_width )
-            boot_menu.menu_width = olen;
 
         entries++;
     }
 
-    boot_menu.entries = entries;
+    boot_menu->entries = entries;
 
-    return entries;
+    return boot_menu;
 }
 
 static INTN text_menu_choose_steamos_loader (INTN entry_default,
                                       OUT opt_type *type,
-                                      UINTN timeout)
+                                      opt UINTN timeout)
 {
-    UINTN cols;
-    UINTN rows;
-    INTN i, selected;
-    EFI_STATUS res;
+    INTN selected, rv;
     const INTN opt console_max_mode = con_get_max_output_mode();
+    con_menu *boot_menu = NULL;
+    boot_menu_option_data *chosen;
 
     if( entry_default < 0 )
         entry_default = 0;
 
-    if( fill_menu_spec( entry_default ) <= 0 )
-        return -1;
-
-    res = console_mode();
-    if( EFI_ERROR( res ) && res != EFI_NOT_FOUND )
-       return res;
-
-    if( console_max_mode > 0 )
-    {
-        for( i = console_max_mode - 1; i != 0; i-- )
-        {
-            res = con_set_output_mode( i );
-            if( EFI_ERROR( res ) )
-                continue;
-
-            break;
-        }
-    }
-
-    res = con_output_mode_info( con_get_output_mode(), &cols, &rows);
-
-    // fall back to punchard size if we don't know how big the console is:
-    if( EFI_ERROR( res ) )
-    {
-        cols = 80;
-        rows = 25;
-    }
+    boot_menu = create_boot_menu( entry_default );
 
     // The menu is displayed in reverse order to the least->most wanted order
     // of the found configs.
     selected = entry_default;
-    if( selected < 0 || selected >= (INTN)boot_menu.entries )
+    if( selected < 0 || selected >= (INTN)boot_menu->entries )
         selected = 0;
     else
         selected = (found_cfg_count - 1) - selected;
 
-    con_clear_screen();
-    con_enable_cursor( FALSE );
-
-    // centre the menu vertically
-    boot_menu.row_offset = (rows - boot_menu.entries) / 2;
-
-    // ==================================================================
-    // … and horizontally:
-    INTN offset = cols / 2;
-    for( i = 0; i < (INTN)boot_menu.entries; i++ )
+    while( TRUE )
     {
-        INTN label_len = strlen_w( boot_menu.option[ i ].label );
-        INTN o = ((cols - label_len) / 2) - 2;
+        con_run_menu( boot_menu, selected, (VOID **)&chosen );
 
-        if( o < 0 )
-            o = 0;
+        if( chosen->type & BOOT_RESET )
+        {
+            if( !con_confirm( L"Really erase personal data?", FALSE ) )
+                continue;
+        }
 
-        if( o < offset )
-            offset = o;
+        break;
     }
 
-    boot_menu.col_offset = offset;
-    // ==================================================================
-
-    for( i = 0; i < (INTN)boot_menu.entries; i++ )
-        render_menu_option( i, i == selected );
-
-    con_set_output_attribute( DEFAULT_ATTRIBUTES );
-    con_reset( FALSE );
-
-    if( timeout )
-    {
-        EFI_EVENT event;
-
-        event = ST->ConIn->WaitForKey;
-        res = WaitForSingleEvent( event, EFI_TIMER_PERIOD_MICROSECONDS( timeout ) );
-        if( res == EFI_TIMEOUT )
-            goto exit;
-        ERROR_JUMP( res, exit, L"Wait for event failed: %r\n", res );
-    }
-
-    for( ;; )
-    {
-        INTN old_selected = selected;
-        EFI_INPUT_KEY key;
-
-        con_set_output_attribute( DEFAULT_ATTRIBUTES );
-
-        res = WaitForSingleEvent( ST->ConIn->WaitForKey, 0 );
-        ERROR_BREAK( res, L"Could not WaitForSingleEvent: %r\n", res );
-
-        res = con_read_key( &key );
-        ERROR_BREAK( res, L"Could not con_read_key: %r\n", res );
-
-        if( ( key.UnicodeChar == CHAR_LINEFEED ) ||
-            ( key.UnicodeChar == CHAR_CARRIAGE_RETURN ) )
-        {
-            break;
-        }
-        else if( ( key.ScanCode    == SCAN_ESC ) &&
-                 ( key.UnicodeChar == 0        ) )
-        {
-            selected = -1;
-            break;
-        }
-        else if( key.ScanCode == SCAN_UP )
-        {
-            if( selected > 0 )
-                selected--;
-            else
-                selected = 0;
-        }
-        else if( key.ScanCode == SCAN_DOWN )
-        {
-            if( selected < (INTN)boot_menu.entries - 1 )
-                selected++;
-            else
-                selected = 0;
-        }
-
-        if( selected == -1 || selected == old_selected )
-            continue;
-
-        render_menu_option( old_selected, FALSE );
-        render_menu_option( selected, TRUE );
-    }
-
-exit:
-    con_clear_screen();
     display_menu = FALSE;
 
-    if( type )
-        *type = boot_menu.option[ selected ].type;
+    if( chosen )
+    {
+        if( type )
+            *type = chosen->type;
 
-    return boot_menu.option[ selected ].config;
+        rv = chosen->config;
+    }
+    else
+    {
+        rv = entry_default;
+    }
+
+    destroy_boot_menu( boot_menu );
+
+    return rv;
 }
 
 // disabled entries are considered older than enabled ones
