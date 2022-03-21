@@ -133,3 +133,28 @@ EFI_STATUS con_set_output_attribute (IN UINTN attribute);
 EFI_STATUS con_clear_screen ();
 EFI_STATUS con_set_cursor_position (IN UINTN col, IN UINTN row);
 EFI_STATUS con_enable_cursor (IN BOOLEAN enable);
+
+//
+// Menu support
+//
+
+typedef struct
+{
+    CHAR16 label[80];
+    VOID *data;
+} con_menu_option;
+
+typedef struct
+{
+    CHAR16 *title;
+    struct { UINTN col; UINTN row; } offset;
+    struct { UINTN col; UINTN row; } screen;
+    UINTN width;
+    UINTN entries;
+    con_menu_option *option;
+} con_menu;
+
+con_menu *con_menu_alloc (INTN entries, CONST CHAR16 *title);
+VOID con_menu_free (con_menu *menu);
+INTN con_run_menu (con_menu *menu, UINTN start, OUT VOID **chosen);
+BOOLEAN con_confirm (CONST CHAR16 *question, BOOLEAN default_answer);
