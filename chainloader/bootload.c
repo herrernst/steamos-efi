@@ -343,7 +343,10 @@ static con_menu *create_boot_menu (INTN selected)
 {
     INTN entries = 0;
 
-    con_menu *boot_menu = con_menu_alloc( found_cfg_count + 1, L"SteamOS" );
+    // 2 boot variants per found config: verbose & verbose+grub-menu
+    // 1 reset mode boot option
+    con_menu *boot_menu =
+      con_menu_alloc( (found_cfg_count * 2) + 1, L"SteamOS" );
 
     const UINT64 llen = sizeof( boot_menu->option[ 0 ].label );
 
@@ -354,10 +357,9 @@ static con_menu *create_boot_menu (INTN selected)
         BOOLEAN current = (selected == i);
         // The menu is displayed in reverse order to the least->most wanted
         // order of the found configs.
-        UINTN o = (found_cfg_count - 1) - i;
+        UINTN o;
         UINTN label_size;
-        boot_menu_option_data *odata =
-          efi_alloc( sizeof(boot_menu_option_data) );
+        boot_menu_option_data *odata = NULL;
 
         // ==================================================================
         // UEFI printf doesn't do left align/right pad:
@@ -377,10 +379,13 @@ static con_menu *create_boot_menu (INTN selected)
 
         // ==================================================================
         // basic boot entry
+        o = (found_cfg_count - 1) - i;
+        odata = efi_alloc( sizeof(boot_menu_option_data) );
         label = &(boot_menu->option[ o ].label[ 0 ]);
-        boot_menu->option[ o ].data = odata;
         odata->type = BOOT_NORMAL|BOOT_VERBOSE;
         odata->config = i;
+        boot_menu->option[ o ].data = odata;
+        odata = NULL;
 
         if( found[ i ].boot_time )
             SPrint( label, llen,
@@ -392,6 +397,24 @@ static con_menu *create_boot_menu (INTN selected)
                     L"%s %s (@ -unknown-boot-time-)",
                     current ? L"Current " : L"Previous",
                     ui_label );
+
+        label[ llen - 1 ] = L'\0';
+
+        entries++;
+
+        // ==================================================================
+        // boot via stage ii (grub) menu
+        o += found_cfg_count;
+        odata = efi_alloc( sizeof(boot_menu_option_data) );
+        label = &(boot_menu->option[ o ].label[ 0 ]);
+        odata->type = BOOT_NORMAL|BOOT_VERBOSE|BOOT_MENU;
+        odata->config = i;
+        boot_menu->option[ o ].data = odata;
+        odata = NULL;
+
+        SPrint( label, llen,
+                L"%s %s (OS Boot Menu)",
+                current ? L"Current " : L"Previous", ui_label );
 
         label[ llen - 1 ] = L'\0';
 
