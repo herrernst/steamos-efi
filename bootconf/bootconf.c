@@ -711,6 +711,12 @@ cleanup:
     return data;
 }
 
+static void sync_unmap( void *addr, size_t length )
+{
+    msync( addr, length, MS_SYNC );
+    munmap( addr, length );
+}
+
 static char *self_ident (image_cfg *cfg_array, size_t limit)
 {
     size_t i = 0;
@@ -756,13 +762,15 @@ static char *self_ident (image_cfg *cfg_array, size_t limit)
                         (const char *)x_efi_uuid   ) == 0 )
                 this_image_ident = strdup( &conf->ident[0] );
 
-            munmap( x_data, x_size );
+            sync_unmap( x_data, x_size );
         }
     }
 
 cleanup:
     if( self_data )
-        munmap( self_data, self_size );
+    {
+        sync_unmap( self_data, self_size );
+    }
     else
         error( ENOENT, "partset '%s' not found in efi dir '%s'",
                self_partset, efidir_path ?: "" );
@@ -1330,7 +1338,7 @@ static int parse_config_fd (int cffile, cfg_entry **config)
 
 cleanup:
     if( cfdata )
-        munmap( cfdata, cfsize );
+        sync_unmap( cfdata, cfsize );
     return res;
 
 allocfail:

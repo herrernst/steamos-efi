@@ -283,8 +283,11 @@ size_t write_config (DIR *dir, const char *ident, const cfg_entry *cfg)
 
             munmap( new_conf, written );
             close( fd );
-
             if( renameat( dfd, &path[ 0 ], dfd, &save_at[ 0 ] ) != 0 )
+                goto fail;
+
+            // to make sure we sync the rename action, reopen-and-sync the target file
+            if( fsync( openat( dfd, save_at, O_RDONLY ) ) != 0 )
                 goto fail;
         }
     }
