@@ -289,6 +289,10 @@ size_t write_config (DIR *dir, const char *ident, const cfg_entry *cfg)
             // to make sure we sync the rename action, reopen-and-sync the target file
             if( fsync( openat( dfd, save_at, O_RDONLY ) ) != 0 )
                 goto fail;
+
+            // and sync the directory FD as well, just in case.
+            if( fsync( dfd ) != 0 )
+                goto fail;
         }
     }
     else
