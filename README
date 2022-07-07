@@ -17,6 +17,12 @@ This file will focus more on the actual implementation details.
 
  * The chainloader starts
  * It checks the directory it was loaded from for the following flag files:
+   * PREALLOC_DEBUGLOG "steamcl-debug.log"
+     * If present treated as a fixed size file into which to write all
+       debug, warning, and log messages (numbered and with timestamps).
+     * If logging reaches the end of the file, messages start being
+       written at the start of the file again.
+     * 3 KiB of log should be sufficient to avoud wrap around
    * FLAGFILE_RESTRICT "steamcl-restricted"
      * If present, do not consider any other media to boot from,
        ie don't check USB sticks or other hard discs for SteamOS images
