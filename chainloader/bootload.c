@@ -843,6 +843,7 @@ EFI_STATUS find_loaders (EFI_HANDLE *handles,
     for( UINTN i = 0; i < n_handles && j < MAX_BOOTCONFS; i++ )
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs = NULL;
+        EFI_DEVICE_PATH *efi_device = NULL;
         EFI_GUID efi_guid = NULL_GUID;
         CHAR16 *efi_label = NULL;
         CHAR16 *os_image_name = NULL;
@@ -858,17 +859,17 @@ EFI_STATUS find_loaders (EFI_HANDLE *handles,
         ERROR_CONTINUE( res, L"partition #%u not opened", i );
 
         res = get_handle_protocol( &handles[ i ], &dp_guid,
-                                   (VOID **)&found[ i ].device_path );
+                                   (VOID **)&efi_device );
         ERROR_CONTINUE( res, L"partition #%u has no device path (what?)", i );
 
-        efi_guid = device_path_partition_uuid( found[ i ].device_path );
+        efi_guid = device_path_partition_uuid( efi_device );
 
         // Don't look at the ESP since we know it can't be a pseudo-EFI
         if( guid_cmp( &esp_guid, &efi_guid ) == 0 )
             continue;
 
         if( restricted )
-            if( !on_same_device( restricted, found[ i ].device_path ) )
+            if( !on_same_device( restricted, efi_device ) )
                 continue;
 
         efi_label = guid_str( &efi_guid );
@@ -925,6 +926,7 @@ EFI_STATUS find_loaders (EFI_HANDLE *handles,
             continue;
         }
 
+        found[ j ].device_path = efi_device;
         found[ j ].disabled  = get_conf_uint( conf, "image-invalid" ) > 0;
         found[ j ].cfg       = conf;
         found[ j ].partition = handles[ i ];
