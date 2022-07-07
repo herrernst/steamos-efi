@@ -465,7 +465,7 @@ static inline void decr_minute (EFI_TIME *time)
 
 // UTC = now + now.zone
 // now.zoneis ± 24 hours (1440 minutes)
-static VOID efi_time_to_utc (EFI_TIME *time)
+VOID efi_time_to_utc (EFI_TIME *time)
 {
     if( time->TimeZone == EFI_UNSPECIFIED_TIMEZONE )
         return;

@@ -131,6 +131,7 @@ BOOLEAN on_same_device (EFI_DEVICE_PATH *a, EFI_DEVICE_PATH *b);
 CHAR16 *guid_str (EFI_GUID *guid);
 
 UINT64 efi_time_to_timestamp (EFI_TIME *time);
+VOID   efi_time_to_utc (EFI_TIME *time);
 #endif
 
 CHAR16 *strwiden (CONST CHAR8 *narrow);
