@@ -21,6 +21,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efiprot.h>
+#include <efistdarg.h>
 
 #include "err.h"
 #include "util.h"
@@ -30,6 +31,8 @@ VOID  efi_free  (VOID *p) { if( p ) FreePool( p); }
 
 static EFI_HANDLE self_image;
 EFI_GUID NULL_GUID = { 0, 0, 0, { 0, 0, 0, 0, 0, 0, 0, 0 } };
+
+static UINTN asprint_size_factor = 0;
 
 CONST CHAR16 *efi_statstr (EFI_STATUS s)
 {
@@ -693,6 +696,84 @@ CHAR8 * strlower (CHAR8 *str)
                 *c = *c + ('a' - 'A');
 
     return str;
+}
+
+static UINTN _init_asprint_size_factor (CHAR8 *buf, UINT64 size, const char *fmt, ...)
+{
+    va_list args;
+    UINTN rv;
+
+    va_start( args, fmt );
+    rv = AsciiVSPrint( buf, size, (const CHAR8 *)fmt, args );
+    va_end( args );
+
+    return rv;
+}
+
+static void init_asprint_size_factor (void)
+{
+    UINTN wrote = 0;
+    CHAR8 testbuf[4];
+
+    if( asprint_size_factor > 0 )
+        return;
+
+    wrote = _init_asprint_size_factor( &testbuf[0], sizeof(testbuf), "%a", "abc" );
+
+    // if AsciiVSPrint is still buggy, we will write one character,
+    // because it thinks we're writing wide characters. If the bug has been
+    // fixed, we'll write 3 characters, because we have space for them and a
+    // trailing NUL (efi sprintf insists on the trailing NUL and allows space
+    // for it, but does not report it as written (which is sensible)).
+    switch( wrote )
+    {
+      case 1:
+        asprint_size_factor = 2;
+        break;
+      case 3:
+        asprint_size_factor = 1;
+        break;
+      default: // seriously WTF but Ok, let's just deal as best we can:
+        asprint_size_factor = 1;
+        break;
+    }
+}
+
+UINTN sprintf_a (CHAR8 *buf, UINT64 size, const char *fmt, ...)
+{
+    va_list args;
+    UINTN rv;
+
+    init_asprint_size_factor();
+
+    va_start( args, fmt );
+    rv = AsciiVSPrint( buf, size * asprint_size_factor, (const CHAR8 *)fmt, args );
+    va_end( args );
+
+    return rv;
+}
+
+UINTN vsprintf_a (CHAR8 *buf, UINT64 size, const char *fmt, va_list args)
+{
+    init_asprint_size_factor();
+    return AsciiVSPrint( buf, size * asprint_size_factor, (const CHAR8 *)fmt, args );
+}
+
+UINTN sprintf_w (CHAR16 *buf, UINT64 size, const CHAR16 *fmt, ...)
+{
+    va_list args;
+    UINTN rv;
+
+    va_start( args, fmt );
+    rv = UnicodeVSPrint( buf, size, fmt, args );
+    va_end( args );
+
+    return rv;
+}
+
+UINTN vsprintf_w (CHAR16 *buf, UINT64 size, const CHAR16 *fmt, va_list args)
+{
+    return UnicodeVSPrint( buf, size, fmt, args );
 }
 
 // memory utility functions
