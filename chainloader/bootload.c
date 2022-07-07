@@ -94,7 +94,7 @@ static EFI_FILE_SYSTEM_VOLUME_LABEL_INFO *volume_label_info (IN EFI_FILE_HANDLE 
         UINTN alloc_size = size * 2;
 
         status = allocate( (VOID **)&buffer, alloc_size );
-        ERROR_RETURN( status, NULL, "Memory alloc failure: %d bytes", alloc_size );
+        ERROR_RETURN( status, NULL, L"Memory alloc failure: %d bytes", alloc_size );
 
         // This will reset size to the required value if EFI_BUFFER_TOO_SMALL:
         status = uefi_call_wrapper( fh->GetInfo, 4, fh, &vol_guid, &size, (VOID *)buffer );
@@ -604,7 +604,7 @@ static EFI_STATUS migrate_conf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs,
     CHAR16 new_path[MAXFSNAMLEN] = L"";
 
     res = efi_mount( efi_fs, &efi_root );
-    ERROR_JUMP( res, cleanup, "efi partition not opened\n" );
+    ERROR_JUMP( res, cleanup, L"efi partition not opened\n" );
 
     // We must have a label and an os_image name to proceed:
     // Absence of either indicates a malformed efi layout
@@ -632,7 +632,7 @@ static EFI_STATUS migrate_conf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs,
     }
 
     res = efi_file_to_mem( conf_file, &buf, &bytes, &alloc );
-    ERROR_JUMP( res, cleanup, "Could not read config file\n" );
+    ERROR_JUMP( res, cleanup, L"Could not read config file\n" );
 
     SPrint( &new_path[0], sizeof(new_path),
             L"%s\\%s.conf", conf_path, os_image_name );
@@ -665,7 +665,7 @@ static EFI_STATUS migrate_conf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs,
 
     res = efi_file_open( esp_root, &new_conf, &new_path[0],
                          EFI_FILE_MODE_CREATE|EFI_FILE_MODE_WRITE, 0 );
-    ERROR_JUMP( res, cleanup, "Unable to create config at %s", &new_path[0] );
+    ERROR_JUMP( res, cleanup, L"Unable to create config at %s", &new_path[0] );
 
     UINTN written = bytes;
     res = efi_file_write( new_conf, buf, &written );

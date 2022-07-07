@@ -78,11 +78,11 @@ EFI_STATUS reboot_into_firmware (VOID)
         res = set_persistent_efivar( L"OsIndications", &gv_guid,
                                      sizeof(os_indications), &os_indications );
         ERROR_RETURN( res, res,
-                      "Failed to set persistent OsIndications variable" );
+                      L"Failed to set persistent OsIndications variable" );
     }
 
     res = reset_system( EfiResetCold, EFI_SUCCESS, 0, NULL );
-    ERROR_RETURN( res, res, "Failed to reset system" );
+    ERROR_RETURN( res, res, L"Failed to reset system" );
 
     return EFI_SUCCESS;
 }

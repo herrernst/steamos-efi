@@ -232,16 +232,16 @@ static EFI_STATUS console_mode (VOID)
     res = get_protocol( &ccp_guid, NULL, (VOID **)&ccp );
     if( res == EFI_NOT_FOUND )
         return res;
-    ERROR_RETURN( res, res, "Could not get_protocol: %r\n", res );
+    ERROR_RETURN( res, res, L"Could not get_protocol: %r\n", res );
 
     res = conctl_get_mode( ccp, &mode, &uga, &locked );
-    ERROR_RETURN( res, res, "Could not conctl_get_mode: %r\n", res );
+    ERROR_RETURN( res, res, L"Could not conctl_get_mode: %r\n", res );
 
     if( mode == CONCTL_SCREEN_TEXT )
         return EFI_SUCCESS;
 
     res = conctl_set_mode( ccp, CONCTL_SCREEN_TEXT );
-    ERROR_RETURN( res, res, "Could not conctl_set_mode: %r\n", res );
+    ERROR_RETURN( res, res, L"Could not conctl_set_mode: %r\n", res );
 
     return EFI_SUCCESS;
 }
