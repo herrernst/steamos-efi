@@ -51,7 +51,7 @@ init_console_ex (void)
         // (The deck, at least as of VANGOGH 101, does not):
         res = uefi_call_wrapper( console->SetState, 2, console, &state );
 
-        if( EFI_ERROR(res) && verbose )
+        if( EFI_ERROR(res) )
             v_msg( L"console-ex set_state error: %d (likely harmless)\n", res );
     }
 
