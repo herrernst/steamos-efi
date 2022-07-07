@@ -76,7 +76,8 @@
        x; })
 
 #define v_msg(fmt, ...) \
-    ({ if( verbose ) Print( fmt, ##__VA_ARGS__ ); })
+    ({ if( verbose ) Print( fmt, ##__VA_ARGS__ ); \
+       DEBUG_VMSG( fmt, ##__VA_ARGS__ ); })
 
 #define v_hex(indent, offset, size, data) \
     ({ if( verbose ) DumpHex( indent, offset, size, data ); })
