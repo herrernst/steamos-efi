@@ -22,6 +22,8 @@
 
 #ifndef NO_EFI_TYPES
 #include <efi.h>
+#include <efilib.h>
+#include "debug.h"
 #endif
 
 #ifndef NO_EFI_TYPES
@@ -36,8 +38,12 @@
 #define ERROR_X(s, x, fmt, ...) \
     if( s != EFI_SUCCESS )                             \
     {                                                  \
-        if( verbose && *(CHAR16 *)fmt != L'0' )        \
-            Print( ERR_FMT( fmt, s, ##__VA_ARGS__ ) ); \
+        if( *(CHAR16 *)fmt != L'0' )                   \
+        {                                              \
+            if( verbose )                              \
+                Print( ERR_FMT( fmt, s, ##__VA_ARGS__ ) ); \
+            DEBUG_VMSG( fmt L": %s\n", ##__VA_ARGS__, efi_statstr(s) ); \
+        }                                              \
         x;                                             \
     }
 #else
@@ -57,9 +63,10 @@
     ERROR_X( s, goto target, fmt, ##__VA_ARGS__ )
 
 #define WARN_STATUS(s, fmt, ...) \
-    if( verbose && (s != EFI_SUCCESS) )          \
-    {                                            \
-        Print( ERR_FMT(fmt, s, ##__VA_ARGS__) ); \
+    if( s != EFI_SUCCESS )                                              \
+    {                                                                   \
+        if( verbose ) Print( ERR_FMT(fmt, s, ##__VA_ARGS__) );          \
+        DEBUG_VMSG( fmt L": %s\n", ##__VA_ARGS__, efi_statstr(s) );     \
     }
 
 #define ALLOC_OR_GOTO(s, tgt) \

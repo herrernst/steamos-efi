@@ -27,6 +27,7 @@
 #include "exec.h"
 #include "console-ex.h"
 #include "console.h"
+#include "debug.h"
 
 static EFI_STATUS reset_system (IN EFI_RESET_TYPE type,
                                 IN EFI_STATUS     status,
@@ -100,6 +101,8 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     CHAR16 *cmdline = NULL;
 
     initialise( image_handle, sys_table );
+    // This initialises the persistent debug mechanism.
+    // It is on if the preallocated debug file exists:
     set_steamos_loader_criteria( &steamos );
 
     steamcl = get_self_loaded_image();
@@ -187,6 +190,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     ERROR_JUMP( res, cleanup, L"exec failed" );
 
 cleanup:
+    debug_log_close();
     efi_free( filesystems );
 
     if( reboot_into_firmware_is_supported() )

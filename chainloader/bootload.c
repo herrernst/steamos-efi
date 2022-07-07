@@ -24,6 +24,7 @@
 
 #include "err.h"
 #include "util.h"
+#include "debug.h"
 #include "fileio.h"
 #include "bootload.h"
 #include "exec.h"
@@ -297,6 +298,10 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
 
     res = efi_mount( fs, &root_dir );
     ERROR_JUMP( res, cleanup, L"Unable to mount bootloader filesystem\n" );
+
+    // This is the earliest we can do this - we need at minimum access to the
+    // EFI filesystem we're running from to write to the persistent log file:
+    debug_log_init ( root_dir, orig_path );
 
     // note that if we were unable to look for the flag file (verb_path unset)
     // then we will remain in verbose mode (the default set above):

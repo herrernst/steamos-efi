@@ -23,6 +23,7 @@
 #ifndef NO_EFI_TYPES
 #include <efi.h>
 #include <efistdarg.h>
+#include "debug.h"
 #else
 #include "bootconf/efi.h"
 #endif
