@@ -105,6 +105,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     // It is on if the preallocated debug file exists:
     set_steamos_loader_criteria( &steamos );
 
+    DEBUG_LOG("initialised @ %a", &log_stamp[0]);
     steamcl = get_self_loaded_image();
 
     if( steamcl )
@@ -124,6 +125,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 
     if( nvram_debug )
     {
+        DEBUG_LOG("recording debug info to nvram");
         set_loader_time_init_usec();
         set_loader_info();
         set_loader_firmware_info();
@@ -133,11 +135,13 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
         set_loader_image_identifier();
         set_chainloader_device_part_uuid();
         set_chainloader_image_identifier();
+        DEBUG_LOG("done");
     }
 
     res = get_protocol_handles( &fs_guid, &filesystems, &count );
     ERROR_JUMP( res, cleanup, L"get_fs_handles" );
 
+    DEBUG_LOG("enumerating EFI filesystems");
     for( int i = 0; i < (int)count; i++ )
     {
         EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fs = NULL;
@@ -147,11 +151,13 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     }
 
     // Move the old pseudo-efi bootconf files to the new /esp location
+    DEBUG_LOG("migrating bootconf from old locations");
     migrate_bootconfs( filesystems, count, steamos.criteria.device_path );
 
     // find_loaders is the slowest step, and is not very interruptible
     // so the hotkey registered at the start may not trigger a callback
     // till after it has returned.
+    DEBUG_LOG("searching for stage 2 loaders");
     res = find_loaders( filesystems, count, &steamos );
     ERROR_JUMP( res, cleanup, L"no valid steamos loader found" );
 
@@ -162,23 +168,20 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     // the menu will be invoked here if it's been requested,
     // either by keypress or by nvram variables set before reboot
     // or by L"display-menu" on the UEFI command line:
+    DEBUG_LOG("choosing stage 2 loader");
     res = choose_steamos_loader( &steamos );
 
     if( bound_key )
         unbind_key( bound_key );
 
-    if( verbose )
+    if( verbose || DEBUG_LOGGING )
     {
-        EFI_GUID part_uuid = device_path_partition_uuid( steamos.device_path );
-        CHAR16 *puuid  = guid_str( &part_uuid );
         CHAR16 *device = device_path_string( steamos.device_path );
 
-        v_msg( L"Booting: %s\n  %s\n  %s\n",
-               device, puuid, steamos.loader_path );
-        v_msg( L"args in : %s\n", cmdline ?: L"NONE" );
-        v_msg( L"args out: %s\n", steamos.args );
+        v_msg( L"Booting : %s %s\n", device, steamos.loader_path );
+        v_msg( L"args in : \"%s\"\n", cmdline ?: L"NONE" );
+        v_msg( L"args out: \"%s\"\n", steamos.args );
 
-        efi_free( puuid );
         efi_free( device );
     }
 
@@ -186,10 +189,12 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
         set_loader_time_exec_usec();
 
     efi_free( cmdline );
+    DEBUG_LOG("exec-bootloader" );
     res = exec_bootloader( &steamos );
     ERROR_JUMP( res, cleanup, L"exec failed" );
 
 cleanup:
+    DEBUG_LOG("boot failed, cleaning up");
     debug_log_close();
     efi_free( filesystems );
 

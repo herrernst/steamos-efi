@@ -657,7 +657,7 @@ static EFI_STATUS migrate_conf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs,
 
         if( age_cmp >= 0 )
         {
-            v_msg( L"Target config is newer than old, do not migrate\n" );
+            v_msg( L"Target config is newer than old, not migrating\n" );
             goto cleanup;
         }
     }
@@ -676,6 +676,8 @@ static EFI_STATUS migrate_conf(EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *efi_fs,
     res = efi_file_write( new_conf, buf, &written );
     ERROR_JUMP( res, cleanup, L"Write %d bytes to %s failed (wrote %d)",
                 bytes, &new_path, written );
+    v_msg( L"migrated %d bytes from %s to %s",
+           written, OLDCONFPATH, &new_path[0] );
 
 cleanup:
         efi_free( os_image_name );
@@ -749,11 +751,11 @@ EFI_STATUS migrate_bootconfs (EFI_HANDLE *handles,
 
         if( self_dev_path && !on_same_device( self_dev_path, efi_dev ) )
         {
-            if( verbose )
+            if( verbose || DEBUG_LOGGING )
             {
                 CHAR16 *partuuid = guid_str( &efi_guid );
 
-                v_msg( L"Partition %s on other disk, skip migration\n",
+                v_msg( L"Partition %s on other disk, not a migration candidate\n",
                        partuuid );
                 efi_free( partuuid );
             }
@@ -985,6 +987,7 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
     BOOLEAN boot_other = FALSE;
     EFI_STATUS res = EFI_SUCCESS;
 
+    DEBUG_LOG("checking configs (%d)", found_cfg_count);
     // pick the newest entry to start with.
     // if boot-other is set, we need to bounce along to the next entry:
     // we walk the above list from newest to oldest, with invalid-flagged
@@ -998,7 +1001,7 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
         // if boot-other is set, skip it
         if( get_conf_uint( found[ i ].cfg, "boot-other" ) )
         {
-            v_msg( L"entry #%u has boot-other set, skip it...\n", i);
+            v_msg( L"config #%u has boot-other set\n", i);
             // if boot-other is set, update should persist until we get to
             // a non-boot-other entry:
             boot_other = TRUE;
@@ -1010,12 +1013,20 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
         // if update is set but update is disabled, skip it
         if( update && get_conf_uint( found[ i ].cfg, "update-disabled" ) )
         {
-            v_msg( L"entry #%u has update-disabled set, skip it...\n", i);
+            v_msg( L"config #%u has both update-disabled + update set\n", i);
             continue;
         }
 
         // boot other is not set, whatever we found is good
         break;
+    }
+
+    if( DEBUG_LOGGING )
+    {
+        CHAR8 *label = strnarrow( found[selected].label );
+        DEBUG_LOG("selected config %d (%a) from available EFI partitions",
+                  selected, label ?: (CHAR8 *)"-" );
+        efi_free( label );
     }
 
     BOOLEAN oneshot = is_loader_config_timeout_oneshot_set();
@@ -1024,9 +1035,23 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
     // oneshot fails we have a fallback boot option selected anyway:
     EFI_GUID entry = get_loader_entry_oneshot ();
     if( guid_cmp( &entry, &NULL_GUID ) != 0 )
+    {
         for( UINTN i = 0; i < found_cfg_count - 1; i++ )
             if( guid_cmp( &entry, &found[ i ].uuid ) == 0 )
                 selected = i;
+
+        if( DEBUG_LOGGING )
+        {
+            CHAR16 *wuuid = guid_str( &entry );
+            CHAR8 *auuid = strnarrow( wuuid );
+
+            DEBUG_LOG("one-shot partition uuid is %a", auuid);
+            DEBUG_LOG("selected config is now #%d\n", selected);
+
+            efi_free( wuuid );
+            efi_free( auuid );
+        }
+    }
 
     // if a oneshot boot was requested from the last OS run or
     // we somehow failed to pick a valid image, display a menu:
@@ -1057,6 +1082,8 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
                 efi_free( old );
             }
         }
+
+        DEBUG_LOG("displaying bootloader menu");
 #if 0
         UINTN timeout = get_loader_config_timeout();
 
@@ -1083,6 +1110,8 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
         found[ selected ].cfg    = NULL;
         found[ selected ].loader = NULL;
 
+        DEBUG_LOG("final config selection: #%d", selected );
+
         // we never un-set an update we inherited from boot-other
         // but we might have it set in our own config:
         if( !update )
@@ -1104,6 +1133,7 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
           default:
             if( boot_type & BOOT_VERBOSE )
             {
+                DEBUG_LOG("Verbose boot mode");
                 set_verbosity( 1 );
                 appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-verbose" );
             }
@@ -1112,12 +1142,14 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
             {
                 // This one is steamos.xxx as it can be passed on verbatim to
                 // the kernel and doesn't need stage 2 to do anything else:
+                DEBUG_LOG("Factory-reset boot mode");
                 appendstr_w( &args[ 0 ], sizeof( args ),
                              L" steamos.factory-reset=1" );
             }
 
             if( boot_type & BOOT_MENU )
             {
+                DEBUG_LOG("Stage II boot menu requested");
                 appendstr_w( &args[ 0 ], sizeof( args ), L" steamos-bootmenu" );
             }
         }
@@ -1126,6 +1158,7 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
         {
             // Our stage II bootloader looks for this command line string
             // Do not remove it unless you also change stage II
+            DEBUG_LOG("OS-update boot mode");
             appendstr_w( &args[ 0 ], sizeof( args ),  L" steamos-update=1" );
             flags |= ENTRY_FLAG_UPDATE;
         }
@@ -1151,6 +1184,7 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
 
         if( nvram_debug )
         {
+            DEBUG_LOG("Logging debug info to NVRAM");
             set_chainloader_boot_attempts ();
             set_loader_entry_default( found_signatures[ found_cfg_count - 1 ] );
             set_loader_entry_selected( found_signatures[ selected ] );
@@ -1176,6 +1210,7 @@ EFI_STATUS exec_bootloader (bootloader *boot)
     UINTN esize;
     CHAR16 *edata = NULL;
 
+    DEBUG_LOG("constructing stage 2 loader device path");
     dpath = make_absolute_device_path( boot->partition, boot->loader_path );
     if( !dpath )
         res = EFI_INVALID_PARAMETER;
@@ -1184,6 +1219,7 @@ EFI_STATUS exec_bootloader (bootloader *boot)
                 L"FDP could not construct a device path from %x + %s",
                 (UINT64) &boot->device_path, boot->loader_path );
 
+    DEBUG_LOG("loading stage 2 loader to memory");
     res = load_image( dpath, &efi_app );
     ERROR_JUMP( res, unload, L"load-image failed" );
 
@@ -1194,15 +1230,20 @@ EFI_STATUS exec_bootloader (bootloader *boot)
 
     // WARNING: Do NOT free boot->args. UEFI _must not_ reuse
     // this memory before the next program in the chain gets to it:
+    v_msg(L"setting loader command line \"%s\"\n", boot->args ?: L"-empty-");
     res = set_image_cmdline( &efi_app, boot->args, &child );
     ERROR_JUMP( res, unload, L"command line not set" );
 
-    v_msg( L"Storing chained loader uuid in EFI var\n" );
+    v_msg( L"Storing chained loader partition uuid in EFI var\n" );
+    DEBUG_LOG("storing stage 2 EFI partition UUID in nvram");
     set_chainedloader_device_part_uuid( efi_app );
 
+    DEBUG_LOG("Executing stage 2 loader at %a", &log_stamp[0]);
     res = exec_image( efi_app, &esize, &edata );
     WARN_STATUS( res, L"start image returned with exit code: %u; data @ 0x%x",
                  esize, (UINT64) edata );
+    DEBUG_LOG("Exec failed? %d", res);
+    debug_log_close();
 
 unload:
     if( efi_app )
