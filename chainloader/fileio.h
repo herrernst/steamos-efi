@@ -45,6 +45,8 @@ EFI_STATUS efi_readdir (EFI_FILE_PROTOCOL *dir,
                         IN OUT EFI_FILE_INFO **dirent,
                         IN OUT UINTN *dirent_size);
 
+EFI_STATUS efi_file_seek (EFI_FILE_PROTOCOL *file, UINT64 pos);
+
 EFI_STATUS efi_file_read (EFI_FILE_PROTOCOL *fh,
                           IN OUT CHAR8 *buf,
                           IN OUT UINTN *bytes);
