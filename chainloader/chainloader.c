@@ -88,6 +88,13 @@ EFI_STATUS reboot_into_firmware (VOID)
     return EFI_SUCCESS;
 }
 
+static UINTN dummy_error_log (void)
+{
+    WARN_STATUS( EFI_UNSUPPORTED, L"dummy warning (test logging)" );
+    ERROR_RETURN( EFI_INVALID_PARAMETER, 1, L"dummy error (test logging)" );
+    return 0;
+}
+
 EFI_STATUS
 efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
 {
@@ -106,6 +113,8 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *sys_table)
     set_steamos_loader_criteria( &steamos );
 
     DEBUG_LOG("initialised @ %a", &log_stamp[0]);
+    dummy_error_log();
+
     steamcl = get_self_loaded_image();
 
     if( steamcl )
