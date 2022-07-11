@@ -7,7 +7,10 @@ build:
   before_script:
     - apt update
     - apt install -y build-essential
-    - apt install -y gnu-efi autoconf autoconf-archive pkg-config
+    - apt install -y autoconf autoconf-archive pkg-config
+    - echo "deb http://deb.debian.org/debian bookworm main" >> /etc/apt/sources.list.d/bookworm.list
+    - apt update
+    - apt install -y gnu-efi/bookworm
   script:
     - autoreconf -ivf
     - ./configure --prefix=/usr
