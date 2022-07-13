@@ -436,7 +436,7 @@ static con_menu *create_boot_menu (INTN selected)
         boot_menu->option[ entries ].data = odata;
         odata->type = BOOT_VERBOSE|BOOT_RESET;
         odata->config = selected;
-        SPrint( label, llen, L"Factory Reset - CLEAR ALL PERSONAL DATA" );
+        SPrint( label, llen, L"-- ERASE USER DATA FROM DECK --" );
         label[ llen - 1 ] = L'\0';
 
         entries++;
@@ -1144,7 +1144,7 @@ EFI_STATUS choose_steamos_loader (IN OUT bootloader *chosen)
             {
                 // This one is steamos.xxx as it can be passed on verbatim to
                 // the kernel and doesn't need stage 2 to do anything else:
-                DEBUG_LOG("Factory-reset boot mode");
+                DEBUG_LOG("Soft factory-reset boot mode");
                 appendstr_w( &args[ 0 ], sizeof( args ),
                              L" steamos.factory-reset=1" );
             }
