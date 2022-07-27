@@ -197,7 +197,13 @@ EFI_STATUS efi_file_write (EFI_FILE_PROTOCOL *fh,
                            IN CHAR8 *buf,
                            IN OUT UINTN *bytes)
 {
-    return uefi_call_wrapper( fh->Write, 3, fh, bytes, buf );
+    EFI_STATUS res = EFI_SUCCESS;
+    res = uefi_call_wrapper( fh->Write, 3, fh, bytes, buf );
+
+    if( res == EFI_SUCCESS )
+        res = uefi_call_wrapper( fh->Flush, 1, fh );
+
+    return res;
 }
 
 EFI_STATUS efi_mount (EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *part,
