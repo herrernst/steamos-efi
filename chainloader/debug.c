@@ -30,8 +30,6 @@ static UINT64 debug_bufsize;
 static CHAR8  *debug_abuf;
 static CHAR16 *debug_wbuf;
 
-#define PREALLOC_DEBUGLOG L"steamcl-debug.log"
-
 static VOID debug_sync( UINT64 from, UINT64 size )
 {
     if( debug_log == NULL )
@@ -59,7 +57,7 @@ VOID update_logstamp (VOID)
                now.Hour, now.Minute, now.Second );
 }
 
-VOID debug_log_init (EFI_FILE_PROTOCOL *dir, CHAR16 *path_rel)
+VOID debug_log_init (EFI_FILE_PROTOCOL *dir, CHAR16 *path_rel, CHAR16 *file)
 {
     UINTN info_size = 0;
     EFI_FILE_INFO *logstat = NULL;
@@ -72,7 +70,7 @@ VOID debug_log_init (EFI_FILE_PROTOCOL *dir, CHAR16 *path_rel)
 
     debug_offset = 0;
 
-    log_path = resolve_path( PREALLOC_DEBUGLOG, path_rel, FALSE );
+    log_path = resolve_path( file, path_rel, FALSE );
 
     // Could not figure out where the debug file would be - give up.
     if( log_path == NULL )
@@ -105,6 +103,7 @@ VOID debug_log_init (EFI_FILE_PROTOCOL *dir, CHAR16 *path_rel)
     if( debug_abuf == NULL || debug_wbuf == NULL )
         goto cleanup;
 
+    v_msg( L"debug buffers at 0x%x , 0x%x\n", debug_abuf, debug_wbuf );
     debug_message_count = 0;
 
     // zero out the log so we wipe any existing contents

@@ -301,7 +301,7 @@ EFI_STATUS set_steamos_loader_criteria (OUT bootloader *loader)
 
     // This is the earliest we can do this - we need at minimum access to the
     // EFI filesystem we're running from to write to the persistent log file:
-    debug_log_init ( root_dir, orig_path );
+    debug_log_init ( root_dir, orig_path, L"steamcl-debug.log" );
 
     // note that if we were unable to look for the flag file (verb_path unset)
     // then we will remain in verbose mode (the default set above):
