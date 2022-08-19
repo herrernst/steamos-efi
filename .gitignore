@@ -16,4 +16,6 @@ steamcl.elf
 steamos-bootconf
 m4
 *.o
+*.efi
+*.elf
 util/steamcl-install
