@@ -39,8 +39,8 @@ AM_CCASFLAGS 	 = $(HOST_CCASFLAGS) $(CCASFLAGS_DEFAULT)
 ACLOCAL_AMFLAGS  = -I m4
 
 bin_PROGRAMS        = steamos-bootconf
-pkglibexec_PROGRAMS = steamcl.efi
-noinst_PROGRAMS     = steamcl.elf
+pkglibexec_PROGRAMS = steamcl.efi input-events.efi
+noinst_PROGRAMS     = steamcl.elf input-events.elf
 if ENABLE_BASH_COMPLETION
 bashcompletiondir   = $(BASH_COMPLETION_DIR)
 dist_bashcompletion_DATA = bash-completion/steamcl-install \
@@ -57,6 +57,7 @@ CLEANFILES          = data/steamcl-version
 
 # this prevents automake from trying to build steamcl.efi as a normal binary
 steamcl.efi$(EXEEXT): steamcl.elf
+input-events.efi$(EXEEXT): input-events.elf
 
 # the checksum/version file:
 data/steamcl-version: steamcl.efi Makefile
@@ -65,6 +66,7 @@ data/steamcl-version: steamcl.efi Makefile
 	@echo " @RELEASE_VERSION@" >> $@;
 
 steamcl_efi_SOURCES = steamcl.elf
+input_events_efi_SOURCES = input-events.elf
 
 # this builds an ELF DSO with the right characteristics to be turned into
 # an EFI blob in the final stage.
@@ -100,6 +102,31 @@ steamcl_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}
 steamcl_elf_LDFLAGS  = $(LDFLAGS) $(EFI_LDFLAGS)
 steamcl_elf_LDADD    = $(EFI_EXTRALIBS)
 steamcl_elf_LINK     = $(LD) $(steamcl_elf_LDFLAGS) -o $@
+
+input_events_elf_SOURCES =  chainloader/util.c		\
+                            chainloader/util.h		\
+                            chainloader/debug.h		\
+                            chainloader/debug.c		\
+                            chainloader/fileio.c	\
+                            chainloader/fileio.h	\
+                            chainloader/console.c	\
+                            chainloader/console.h	\
+                            chainloader/console-ex.c	\
+                            chainloader/console-ex.h	\
+                            chainloader/usb-hc.h	\
+                            chainloader/usb-io.h	\
+                            chainloader/usb-fn.h	\
+                            chainloader/usb.h		\
+                            chainloader/usb.c		\
+                            chainloader/err.c		\
+                            chainloader/err.h		\
+                            chainloader/input-events.c
+
+input_events_elf_CFLAGS   = $(EFI_CFLAGS)
+input_events_elf_CFLAGS  += -I${EFI_INC} -I${EFI_INC}/${build_cpu}
+input_events_elf_LDFLAGS  = $(LDFLAGS) $(EFI_LDFLAGS)
+input_events_elf_LDADD    = $(EFI_EXTRALIBS)
+input_events_elf_LINK     = $(LD) $(steamcl_elf_LDFLAGS) -o $@
 
 steamos_bootconf_SOURCES = bootconf/bootconf.c     \
                            bootconf/bootconf.h     \
